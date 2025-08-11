@@ -1,0 +1,325 @@
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.98);
+  backdrop-filter: blur(20px);
+  z-index: 2147483647;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  min-width: 100vw;
+  min-height: 100vh;
+}
+
+/* Modal Container */
+.modalContainer {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+/* Modal Header */
+.modalHeader {
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.modalTitle i {
+  color: var(--color-primary);
+}
+
+.closeButton {
+  color: var(--color-gray-400);
+  font-size: var(--font-size-2xl);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Content */
+.modalContent {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* Signature Section */
+.signatureSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.scannerSection {
+  text-align: center;
+}
+
+.scannerActive {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.scannerSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--color-primary);
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.scannerText {
+  color: white;
+  font-weight: 500;
+}
+
+.scanButton {
+  width: 100%;
+  max-width: 20rem;
+}
+
+/* Error Container */
+.errorContainer {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.errorContainer i {
+  color: var(--color-error);
+}
+
+.errorText {
+  color: #fca5a5;
+  font-size: var(--font-size-sm);
+}
+
+/* Signatures Section */
+.signaturesSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.signaturesTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.signaturesTitle i {
+  color: var(--color-primary);
+}
+
+.emptySignatures {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-gray-400);
+}
+
+.emptySignatures i {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+.emptySignatures p {
+  font-size: var(--font-size-sm);
+}
+
+.signaturesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.signatureItem {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.signatureItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.signatureInfo {
+  flex: 1;
+}
+
+.signatureInput {
+  color: white;
+  font-weight: 500;
+}
+
+.signatureKey {
+  color: var(--color-gray-400);
+  font-size: var(--font-size-xs);
+  font-family: monospace;
+  margin-top: var(--spacing-xs);
+}
+
+.signatureAddress {
+  color: var(--color-gray-400);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.removeButton {
+  color: var(--color-error);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.removeButton:hover {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Broadcast Section */
+.broadcastSection {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.broadcastStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.statusDot {
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--color-primary);
+  border-radius: 50%;
+}
+
+.statusText {
+  color: white;
+  font-weight: 500;
+}
+
+.broadcastButton {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.broadcastDescription {
+  color: var(--color-gray-400);
+  font-size: var(--font-size-sm);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modalOverlay {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .modalContainer {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .modalHeader {
+    padding: var(--spacing-lg);
+  }
+
+  .modalContent {
+    padding: var(--spacing-lg);
+    gap: var(--spacing-lg);
+    flex: 1;
+  }
+
+  .scannerActive {
+    padding: var(--spacing-lg);
+  }
+
+  .signatureItem {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

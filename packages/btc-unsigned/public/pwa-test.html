@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BTC Creator - PWA Test</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        color: #ffffff;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .test-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .test-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .test-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #f7931a;
+        margin-bottom: 10px;
+      }
+
+      .test-subtitle {
+        color: #cccccc;
+        font-size: 16px;
+      }
+
+      .test-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .test-section h3 {
+        color: #f7931a;
+        margin-bottom: 15px;
+        font-size: 18px;
+      }
+
+      .test-result {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        color: #00ff00;
+        margin-top: 10px;
+      }
+
+      .test-button {
+        background: #f7931a;
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .test-button:hover {
+        background: #e6851a;
+        transform: translateY(-1px);
+      }
+
+      .test-button:active {
+        transform: translateY(0);
+      }
+
+      .button-group {
+        text-align: center;
+        margin: 20px 0;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .status-success {
+        background: #44ff44;
+      }
+
+      .status-warning {
+        background: #ffaa00;
+      }
+
+      .status-error {
+        background: #ff4444;
+      }
+
+      @media (max-width: 600px) {
+        .test-container {
+          padding: 20px;
+          margin: 10px;
+        }
+
+        .test-title {
+          font-size: 24px;
+        }
+      }
+
+      /* iOS PWA Safe Area Support */
+      @supports (padding: max(0px)) {
+        body {
+          padding-left: max(20px, env(safe-area-inset-left));
+          padding-right: max(20px, env(safe-area-inset-right));
+          padding-top: max(20px, env(safe-area-inset-top));
+          padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="test-container">
+      <div class="test-header">
+        <h1 class="test-title">BTC Creator - PWA Test</h1>
+        <p class="test-subtitle">Test PWA functionality and installation</p>
+      </div>
+
+      <div class="test-section">
+        <h3>PWA Installation Status</h3>
+        <div class="test-result" id="installStatus">
+          Checking installation status...
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h3>Service Worker Status</h3>
+        <div class="test-result" id="swStatus">Checking service worker...</div>
+      </div>
+
+      <div class="test-section">
+        <h3>Cache Status</h3>
+        <div class="test-result" id="cacheStatus">Checking cache...</div>
+      </div>
+
+      <div class="test-section">
+        <h3>Device & Browser Info</h3>
+        <div class="test-result" id="deviceInfo">Detecting device...</div>
+      </div>
+
+      <div class="button-group">
+        <button class="test-button" onclick="runAllTests()">
+          Run All Tests
+        </button>
+        <button class="test-button" onclick="testInstallation()">
+          Test Installation
+        </button>
+        <button class="test-button" onclick="testServiceWorker()">
+          Test SW
+        </button>
+        <button class="test-button" onclick="testCache()">Test Cache</button>
+        <button class="test-button" onclick="goToApp()">Go to App</button>
+      </div>
+    </div>
+
+    <script>
+      // Test PWA installation status
+      function testInstallation() {
+          const statusElement = document.getElementById('installStatus');
+          let status = 'PWA Installation Status:\n';
+
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          const isAndroid = /Android/.test(navigator.userAgent);
+
+          status += `Standalone Mode: ${isStandalone ? '✓ YES' : '✗ NO'}\n`;
+          status += `Platform: ${isIOS ? 'iOS' : isAndroid ? 'Android' : 'Other'}\n`;
+
+          if (isIOS) {
+              const isStandaloneIOS = (window.navigator as any).standalone;
+              status += `iOS Standalone: ${isStandaloneIOS ? '✓ YES' : '✗ NO'}\n`;
+          }
+
+          if (isStandalone) {
+              status += `\n🎉 PWA is installed and running!\n`;
+              status += `You can now close this browser tab.`;
+          } else {
+              status += `\n📱 PWA is not installed yet.\n`;
+              if (isIOS) {
+                  status += `On iOS: Use Share button → Add to Home Screen`;
+              } else if (isAndroid) {
+                  status += `On Android: Look for install prompt or use menu`;
+              } else {
+                  status += `Look for install prompt in your browser`;
+              }
+          }
+
+          statusElement.textContent = status;
+      }
+
+      // Test service worker
+      function testServiceWorker() {
+          const statusElement = document.getElementById('swStatus');
+          let status = 'Service Worker Status:\n';
+
+          if ('serviceWorker' in navigator) {
+              status += '✓ Service Worker API supported\n';
+
+              navigator.serviceWorker.getRegistrations()
+                  .then(registrations => {
+                      if (registrations.length > 0) {
+                          status += `✓ ${registrations.length} registration(s) found\n`;
+                          registrations.forEach((reg, index) => {
+                              status += `  Registration ${index + 1}:\n`;
+                              status += `    Scope: ${reg.scope}\n`;
+                              status += `    Active: ${reg.active ? '✓ Yes' : '✗ No'}\n`;
+                              status += `    Waiting: ${reg.waiting ? '✓ Yes' : '✗ No'}\n`;
+                              status += `    Installing: ${reg.installing ? '✓ Yes' : '✗ No'}\n`;
+                          });
+                      } else {
+                          status += '✗ No registrations found\n';
+                      }
+                      statusElement.textContent = status;
+                  })
+                  .catch(error => {
+                      status += `✗ Error: ${error.message}\n`;
+                      statusElement.textContent = status;
+                  });
+          } else {
+              status += '✗ Service Worker API not supported\n';
+              statusElement.textContent = status;
+          }
+      }
+
+      // Test cache
+      async function testCache() {
+          const statusElement = document.getElementById('cacheStatus');
+          let status = 'Cache Status:\n';
+
+          if ('caches' in window) {
+              try {
+                  const cacheNames = await caches.keys();
+                  status += `✓ Cache API supported\n`;
+                  status += `Total caches: ${cacheNames.length}\n`;
+
+                  if (cacheNames.length > 0) {
+                      status += '\nCache Details:\n';
+                      for (const cacheName of cacheNames) {
+                          const cache = await caches.open(cacheName);
+                          const keys = await cache.keys();
+                          status += `  ${cacheName}: ${keys.length} items\n`;
+                      }
+
+                      // Check for our specific cache
+                      const btcUnsignedCache = cacheNames.find(name => name.includes('btc-unsigned'));
+                      if (btcUnsignedCache) {
+                          status += `\n🎯 BTC Creator cache found: ${btcUnsignedCache}\n`;
+                      } else {
+                          status += `\n⚠️ BTC Creator cache not found\n`;
+                      }
+                  } else {
+                      status += '\n⚠️ No caches found\n';
+                  }
+              } catch (error) {
+                  status += `✗ Error: ${error.message}\n`;
+              }
+          } else {
+              status += '✗ Cache API not supported\n';
+          }
+
+          statusElement.textContent = status;
+      }
+
+      // Test device info
+      function testDeviceInfo() {
+          const statusElement = document.getElementById('deviceInfo');
+          const userAgent = navigator.userAgent;
+
+          let status = 'Device & Browser Information:\n';
+          status += `User Agent: ${userAgent}\n`;
+          status += `Platform: ${navigator.platform}\n`;
+          status += `Language: ${navigator.language}\n`;
+          status += `Online: ${navigator.onLine ? '✓ Yes' : '✗ No'}\n`;
+
+          // Detect iOS/Android
+          const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+          const isAndroid = /Android/.test(userAgent);
+          status += `Device Type: ${isIOS ? 'iOS' : isAndroid ? 'Android' : 'Other'}\n`;
+
+          // PWA detection
+          const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+          status += `PWA Mode: ${isPWA ? '✓ Yes' : '✗ No'}\n`;
+
+          // Screen information
+          status += `Screen: ${screen.width}x${screen.height}\n`;
+          status += `Viewport: ${window.innerWidth}x${window.innerHeight}\n`;
+          status += `Pixel Ratio: ${window.devicePixelRatio}\n`;
+
+          statusElement.textContent = status;
+      }
+
+      // Run all tests
+      function runAllTests() {
+          testInstallation();
+          testServiceWorker();
+          testCache();
+          testDeviceInfo();
+      }
+
+      // Go to main app
+      function goToApp() {
+          window.location.href = '/';
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function() {
+          runAllTests();
+
+          // Auto-refresh every 10 seconds
+          setInterval(runAllTests, 10000);
+      });
+
+      // Monitor online/offline events
+      window.addEventListener('online', () => {
+          testDeviceInfo();
+      });
+
+      window.addEventListener('offline', () => {
+          testDeviceInfo();
+      });
+
+      // Service Worker message handling
+      if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.addEventListener('message', (event) => {
+              if (event.data && event.data.type === 'SW_READY') {
+                  console.log('Service Worker ready message received');
+                  testServiceWorker();
+              }
+          });
+      }
+    </script>
+  </body>
+</html>

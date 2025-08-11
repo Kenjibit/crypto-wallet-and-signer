@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="theme-color" content="#f7931a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>BTC Signer - Offline</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        color: white;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        min-height: 100dvh; /* Dynamic viewport height for iOS */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+          env(safe-area-inset-bottom) env(safe-area-inset-left);
+        padding: 2rem;
+      }
+
+      .offline-container {
+        text-align: center;
+        max-width: 90vw;
+        max-width: 90dvw;
+        width: 100%;
+        padding: 2rem;
+      }
+
+      .offline-icon {
+        font-size: clamp(3rem, 8vw, 5rem);
+        color: #f7931a;
+        margin-bottom: 1.5rem;
+        display: block;
+      }
+
+      h1 {
+        color: #f7931a;
+        margin-bottom: 1rem;
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        font-weight: 700;
+      }
+
+      p {
+        color: #d1d5db;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        font-size: clamp(0.9rem, 3vw, 1rem);
+      }
+
+      .status-indicator {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.5);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+      }
+
+      .status-indicator.success {
+        background: rgba(34, 197, 94, 0.2);
+        border-color: rgba(34, 197, 94, 0.5);
+      }
+
+      .retry-button {
+        background: #f7931a;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 1.5rem;
+        min-height: 44px; /* iOS touch target minimum */
+        min-width: 120px;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .retry-button:hover,
+      .retry-button:active {
+        background: #e68207;
+      }
+
+      .retry-button:focus {
+        outline: 2px solid #f7931a;
+        outline-offset: 2px;
+      }
+
+      .retry-button:disabled {
+        background: #6b7280;
+        cursor: not-allowed;
+      }
+
+      .offline-features {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: left;
+      }
+
+      .offline-features h3 {
+        color: #22c55e;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+      }
+
+      .offline-features ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .offline-features li {
+        color: #d1d5db;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+        padding-left: 1rem;
+        position: relative;
+      }
+
+      .offline-features li:before {
+        content: '✓';
+        color: #22c55e;
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+      }
+
+      .device-info {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: left;
+        font-size: 0.9rem;
+      }
+
+      .device-info h3 {
+        color: #3b82f6;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+      }
+
+      .cache-status {
+        background: rgba(168, 85, 247, 0.1);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: left;
+        font-size: 0.9rem;
+      }
+
+      .cache-status h3 {
+        color: #a855f7;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+      }
+
+      .secondary-button {
+        background: transparent;
+        color: #f7931a;
+        border: 2px solid #f7931a;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        min-height: 44px;
+        min-width: 120px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .secondary-button:hover,
+      .secondary-button:active {
+        background: #f7931a;
+        color: white;
+      }
+
+      /* iPhone-specific adjustments */
+      @supports (-webkit-touch-callout: none) {
+        body {
+          /* iOS-specific optimizations */
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        .retry-button,
+        .secondary-button {
+          /* iOS button styling */
+          -webkit-appearance: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+      }
+
+      /* Responsive adjustments for different iPhone sizes */
+      @media (max-width: 428px) {
+        .offline-container {
+          padding: 1.5rem;
+        }
+
+        body {
+          padding: 1rem;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+
+      @media (max-width: 375px) {
+        .offline-container {
+          padding: 1rem;
+        }
+
+        body {
+          padding: 0.75rem;
+        }
+      }
+
+      /* Ensure proper display on all devices */
+      @media (display-mode: standalone) {
+        body {
+          /* PWA standalone mode adjustments */
+          padding-top: max(env(safe-area-inset-top), 1rem);
+          padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+        }
+      }
+
+      /* Android-specific optimizations */
+      @media screen and (-webkit-min-device-pixel-ratio: 0) {
+        .retry-button,
+        .secondary-button {
+          /* Android button optimizations */
+          -webkit-tap-highlight-color: transparent;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="offline-container">
+      <div class="offline-icon">📱</div>
+      <h1>You're Offline</h1>
+
+      <div class="status-indicator" id="statusIndicator">
+        <strong>Network Status:</strong> No internet connection detected
+      </div>
+
+      <p>
+        The BTC Signer app requires an internet connection to load initially.
+      </p>
+
+      <div class="offline-features">
+        <h3>What works offline:</h3>
+        <ul>
+          <li>Previously loaded pages and assets</li>
+          <li>Cached CSS and JavaScript</li>
+          <li>Basic app functionality</li>
+          <li>Local storage data</li>
+          <li>PSBT signing capabilities</li>
+          <li>QR code generation</li>
+        </ul>
+      </div>
+
+      <div class="device-info" id="deviceInfo">
+        <h3>Device Information:</h3>
+        <div id="deviceDetails">Detecting device...</div>
+      </div>
+
+      <div class="cache-status" id="cacheStatus">
+        <h3>Cache Status:</h3>
+        <div id="cacheDetails">Checking cache...</div>
+      </div>
+
+      <p>
+        <strong>Tip:</strong> Once the app is fully loaded, you can use it
+        offline for signing transactions.
+      </p>
+
+      <div class="action-buttons">
+        <button
+          class="retry-button"
+          id="retryButton"
+          onclick="checkConnection()"
+        >
+          Check Connection
+        </button>
+        <button class="secondary-button" onclick="checkCache()">
+          Check Cache
+        </button>
+        <button class="secondary-button" onclick="clearCache()">
+          Clear Cache
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Enhanced device detection
+      function detectDevice() {
+        const userAgent = navigator.userAgent;
+        const isIOS =
+          /iPad|iPhone|iPod/.test(userAgent) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isAndroid = /Android/.test(userAgent);
+        const isOldIOS = isIOS && /iPhone OS (7|8|9|10|11|12)/.test(userAgent);
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
+        const deviceDetails = document.getElementById('deviceDetails');
+        if (deviceDetails) {
+          deviceDetails.innerHTML = `
+            <strong>Platform:</strong> ${
+              isIOS ? 'iOS' : isAndroid ? 'Android' : 'Other'
+            }<br>
+            <strong>Device Type:</strong> ${
+              isOldIOS
+                ? 'iPhone 7-12'
+                : isIOS
+                ? 'iPhone 13+'
+                : isAndroid
+                ? 'Android'
+                : 'Other'
+            }<br>
+            <strong>PWA Mode:</strong> ${isPWA ? 'Yes' : 'No'}<br>
+            <strong>User Agent:</strong> ${userAgent.substring(0, 50)}...
+          `;
+        }
+
+        return { isIOS, isAndroid, isOldIOS, isPWA };
+      }
+
+      // Enhanced cache checking
+      async function checkCache() {
+        const cacheDetails = document.getElementById('cacheDetails');
+        if (!cacheDetails) return;
+
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            const btcSignerCache = cacheNames.find((name) =>
+              name.includes('btc-signer')
+            );
+
+            if (btcSignerCache) {
+              const cache = await caches.open(btcSignerCache);
+              const keys = await cache.keys();
+
+              cacheDetails.innerHTML = `
+                <strong>Cache Name:</strong> ${btcSignerCache}<br>
+                <strong>Assets Cached:</strong> ${keys.length}<br>
+                <strong>Status:</strong> <span style="color: #22c55e;">✓ Active</span>
+              `;
+            } else {
+              cacheDetails.innerHTML = `
+                <strong>Status:</strong> <span style="color: #ef4444;">✗ No cache found</span><br>
+                <strong>Available Caches:</strong> ${cacheNames.join(', ')}
+              `;
+            }
+          } catch (error) {
+            cacheDetails.innerHTML = `
+              <strong>Status:</strong> <span style="color: #ef4444;">✗ Error checking cache</span><br>
+              <strong>Error:</strong> ${error.message}
+            `;
+          }
+        } else {
+          cacheDetails.innerHTML = `
+            <strong>Status:</strong> <span style="color: #ef4444;">✗ Cache API not supported</span>
+          `;
+        }
+      }
+
+      // Enhanced cache clearing
+      async function clearCache() {
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            const btcSignerCache = cacheNames.find((name) =>
+              name.includes('btc-signer')
+            );
+
+            if (btcSignerCache) {
+              await caches.delete(btcSignerCache);
+              const cacheDetails = document.getElementById('cacheDetails');
+              if (cacheDetails) {
+                cacheDetails.innerHTML = `
+                  <strong>Status:</strong> <span style="color: #22c55e;">✓ Cache cleared</span><br>
+                  <strong>Action:</strong> Cache has been removed
+                `;
+              }
+            }
+          } catch (error) {
+            console.log('Failed to clear cache:', error);
+          }
+        }
+      }
+
+      // Enhanced connection checking
+      async function checkConnection() {
+        const button = document.getElementById('retryButton');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        if (!button || !statusIndicator) return;
+
+        button.textContent = 'Checking...';
+        button.disabled = true;
+
+        try {
+          // Test connection with a small request
+          const response = await fetch('/manifest.json', {
+            method: 'HEAD',
+            cache: 'no-cache',
+            signal: AbortSignal.timeout(5000), // 5 second timeout
+          });
+
+          if (response.ok) {
+            statusIndicator.innerHTML =
+              '<strong>Network Status:</strong> Connection restored! Redirecting...';
+            statusIndicator.className = 'status-indicator success';
+
+            // Redirect to main app
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          } else {
+            throw new Error('Response not ok');
+          }
+        } catch (error) {
+          statusIndicator.innerHTML =
+            '<strong>Network Status:</strong> Still offline - check your connection';
+          statusIndicator.className = 'status-indicator';
+
+          button.textContent = 'Try Again';
+          button.disabled = false;
+        }
+      }
+
+      // Enhanced offline capability check
+      async function checkOfflineCapability() {
+        const cacheDetails = document.getElementById('cacheDetails');
+        if (!cacheDetails) return;
+
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            const btcSignerCache = cacheNames.find((name) =>
+              name.includes('btc-signer')
+            );
+
+            if (btcSignerCache) {
+              const cache = await caches.open(btcSignerCache);
+              const keys = await cache.keys();
+
+              const cssAssets = keys.filter((req) =>
+                req.url.includes('.css')
+              ).length;
+              const jsAssets = keys.filter((req) =>
+                req.url.includes('.js')
+              ).length;
+              const imageAssets = keys.filter(
+                (req) => req.url.includes('.png') || req.url.includes('.svg')
+              ).length;
+
+              cacheDetails.innerHTML = `
+                <strong>Cache Name:</strong> ${btcSignerCache}<br>
+                <strong>Total Assets:</strong> ${keys.length}<br>
+                <strong>CSS Files:</strong> ${cssAssets}<br>
+                <strong>JavaScript Files:</strong> ${jsAssets}<br>
+                <strong>Image Files:</strong> ${imageAssets}<br>
+                <strong>Status:</strong> <span style="color: #22c55e;">✓ Ready for offline use</span>
+              `;
+            } else {
+              cacheDetails.innerHTML = `
+                <strong>Status:</strong> <span style="color: #ef4444;">✗ No cache found</span><br>
+                <strong>Offline Capability:</strong> Limited
+              `;
+            }
+          } catch (error) {
+            cacheDetails.innerHTML = `
+              <strong>Status:</strong> <span style="color: #ef4444;">✗ Error checking cache</span><br>
+              <strong>Error:</strong> ${error.message}
+            `;
+          }
+        } else {
+          cacheDetails.innerHTML = `
+            <strong>Status:</strong> <span style="color: #ef4444;">✗ Cache API not supported</span><br>
+            <strong>Offline Capability:</strong> None
+          `;
+        }
+      }
+
+      // Enhanced initialization
+      document.addEventListener('DOMContentLoaded', function () {
+        // Detect device immediately
+        const deviceInfo = detectDevice();
+
+        // Check cache status
+        checkCache();
+
+        // Force viewport recalculation for iOS
+        if (deviceInfo.isIOS) {
+          const viewport = document.querySelector('meta[name="viewport"]');
+          if (viewport) {
+            viewport.setAttribute(
+              'content',
+              'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+            );
+          }
+
+          // Ensure proper height calculation
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        // Add touch event handling for better mobile experience
+        const buttons = document.querySelectorAll(
+          '.retry-button, .secondary-button'
+        );
+        buttons.forEach((button) => {
+          button.addEventListener('touchstart', function () {
+            this.style.transform = 'scale(0.95)';
+          });
+
+          button.addEventListener('touchend', function () {
+            this.style.transform = 'scale(1)';
+          });
+        });
+
+        // Auto-check connection every 10 seconds
+        setInterval(checkConnection, 10000);
+
+        // Auto-check cache every 30 seconds
+        setInterval(checkCache, 30000);
+      });
+
+      // Handle window resize for dynamic viewport
+      window.addEventListener('resize', function () {
+        const deviceInfo = detectDevice();
+        if (deviceInfo.isIOS) {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+      });
+
+      // Enhanced error handling
+      window.addEventListener('error', function (event) {
+        console.log('Page error:', event.error);
+      });
+
+      window.addEventListener('unhandledrejection', function (event) {
+        console.log('Unhandled promise rejection:', event.reason);
+      });
+    </script>
+  </body>
+</html>

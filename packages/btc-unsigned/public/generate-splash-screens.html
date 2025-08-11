@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>iOS Splash Screen Generator for BTC Signer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: #f5f5f5;
+      }
+      .splash-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+      .splash-item {
+        text-align: center;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background: white;
+      }
+      canvas {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .download-btn {
+        background: #f7931a;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 15px;
+        font-size: 14px;
+      }
+      .download-btn:hover {
+        background: #e68207;
+      }
+      .device-info {
+        margin: 10px 0;
+        color: #666;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>iOS Splash Screen Generator for BTC Signer</h1>
+    <p>
+      Generate splash screens for all iOS device sizes. These will be shown when
+      the app launches.
+    </p>
+
+    <div class="splash-grid">
+      <div class="splash-item">
+        <h3>iPhone SE (1st gen)</h3>
+        <div class="device-info">320×568px @2x</div>
+        <canvas id="canvas640x1136" width="640" height="1136"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas640x1136', 'splash-640x1136.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 6/7/8</h3>
+        <div class="device-info">375×667px @2x</div>
+        <canvas id="canvas750x1334" width="750" height="1334"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas750x1334', 'splash-750x1334.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 6/7/8 Plus</h3>
+        <div class="device-info">414×736px @3x</div>
+        <canvas id="canvas1242x2208" width="1242" height="2208"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1242x2208', 'splash-1242x2208.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone X/XS</h3>
+        <div class="device-info">375×812px @3x</div>
+        <canvas id="canvas1125x2436" width="1125" height="2436"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1125x2436', 'splash-1125x2436.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone XR</h3>
+        <div class="device-info">414×896px @2x</div>
+        <canvas id="canvas828x1792" width="828" height="1792"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas828x1792', 'splash-828x1792.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone XS Max</h3>
+        <div class="device-info">414×896px @3x</div>
+        <canvas id="canvas1242x2688" width="1242" height="2688"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1242x2688', 'splash-1242x2688.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 12/13 mini</h3>
+        <div class="device-info">375×812px @3x</div>
+        <canvas id="canvas1125x2436" width="1125" height="2436"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1125x2436', 'splash-1125x2436.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 12/13/14</h3>
+        <div class="device-info">390×844px @3x</div>
+        <canvas id="canvas1170x2532" width="1170" height="2532"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1170x2532', 'splash-1170x2532.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 12/13 Pro</h3>
+        <div class="device-info">393×852px @3x</div>
+        <canvas id="canvas1179x2556" width="1179" height="2556"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1179x2556', 'splash-1179x2556.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 12/13/14 Plus</h3>
+        <div class="device-info">428×926px @3x</div>
+        <canvas id="canvas1284x2778" width="1284" height="2778"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1284x2778', 'splash-1284x2778.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 12/13/14 Pro Max</h3>
+        <div class="device-info">430×932px @3x</div>
+        <canvas id="canvas1290x2796" width="1290" height="2796"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1290x2796', 'splash-1290x2796.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 15/15 Pro</h3>
+        <div class="device-info">393×852px @3x</div>
+        <canvas id="canvas1179x2556" width="1179" height="2556"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1179x2556', 'splash-1179x2556.png')"
+        >
+          Download
+        </button>
+      </div>
+
+      <div class="splash-item">
+        <h3>iPhone 15 Plus/15 Pro Max</h3>
+        <div class="device-info">430×932px @3x</div>
+        <canvas id="canvas1290x2796" width="1290" height="2796"></canvas>
+        <br /><button
+          class="download-btn"
+          onclick="downloadSplash('canvas1290x2796', 'splash-1290x2796.png')"
+        >
+          Download
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function generateSplash(canvasId, width, height) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, '#1f2937');
+        gradient.addColorStop(1, '#374151');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        // BTC Symbol (centered)
+        ctx.fillStyle = '#f7931a';
+        const fontSize = Math.min(width, height) * 0.15;
+        ctx.font = `bold ${fontSize}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('₿', width / 2, height / 2);
+
+        // App name below symbol
+        ctx.fillStyle = '#f7931a';
+        const appNameFontSize = Math.min(width, height) * 0.04;
+        ctx.font = `bold ${appNameFontSize}px Arial`;
+        ctx.fillText('BTC Signer', width / 2, height / 2 + fontSize * 1.2);
+
+        // Signature lines at bottom
+        ctx.strokeStyle = '#f7931a';
+        ctx.lineWidth = Math.min(width, height) * 0.008;
+        ctx.lineCap = 'round';
+
+        const lineY1 = height * 0.8;
+        const lineY2 = height * 0.85;
+        const lineY3 = height * 0.9;
+        const lineX1 = width * 0.2;
+        const lineX2 = width * 0.8;
+
+        ctx.beginPath();
+        ctx.moveTo(lineX1, lineY1);
+        ctx.lineTo(lineX2, lineY1);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(lineX1, lineY2);
+        ctx.lineTo(lineX2, lineY2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(lineX1, lineY3);
+        ctx.lineTo(lineX2, lineY3);
+        ctx.stroke();
+      }
+
+      function downloadSplash(canvasId, filename) {
+        const canvas = document.getElementById(canvasId);
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+
+      // Generate all splash screens
+      generateSplash('canvas640x1136', 640, 1136);
+      generateSplash('canvas750x1334', 750, 1334);
+      generateSplash('canvas1242x2208', 1242, 2208);
+      generateSplash('canvas1125x2436', 1125, 2436);
+      generateSplash('canvas828x1792', 828, 1792);
+      generateSplash('canvas1242x2688', 1242, 2688);
+      generateSplash('canvas1125x2436', 1125, 2436);
+      generateSplash('canvas1170x2532', 1170, 2532);
+      generateSplash('canvas1179x2556', 1179, 2556);
+      generateSplash('canvas1284x2778', 1284, 2778);
+      generateSplash('canvas1290x2796', 1290, 2796);
+      generateSplash('canvas1179x2556', 1179, 2556);
+      generateSplash('canvas1290x2796', 1290, 2796);
+    </script>
+  </body>
+</html>

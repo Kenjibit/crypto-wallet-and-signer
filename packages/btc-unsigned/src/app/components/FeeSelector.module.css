@@ -1,0 +1,35 @@
+.feeButtonsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .feeButtonsContainer {
+    flex-wrap: nowrap;
+  }
+}
+
+.feeButton {
+  flex: 1;
+  text-align: center;
+}
+
+.customFeeContainer {
+  margin-top: 1rem;
+}
+
+.feeIndicator {
+  background: rgba(247, 147, 26, 0.1);
+  border-left: 3px solid var(--primary);
+  padding: 0.75rem;
+  border-radius: 0 8px 8px 0;
+  margin-top: 1rem;
+}
+
+.feeIndicatorContent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}

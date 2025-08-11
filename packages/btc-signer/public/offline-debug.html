@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="theme-color" content="#f7931a" />
+    <title>BTC Signer - Offline Debug</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #1a1a1a;
+        color: #ffffff;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .status-card {
+        background: #2a2a2a;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #3a3a3a;
+      }
+
+      .status-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #f7931a;
+      }
+
+      .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #3a3a3a;
+      }
+
+      .status-item:last-child {
+        border-bottom: none;
+      }
+
+      .status-label {
+        font-weight: 500;
+      }
+
+      .status-value {
+        font-family: monospace;
+        font-size: 14px;
+        color: #a0a0a0;
+      }
+
+      .status-value.online {
+        color: #22c55e;
+      }
+
+      .status-value.offline {
+        color: #ef4444;
+      }
+
+      .button {
+        background: #f7931a;
+        color: #ffffff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        margin: 10px 5px;
+        transition: background 0.2s;
+      }
+
+      .button:hover {
+        background: #e67e22;
+      }
+
+      .button:disabled {
+        background: #666;
+        cursor: not-allowed;
+      }
+
+      .cache-info {
+        background: #2a2a2a;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        border: 1px solid #3a3a3a;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .cache-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #3a3a3a;
+        font-family: monospace;
+        font-size: 12px;
+      }
+
+      .cache-item:last-child {
+        border-bottom: none;
+      }
+
+      .css-file {
+        color: #22c55e;
+      }
+
+      .js-file {
+        color: #3b82f6;
+      }
+
+      .other-file {
+        color: #a0a0a0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🔧 BTC Signer - Offline Debug</h1>
+        <p>Debug information for offline functionality</p>
+      </div>
+
+      <div class="status-card">
+        <div class="status-title">Network Status</div>
+        <div class="status-item">
+          <span class="status-label">Connection:</span>
+          <span class="status-value" id="connection-status">Checking...</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Service Worker:</span>
+          <span class="status-value" id="sw-status">Checking...</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Cache Name:</span>
+          <span class="status-value" id="cache-name">-</span>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-title">Actions</div>
+        <button class="button" onclick="checkCache()">Check Cache</button>
+        <button class="button" onclick="clearCache()">Clear Cache</button>
+        <button class="button" onclick="reloadPage()">Reload Page</button>
+        <button class="button" onclick="goToMain()">Go to Main App</button>
+      </div>
+
+      <div class="cache-info" id="cache-info" style="display: none">
+        <div class="status-title">Cache Contents</div>
+        <div id="cache-contents">Loading...</div>
+      </div>
+    </div>
+
+    <script>
+      // Check network status
+      function updateNetworkStatus() {
+        const statusElement = document.getElementById('connection-status');
+        if (navigator.onLine) {
+          statusElement.textContent = 'Online';
+          statusElement.className = 'status-value online';
+        } else {
+          statusElement.textContent = 'Offline';
+          statusElement.className = 'status-value offline';
+        }
+      }
+
+      // Check service worker status
+      function updateSWStatus() {
+        const statusElement = document.getElementById('sw-status');
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistration().then((registration) => {
+            if (registration) {
+              statusElement.textContent = 'Registered';
+              statusElement.className = 'status-value online';
+              document.getElementById('cache-name').textContent =
+                'btc-signer-v4';
+            } else {
+              statusElement.textContent = 'Not Registered';
+              statusElement.className = 'status-value offline';
+            }
+          });
+        } else {
+          statusElement.textContent = 'Not Supported';
+          statusElement.className = 'status-value offline';
+        }
+      }
+
+      // Check cache contents
+      async function checkCache() {
+        const cacheInfo = document.getElementById('cache-info');
+        const cacheContents = document.getElementById('cache-contents');
+
+        cacheInfo.style.display = 'block';
+        cacheContents.textContent = 'Loading...';
+
+        try {
+          const response = await fetch('/sw-debug');
+          const debugInfo = await response.json();
+
+          let html = `<div class="status-item">
+          <span class="status-label">Total Assets:</span>
+          <span class="status-value">${debugInfo.totalAssets}</span>
+        </div>`;
+
+          html += `<div class="status-item">
+          <span class="status-label">CSS Files:</span>
+          <span class="status-value">${debugInfo.cssAssets.length}</span>
+        </div>`;
+
+          html += `<div class="status-item">
+          <span class="status-label">JS Files:</span>
+          <span class="status-value">${debugInfo.jsAssets.length}</span>
+        </div>`;
+
+          html +=
+            '<div style="margin-top: 20px;"><strong>All Cached Assets:</strong></div>';
+
+          debugInfo.allAssets.forEach((asset) => {
+            let className = 'other-file';
+            if (asset.includes('.css')) className = 'css-file';
+            else if (asset.includes('.js')) className = 'js-file';
+
+            html += `<div class="cache-item ${className}">${asset}</div>`;
+          });
+
+          cacheContents.innerHTML = html;
+        } catch (error) {
+          cacheContents.innerHTML = `<div class="status-value offline">Error loading cache info: ${error.message}</div>`;
+        }
+      }
+
+      // Clear cache
+      async function clearCache() {
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map((name) => caches.delete(name)));
+            alert('Cache cleared successfully!');
+            checkCache();
+          } catch (error) {
+            alert('Error clearing cache: ' + error.message);
+          }
+        }
+      }
+
+      // Reload page
+      function reloadPage() {
+        window.location.reload();
+      }
+
+      // Go to main app
+      function goToMain() {
+        window.location.href = '/';
+      }
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', function () {
+        updateNetworkStatus();
+        updateSWStatus();
+
+        // Listen for online/offline events
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        // Auto-check cache every 10 seconds
+        setInterval(checkCache, 10000);
+      });
+    </script>
+  </body>
+</html>

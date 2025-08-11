@@ -1,0 +1,1224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import design tokens */
+@import './design-tokens.css';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: white;
+  line-height: 1.6;
+  min-height: 100vh;
+  /* Use iOS safe area variables for proper iPhone display */
+  padding: var(--ios-pwa-padding-top) var(--ios-pwa-padding-right)
+    var(--ios-pwa-padding-bottom) var(--ios-pwa-padding-left);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  /* iOS PWA specific styles */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /* Ensure proper viewport handling on iOS */
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* iOS PWA Standalone Mode Detection and Safe Area Handling */
+@media (display-mode: standalone) {
+  /* PWA-specific styles when running in standalone mode */
+  body {
+    /* Ensure full screen experience with safe area support */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+
+    /* Use safe area variables for proper iPhone display */
+    padding-top: var(--ios-pwa-padding-top);
+    padding-bottom: var(--ios-pwa-padding-bottom);
+    padding-left: var(--ios-pwa-padding-left);
+    padding-right: var(--ios-pwa-padding-right);
+
+    /* Prevent content from being hidden behind iPhone notch/dynamic island */
+    min-height: calc(100vh - var(--safe-area-top) - var(--safe-area-bottom));
+  }
+
+  /* Hide browser UI elements in PWA mode */
+  /* Prevent external links from opening in browser */
+  a[href^='http']:not([href*='localhost:3000']):not([href*='127.0.0.1:3000']) {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+}
+
+/* iOS PWA specific styles with enhanced safe area support */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific PWA styles */
+  @media (display-mode: standalone) {
+    /* iOS PWA optimizations */
+    body {
+      /* iOS-specific PWA styles with safe area support */
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+
+      /* Enhanced safe area handling for iPhone */
+      padding-top: max(var(--ios-pwa-padding-top), var(--safe-area-top) + 20px);
+      padding-bottom: max(
+        var(--ios-pwa-padding-bottom),
+        var(--safe-area-bottom) + 20px
+      );
+      padding-left: max(
+        var(--ios-pwa-padding-left),
+        var(--safe-area-left) + 20px
+      );
+      padding-right: max(
+        var(--ios-pwa-padding-right),
+        var(--safe-area-right) + 20px
+      );
+
+      /* Ensure content is visible on all iPhone models */
+      min-height: calc(100vh - var(--safe-area-top) - var(--safe-area-bottom));
+
+      /* iOS-specific viewport handling */
+      width: 100vw;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    /* iOS container adjustments */
+    .container {
+      /* Ensure container respects safe areas */
+      padding-left: max(2rem, var(--safe-area-left) + 1rem);
+      padding-right: max(2rem, var(--safe-area-right) + 1rem);
+      padding-top: max(2rem, var(--safe-area-top) + 1rem);
+      padding-bottom: max(2rem, var(--safe-area-bottom) + 1rem);
+
+      /* Prevent horizontal overflow on iPhone */
+      max-width: calc(100vw - var(--safe-area-left) - var(--safe-area-right));
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Network indicator */
+.network-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: rgba(247, 147, 26, 0.2);
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Form styles */
+.input-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--gray-200);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 1rem;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(247, 147, 26, 0.3);
+}
+
+.input-with-button {
+  display: flex;
+  gap: 10px;
+}
+
+.input-with-button input {
+  flex: 1;
+}
+
+.input-with-button button {
+  flex: 1;
+}
+
+.amount-container {
+  display: flex;
+  gap: 15px;
+}
+
+/* Legacy currency-select styles removed - not used */
+
+.balance-display {
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.balance-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Summary styles */
+.summary {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 25px 0;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item .value {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Button container - for legacy components */
+.btn-container {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.btn-container button {
+  flex: 1;
+}
+
+/* REMOVED: Global button styles that were causing conflicts */
+/* These are now handled by the Button component */
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--gray-200);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Transaction output */
+.transaction-output {
+  margin-top: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab navigation */
+.tab-navigation {
+  display: flex;
+  border-bottom: 1px solid var(--gray-700);
+  margin-bottom: 1rem;
+}
+
+.tab-button {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  color: var(--gray-400);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--gray-300);
+}
+
+.tab-button.active {
+  color: #60a5fa;
+  border-bottom: 2px solid #60a5fa;
+}
+
+/* Legacy transactionHex styles removed - not used */
+
+/* QR container */
+.qr-container {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  text-align: center;
+  display: none;
+}
+
+/* Responsive QR code container */
+.qr-code-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--spacing-xl) auto; /* Top and bottom margin using design tokens */
+}
+
+@media (min-width: 768px) {
+  .qr-code-container {
+    width: 320px;
+  }
+}
+
+#qrcode {
+  display: inline-block;
+  margin: 15px auto;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  min-height: 232px;
+  min-width: 232px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Info box */
+.info-box {
+  background: rgba(247, 147, 26, 0.1);
+  border-left: 4px solid var(--primary);
+  padding: 15px;
+  border-radius: 0 8px 8px 0;
+  margin-top: 25px;
+  font-size: 0.95rem;
+}
+
+/* Status messages */
+.status {
+  padding: 15px;
+  border-radius: 12px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 400px;
+  z-index: 100;
+  animation: slideIn 0.3s ease-out;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+/* Ensure status dismiss button is always visible */
+.status .status-dismiss,
+.status button.status-dismiss {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  z-index: 101 !important;
+}
+
+.status-dismiss {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 2px solid var(--color-gray-400) !important;
+  color: var(--color-gray-400) !important;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  margin-left: auto;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 101;
+  min-width: 28px;
+  min-height: 28px;
+  line-height: 1;
+  text-align: center;
+  position: relative;
+}
+
+.status-dismiss::before {
+  content: '×';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.status-dismiss:hover {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: white !important;
+  transform: scale(1.1);
+}
+
+/* Mobile-friendly dismiss button */
+@media (max-width: 768px) {
+  .status-dismiss {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1.75rem !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+
+  .status-dismiss::before {
+    font-size: 1.75rem !important;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 375px) {
+  .status-dismiss {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 2rem !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .status-dismiss::before {
+    font-size: 2rem !important;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.status.success {
+  background: rgba(16, 185, 129, 0.2);
+  border-left: 4px solid var(--success);
+}
+
+.status.error {
+  background: rgba(239, 68, 68, 0.2);
+  border-left: 4px solid var(--error);
+}
+
+.status.warning {
+  background: rgba(245, 158, 11, 0.2);
+  border-left: 4px solid var(--warning);
+}
+
+/* Responsive adjustments for status */
+@media (max-width: 768px) {
+  .status {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    margin: 0;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 375px) {
+  .status {
+    top: 5px;
+    right: 5px;
+    left: 5px;
+    padding: 12px;
+    font-size: 0.875rem;
+  }
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  color: var(--gray-300);
+  font-size: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Fee selector responsive classes */
+.fee-dropdown-mobile {
+  display: block;
+}
+
+.fee-dropdown-desktop {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .fee-dropdown-mobile {
+    display: none;
+  }
+
+  .fee-dropdown-desktop {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+/* Custom Select Dropdown Styles */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: var(--spacing-lg);
+}
+
+.custom-select-button {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  color: var(--color-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease;
+  font-weight: 600;
+  min-height: 48px;
+  box-shadow: var(--shadow-sm);
+  will-change: transform, box-shadow, background-color;
+}
+
+.custom-select-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.custom-select-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.custom-select-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.custom-select-value {
+  flex: 1;
+  text-align: left;
+}
+
+.custom-select-arrow {
+  transition: transform 0.2s ease;
+  margin-left: var(--spacing-sm);
+  color: var(--color-gray-400);
+  font-size: var(--font-size-sm);
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-gray-800);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-sm);
+  z-index: var(--z-dropdown);
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.custom-select-option {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: transparent;
+  border: none;
+  color: var(--color-gray-200);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  will-change: background-color;
+}
+
+.custom-select-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-select-option.selected {
+  background: var(--color-primary);
+  color: white;
+}
+
+.custom-select-option:first-child {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+}
+
+.custom-select-option:last-child {
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+/* Focus states for accessibility */
+.custom-select-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.custom-select-option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Step components */
+.step {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 12px;
+}
+
+.step-number {
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: bold;
+}
+
+.qr-placeholder {
+  color: #777;
+  font-size: 0.9rem;
+}
+
+/* UTXO styles */
+.utxo-container {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.utxo-item {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.utxo-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .amount-container {
+    flex-direction: column;
+  }
+
+  /* Mobile responsive styles */
+
+  .btn-container {
+    flex-direction: column;
+  }
+}
+
+/* Header specific styles */
+header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px 0;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.logo i {
+  font-size: 2.5rem;
+  color: var(--primary);
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  background: linear-gradient(to right, #f7931a, #ffcc00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  color: var(--gray-300);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    padding: 0 15px;
+  }
+
+  .network-indicator {
+    top: 5px;
+    right: 5px;
+    font-size: 0.8rem;
+  }
+}
+
+/* PWA Standalone Mode Detection (CSS-based, no hydration issues) */
+@media (display-mode: standalone) {
+  /* PWA-specific styles when running in standalone mode */
+
+  /* Hide browser UI elements in PWA mode */
+  body {
+    /* Ensure full screen experience */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent external links from opening in browser */
+  a[href^='http']:not([href*='localhost:3000']):not([href*='127.0.0.1:3000']) {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+}
+
+/* iOS PWA specific styles */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific PWA styles */
+  @media (display-mode: standalone) {
+    /* iOS PWA optimizations */
+    body {
+      /* iOS-specific PWA styles */
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+  }
+}
+
+/* Signer App Specific Styles */
+.scannerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.instructions {
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.instructions h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.instructions ol {
+  list-style: decimal;
+  list-style-position: inside;
+  space-y: 0.5rem;
+}
+
+.instructions li {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.scannerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.scannerStatus {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.success {
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+.psbtInfo {
+  margin-top: 1.5rem;
+}
+
+.psbtInfo h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.psbtData {
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.psbtData h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.psbtActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.privateKeySection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.privateKeyInstructions h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+}
+
+.privateKeyInstructions p {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.privateKeyInput {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.inputActions {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggleButton,
+.clearButton {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover,
+.clearButton:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.keyValidation {
+  font-size: 0.875rem;
+}
+
+.valid {
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+.invalid {
+  color: var(--color-error);
+  font-weight: 500;
+}
+
+.noKey {
+  color: var(--color-text-tertiary);
+}
+
+.validKey {
+  border-color: var(--color-success) !important;
+}
+
+.signingActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.signedTransaction h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.signedActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.signaturesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.airGappedInfo {
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.airGappedInfo h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+}
+
+.airGappedInfo p {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.signaturesList {
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.signaturesList h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.signatureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--color-background);
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.signatureIndex {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.signatureDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.signatureTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.signatureData {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.signatureLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 0.25rem;
+}
+
+.signatureValue {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  word-break: break-all;
+}
+
+.qrCodeSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qrCodeContainer {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.qrCode {
+  border-radius: 8px;
+}
+
+.signatureActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive Design for Signer */
+@media (max-width: 768px) {
+  .scannerActions,
+  .signingActions,
+  .psbtActions,
+  .signedActions,
+  .signatureActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .signatureItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .signatureIndex {
+    align-self: flex-start;
+  }
+
+  .btn-container {
+    flex-direction: column;
+  }
+}
+
+/* iPhone-specific responsive adjustments for Signer */
+@media (max-width: 430px) {
+  .instructions,
+  .psbtData,
+  .privateKeyInstructions {
+    padding: 1rem;
+  }
+
+  .scannerActions,
+  .signingActions,
+  .psbtActions,
+  .signedActions,
+  .signatureActions {
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .signatureItem {
+    padding: 0.75rem;
+  }
+
+  .qrCodeContainer {
+    padding: 0.75rem;
+  }
+
+  .scannerActions button,
+  .signingActions button,
+  .psbtActions button,
+  .signedActions button,
+  .signatureActions button {
+    width: 100%;
+    max-width: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+    min-height: 44px;
+  }
+
+  .inputActions {
+    right: 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .toggleButton,
+  .clearButton {
+    padding: 0.375rem;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .inputWrapper {
+    margin-bottom: 0.75rem;
+  }
+
+  .inputWrapper input,
+  .inputWrapper textarea {
+    padding-right: 4rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .instructions,
+  .psbtData,
+  .privateKeyInstructions {
+    padding: 0.75rem;
+  }
+
+  .scannerActions,
+  .signingActions,
+  .psbtActions,
+  .signedActions,
+  .signatureActions {
+    gap: 0.375rem;
+    width: 100%;
+  }
+
+  .signatureItem {
+    padding: 0.5rem;
+  }
+
+  .qrCodeContainer {
+    padding: 0.5rem;
+  }
+
+  .scannerActions button,
+  .signingActions button,
+  .psbtActions button,
+  .signedActions button,
+  .signatureActions button {
+    width: 100%;
+    max-width: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+    min-height: 40px;
+    font-size: 0.875rem;
+  }
+
+  .inputActions {
+    right: 0.375rem;
+    gap: 0.25rem;
+  }
+
+  .toggleButton,
+  .clearButton {
+    padding: 0.5rem;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 0.875rem;
+  }
+
+  .inputWrapper {
+    margin-bottom: 0.5rem;
+  }
+
+  .inputWrapper input,
+  .inputWrapper textarea {
+    padding-right: 3.5rem;
+  }
+}

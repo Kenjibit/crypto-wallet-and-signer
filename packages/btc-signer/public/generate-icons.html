@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Icon Generator</title>
+  </head>
+  <body>
+    <h1>BTC Signer Icon Generator</h1>
+    <p>Right-click on each icon below and "Save image as" to download:</p>
+
+    <h2>192x192 Icon</h2>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+
+    <h2>512x512 Icon</h2>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+
+    <script>
+      function generateIcon(canvasId, size) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, '#1f2937');
+        gradient.addColorStop(1, '#374151');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+
+        // BTC Symbol
+        ctx.fillStyle = '#f7931a';
+        ctx.font = `bold ${size * 0.35}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('₿', size / 2, size / 2);
+
+        // Signature lines
+        ctx.strokeStyle = '#f7931a';
+        ctx.lineWidth = size * 0.015;
+        ctx.lineCap = 'round';
+
+        const lineY1 = size * 0.74;
+        const lineY2 = size * 0.82;
+        const lineY3 = size * 0.9;
+        const lineX1 = size * 0.23;
+        const lineX2 = size * 0.77;
+
+        ctx.beginPath();
+        ctx.moveTo(lineX1, lineY1);
+        ctx.lineTo(lineX2, lineY1);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(lineX1, lineY2);
+        ctx.lineTo(lineX2, lineY2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(lineX1, lineY3);
+        ctx.lineTo(lineX2, lineY3);
+        ctx.stroke();
+      }
+
+      // Generate both icons
+      generateIcon('canvas192', 192);
+      generateIcon('canvas512', 512);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,190 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-family: inherit;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Variants */
+.button--primary {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.button--primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.button--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-gray-200);
+}
+
+.button--secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.button--secondary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--color-gray-300);
+}
+
+.button--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-gray-200);
+}
+
+.button--danger {
+  background: var(--color-error);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.button--danger:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.button--danger:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Sizes */
+.button--sm {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  min-height: 32px;
+}
+
+.button--md {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-md);
+  min-height: 40px;
+}
+
+.button--lg {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  min-height: 48px;
+}
+
+/* States */
+.button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.button--loading {
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Icon styles */
+.icon {
+  font-size: 1em;
+}
+
+/* Focus states for accessibility */
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .button--lg {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-md);
+    min-height: 44px;
+  }
+}
+
+/* Extra small devices (iPhone SE, iPhone 7, etc.) */
+@media (max-width: 375px) {
+  .button {
+    font-size: var(--font-size-sm);
+    min-height: 36px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    width: 100%;
+    max-width: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  .button--md {
+    padding: var(--spacing-sm) var(--spacing-md);
+    min-height: 36px;
+  }
+
+  .button--lg {
+    padding: var(--spacing-md) var(--spacing-lg);
+    min-height: 40px;
+  }
+}
+
+/* Ultra small devices (iPhone 5/SE 1st gen) */
+@media (max-width: 320px) {
+  .button {
+    font-size: var(--font-size-xs, 0.75rem);
+    min-height: 32px;
+    padding: var(--spacing-xs, 0.25rem) var(--spacing-sm);
+    width: 100%;
+    max-width: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  .button--md {
+    padding: var(--spacing-xs, 0.25rem) var(--spacing-sm);
+    min-height: 32px;
+  }
+
+  .button--lg {
+    padding: var(--spacing-sm) var(--spacing-md);
+    min-height: 36px;
+  }
+}

@@ -1,0 +1,265 @@
+/* iOS PWA Safe Area Handling and iPhone Display Optimization */
+
+/* iOS Safe Area CSS Variables */
+:root {
+  /* Safe area insets for iPhone notch and home indicator */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
+  /* iOS Status Bar Height (44px + safe area) */
+  --status-bar-height: calc(var(--safe-area-top) + 44px);
+
+  /* iOS Home Indicator Height */
+  --home-indicator-height: var(--safe-area-bottom);
+
+  /* iOS PWA Specific Spacing */
+  --ios-pwa-padding-top: calc(var(--safe-area-top) + 20px);
+  --ios-pwa-padding-bottom: calc(var(--safe-area-bottom) + 20px);
+  --ios-pwa-padding-left: calc(var(--safe-area-left) + 20px);
+  --ios-pwa-padding-right: calc(var(--safe-area-right) + 20px);
+
+  /* iOS PWA Container Constraints */
+  --ios-pwa-max-width: calc(
+    100vw - var(--safe-area-left) - var(--safe-area-right)
+  );
+  --ios-pwa-min-height: calc(
+    100vh - var(--safe-area-top) - var(--safe-area-bottom)
+  );
+}
+
+/* iOS PWA Standalone Mode Styles */
+@media (display-mode: standalone) {
+  /* Body adjustments for iOS PWA */
+  body {
+    /* Ensure full screen experience with safe area support */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+
+    /* Use safe area variables for proper iPhone display */
+    padding-top: var(--ios-pwa-padding-top);
+    padding-bottom: var(--ios-pwa-padding-bottom);
+    padding-left: var(--ios-pwa-padding-left);
+    padding-right: var(--ios-pwa-padding-right);
+
+    /* Prevent content from being hidden behind iPhone notch/dynamic island */
+    min-height: var(--ios-pwa-min-height);
+
+    /* iOS-specific viewport handling */
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Container adjustments for iOS PWA */
+  .container {
+    /* Ensure container respects iPhone safe areas */
+    padding-top: max(2rem, var(--safe-area-top) + 1rem);
+    padding-bottom: max(2rem, var(--safe-area-bottom) + 1rem);
+    padding-left: max(2rem, var(--safe-area-left) + 1rem);
+    padding-right: max(2rem, var(--safe-area-right) + 1rem);
+
+    /* Prevent content from being hidden behind iPhone notch/dynamic island */
+    min-height: var(--ios-pwa-min-height);
+
+    /* Ensure proper width handling on iPhone */
+    width: 100%;
+    max-width: var(--ios-pwa-max-width);
+    margin-left: auto;
+    margin-right: auto;
+
+    /* iOS-specific container behavior */
+    box-sizing: border-box;
+    position: relative;
+    overflow-x: hidden;
+  }
+}
+
+/* iOS-specific PWA styles with enhanced safe area support */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific PWA styles */
+  @media (display-mode: standalone) {
+    /* iOS PWA optimizations */
+    body {
+      /* iOS-specific PWA styles with safe area support */
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+
+      /* Enhanced safe area handling for iPhone */
+      padding-top: max(var(--ios-pwa-padding-top), var(--safe-area-top) + 20px);
+      padding-bottom: max(
+        var(--ios-pwa-padding-bottom),
+        var(--safe-area-bottom) + 20px
+      );
+      padding-left: max(
+        var(--ios-pwa-padding-left),
+        var(--safe-area-left) + 20px
+      );
+      padding-right: max(
+        var(--ios-pwa-padding-right),
+        var(--safe-area-right) + 20px
+      );
+
+      /* Ensure content is visible on all iPhone models */
+      min-height: var(--ios-pwa-min-height);
+
+      /* iOS-specific viewport handling */
+      width: 100vw;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    /* iOS container adjustments */
+    .container {
+      /* Enhanced safe area handling for iPhone */
+      padding-top: max(2rem, var(--safe-area-top) + 1rem);
+      padding-bottom: max(2rem, var(--safe-area-bottom) + 1rem);
+      padding-left: max(2rem, var(--safe-area-left) + 1rem);
+      padding-right: max(2rem, var(--safe-area-right) + 1rem);
+
+      /* Ensure content is visible on all iPhone models */
+      min-height: var(--ios-pwa-min-height);
+
+      /* iOS-specific viewport handling */
+      width: 100%;
+      max-width: var(--ios-pwa-max-width);
+      overflow-x: hidden;
+    }
+  }
+}
+
+/* iPhone-specific responsive adjustments */
+@media (max-width: 430px) {
+  /* iPhone 15 Pro Max, iPhone 14 Pro Max, iPhone 13 Pro Max */
+  @media (display-mode: standalone) {
+    .container {
+      padding-top: max(1.5rem, var(--safe-area-top) + 0.75rem);
+      padding-bottom: max(1.5rem, var(--safe-area-bottom) + 0.75rem);
+      padding-left: max(1.5rem, var(--safe-area-left) + 0.75rem);
+      padding-right: max(1.5rem, var(--safe-area-right) + 0.75rem);
+    }
+  }
+}
+
+@media (max-width: 393px) {
+  /* iPhone 15 Pro, iPhone 14 Pro, iPhone 13 Pro */
+  @media (display-mode: standalone) {
+    .container {
+      padding-top: max(1.25rem, var(--safe-area-top) + 0.5rem);
+      padding-bottom: max(1.25rem, var(--safe-area-bottom) + 0.5rem);
+      padding-left: max(1.25rem, var(--safe-area-left) + 0.5rem);
+      padding-right: max(1.25rem, var(--safe-area-right) + 0.5rem);
+    }
+  }
+}
+
+@media (max-width: 390px) {
+  /* iPhone 14, iPhone 13 */
+  @media (display-mode: standalone) {
+    .container {
+      padding-top: max(1rem, var(--safe-area-top) + 0.5rem);
+      padding-bottom: max(1rem, var(--safe-area-bottom) + 0.5rem);
+      padding-left: max(1rem, var(--safe-area-left) + 0.5rem);
+      padding-right: max(1rem, var(--safe-area-right) + 0.5rem);
+    }
+  }
+}
+
+@media (max-width: 375px) {
+  /* iPhone SE, iPhone 6/7/8, iPhone X/XS, iPhone 12 mini, iPhone 13 mini */
+  @media (display-mode: standalone) {
+    .container {
+      padding-top: max(0.75rem, var(--safe-area-top) + 0.375rem);
+      padding-bottom: max(0.75rem, var(--safe-area-bottom) + 0.375rem);
+      padding-left: max(0.75rem, var(--safe-area-left) + 0.375rem);
+      padding-right: max(0.75rem, var(--safe-area-right) + 0.375rem);
+    }
+  }
+}
+
+@media (max-width: 320px) {
+  /* iPhone 5/SE 1st gen */
+  @media (display-mode: standalone) {
+    .container {
+      padding-top: max(0.5rem, var(--safe-area-top) + 0.25rem);
+      padding-bottom: max(0.5rem, var(--safe-area-bottom) + 0.25rem);
+      padding-left: max(0.5rem, var(--safe-area-left) + 0.25rem);
+      padding-right: max(0.5rem, var(--safe-area-right) + 0.25rem);
+    }
+  }
+}
+
+/* iOS PWA Status Bar and Home Indicator Handling */
+@media (display-mode: standalone) {
+  /* Status bar area (top) */
+  .status-bar-area {
+    height: var(--status-bar-height);
+    min-height: var(--status-bar-height);
+    background: transparent;
+    position: relative;
+    z-index: 1000;
+  }
+
+  /* Home indicator area (bottom) */
+  .home-indicator-area {
+    height: var(--home-indicator-height);
+    min-height: var(--home-indicator-height);
+    background: transparent;
+    position: relative;
+    z-index: 1000;
+  }
+
+  /* Content area that respects safe areas */
+  .safe-content-area {
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+    padding-left: var(--safe-area-left);
+    padding-right: var(--safe-area-right);
+  }
+}
+
+/* iOS PWA Touch Optimization */
+@media (display-mode: standalone) {
+  /* Ensure proper touch targets */
+  button,
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'],
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent text selection in PWA mode */
+  * {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Allow text selection in input fields */
+  input,
+  textarea {
+    -webkit-user-select: text;
+  }
+}
+
+/* iOS PWA Scroll Behavior */
+@media (display-mode: standalone) {
+  /* Smooth scrolling for iOS */
+  html,
+  body {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent horizontal scroll */
+  body,
+  .container {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+}
