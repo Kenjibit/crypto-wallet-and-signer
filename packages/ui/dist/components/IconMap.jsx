@@ -48,20 +48,4 @@ export function renderIcon(iconName, props = {}) {
     const IconComponent = getIconComponent(iconName);
     return <IconComponent {...props}/>;
 }
-// Helper function to render bold icon with enhanced stroke width
-export function renderBoldIcon(iconName, props = {}) {
-    const IconComponent = getIconComponent(iconName);
-    return <IconComponent {...props} strokeWidth={2.5}/>;
-}
-// Helper function to render extra bold icon
-export function renderExtraBoldIcon(iconName, props = {}) {
-    const IconComponent = getIconComponent(iconName);
-    return <IconComponent {...props} strokeWidth={3}/>;
-}
-// Helper function to render icon with bold CSS class
-export function renderBoldStyledIcon(iconName, boldLevel = 'bold', props = {}) {
-    const IconComponent = getIconComponent(iconName);
-    const className = `icon-${boldLevel} ${props.className || ''}`.trim();
-    return <IconComponent {...props} className={className}/>;
-}
 //# sourceMappingURL=IconMap.jsx.map

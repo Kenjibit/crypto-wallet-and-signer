@@ -7,7 +7,12 @@ export const Input = forwardRef(({ label, icon, error, size = 'md', variant = 'd
     const inputId = id || generatedId;
     return (<div className={styles.container}>
         {label && !hideLabel && (<label htmlFor={inputId} className={styles.label}>
-            {icon && renderIcon(icon, { size: 16, className: styles.icon })}
+            {icon &&
+                renderIcon(icon, {
+                    size: 16,
+                    strokeWidth: 3.5,
+                    className: styles.icon,
+                })}
             {label}
           </label>)}
 

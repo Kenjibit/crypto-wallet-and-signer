@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './styles/globals.css';
 import './styles/ios-pwa.css';
-import PWAProvider from './components/PWAProvider';
+import { PWAProvider } from '@btc-wallet/my-pwa';
 
 export const metadata: Metadata = {
   title: 'BTC Transaction Creator',

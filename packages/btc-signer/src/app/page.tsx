@@ -12,8 +12,7 @@ import {
 } from '@btc-wallet/ui';
 import { QRScannerModal } from './components/QRScannerModal';
 import { QRCodeDisplay } from './components/QRCode';
-import OfflineIndicator from './components/OfflineIndicator';
-import InstallPrompt from './components/InstallPrompt';
+import { OfflineIndicator, InstallPrompt } from '@btc-wallet/my-pwa';
 import { Eye, EyeOff, Trash } from 'lucide-react';
 import {
   parsePSBT,

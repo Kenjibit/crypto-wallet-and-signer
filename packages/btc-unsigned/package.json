@@ -5,9 +5,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync-pwa": "my-pwa-sync-assets --cache-name btc-unsigned-cache-v1",
+    "postinstall": "npm run sync-pwa",
+    "prebuild": "npm run sync-pwa",
+    "predev": "npm run sync-pwa"
   },
   "dependencies": {
+    "@btc-wallet/my-pwa": "file:../my-pwa",
     "@btc-wallet/ui": "file:../ui",
     "@fortawesome/fontawesome-free": "^7.0.0",
     "axios": "^1.11.0",

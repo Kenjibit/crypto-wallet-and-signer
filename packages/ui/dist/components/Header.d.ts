@@ -1,3 +1,7 @@
 import React from 'react';
-export default function Header(): React.JSX.Element;
+interface HeaderProps {
+    appType?: 'creator' | 'signer';
+}
+export default function Header({ appType }: HeaderProps): React.JSX.Element;
+export {};
 //# sourceMappingURL=Header.d.ts.map

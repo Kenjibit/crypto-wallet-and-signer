@@ -20,7 +20,12 @@ export const TabButton = ({ tabId, children, icon, className, }) => {
     const { activeTab, setActiveTab } = context;
     const isActive = activeTab === tabId;
     return (<button type="button" className={cn(styles.tabButton, isActive && styles['tabButton--active'], className)} onClick={() => setActiveTab(tabId)}>
-      {icon && renderIcon(icon, { size: 16, className: styles.icon })}
+      {icon &&
+            renderIcon(icon, {
+                size: 16,
+                strokeWidth: 3.5,
+                className: styles.icon,
+            })}
       {children}
     </button>);
 };

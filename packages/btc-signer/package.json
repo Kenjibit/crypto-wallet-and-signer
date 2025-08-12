@@ -5,10 +5,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "copy-pwa-assets": "node ../my-pwa/bin/sync-assets.js --target . --cache-name btc-signer-v1",
+    "postinstall": "npm run copy-pwa-assets",
+    "prebuild": "npm run copy-pwa-assets",
+    "predev": "npm run copy-pwa-assets"
   },
   "dependencies": {
     "@btc-wallet/ui": "file:../ui",
+    "@btc-wallet/my-pwa": "file:../my-pwa",
     "bitcoinjs-lib": "^6.1.7",
     "ecpair": "^3.0.0",
     "next": "15.4.4",

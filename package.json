@@ -11,6 +11,7 @@
     "dev:signerHttps": "npm run dev --workspace=btc-signer --experimental-https",
     "build:unsigned": "npm run build --workspace=btc-unsigned",
     "build:signer": "npm run build --workspace=btc-signer",
+    "build:pwa": "npm run build --workspace=@btc-wallet/my-pwa",
     "build:all": "npm run build --workspaces",
     "lint:all": "npm run lint --workspaces",
     "clean": "npm run clean --workspaces"
@@ -18,7 +19,5 @@
   "devDependencies": {
     "typescript": "^5.0.0"
   },
-  "dependencies": {
-    "lucide-react": "^0.539.0"
-  }
+  "dependencies": {}
 }

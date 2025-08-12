@@ -6,8 +6,7 @@ import TransactionForm from './components/TransactionForm';
 import TransactionOutput from './components/TransactionOutput';
 import TransactionDetails from './components/TransactionDetails';
 import { BroadcastModal } from './components/BroadcastModal';
-import InstallPrompt from './components/InstallPrompt';
-import OfflineIndicator from './components/OfflineIndicator';
+import { InstallPrompt, OfflineIndicator } from '@btc-wallet/my-pwa';
 import { UTXO, UnsignedTransaction } from '../types/bitcoin';
 import { SignatureData } from '../lib/broadcast';
 import {
