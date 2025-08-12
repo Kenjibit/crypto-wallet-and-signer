@@ -5,7 +5,8 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "react": "^19.1.0",

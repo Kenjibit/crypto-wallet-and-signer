@@ -18,6 +18,7 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "docs": "typedoc src/index.ts --out docs",
     "sync-assets": "node ./bin/sync-assets.js",
+    "prepare": "npm run build",
     "docs:serve": "npx serve docs"
   },
   "bin": {
