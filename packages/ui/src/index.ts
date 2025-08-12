@@ -17,6 +17,8 @@ export {
 export { default as Header } from './components/Header';
 export { default as MainContainer } from './components/MainContainer';
 export { default as Status } from './components/Status';
+export { QRScannerModal } from './components/QRScannerModal';
+export type { QRScannerModalProps } from './components/QRScannerModal';
 
 // Style exports
 export * from './utils/styles';

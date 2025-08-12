@@ -10,7 +10,7 @@ import {
   Input,
   Status,
 } from '@btc-wallet/ui';
-import { QRScannerModal } from './components/QRScannerModal';
+import { QRScannerModal } from '@btc-wallet/ui';
 import { QRCodeDisplay } from './components/QRCode';
 import { OfflineIndicator, InstallPrompt } from '@btc-wallet/my-pwa';
 import { Eye, EyeOff, Trash } from 'lucide-react';

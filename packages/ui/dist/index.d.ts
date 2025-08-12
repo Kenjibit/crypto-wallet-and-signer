@@ -6,5 +6,7 @@ export { TabContainer, TabNavigation, TabButton, TabContent, TabPanel, } from '.
 export { default as Header } from './components/Header';
 export { default as MainContainer } from './components/MainContainer';
 export { default as Status } from './components/Status';
+export { QRScannerModal } from './components/QRScannerModal';
+export type { QRScannerModalProps } from './components/QRScannerModal';
 export * from './utils/styles';
 //# sourceMappingURL=index.d.ts.map
