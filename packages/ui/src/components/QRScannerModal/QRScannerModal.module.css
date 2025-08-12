@@ -13,6 +13,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  /* Respect safe areas to avoid notch/home indicator overlap */
+  padding-top: var(--safe-area-top, 0px);
+  padding-bottom: var(--safe-area-bottom, 0px);
 }
 
 /* Scanner Container */
@@ -294,4 +298,19 @@
     transparent
   );
   animation: scanLine 2s linear infinite;
+}
+
+/* Modern safe-area handling using env() when available */
+@supports (padding: max(0px)) {
+  .scannerOverlay {
+    padding-top: max(var(--safe-area-top, 0px), env(safe-area-inset-top));
+    padding-bottom: max(
+      var(--safe-area-bottom, 0px),
+      env(safe-area-inset-bottom)
+    );
+  }
+
+  .scannerFooter {
+    padding-bottom: max(var(--spacing-lg), env(safe-area-inset-bottom));
+  }
 }

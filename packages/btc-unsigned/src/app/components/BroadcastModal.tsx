@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button, Card } from '@btc-wallet/ui';
 import { SignatureData } from '../../lib/broadcast';
 import { parseSignatureQR } from '../../lib/qr-generator';
-import { QRScannerModal } from './QRScannerModal';
+import { QRScannerModal } from '@btc-wallet/ui';
 import {
   AlertTriangle,
   FileSignature,
