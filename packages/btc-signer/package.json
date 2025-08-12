@@ -14,6 +14,7 @@
   "dependencies": {
     "@btc-wallet/ui": "file:../ui",
     "@btc-wallet/my-pwa": "file:../my-pwa",
+    "axios": "^1.11.0",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.474.0",
     "bitcoinjs-lib": "^6.1.7",
