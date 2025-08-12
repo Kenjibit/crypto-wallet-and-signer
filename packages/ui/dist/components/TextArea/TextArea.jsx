@@ -6,7 +6,12 @@ export const TextArea = forwardRef(({ label, icon, error, size = 'md', variant =
     const textareaId = id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
     return (<div className={styles.container}>
         {label && (<label htmlFor={textareaId} className={styles.label}>
-            {icon && renderIcon(icon, { size: 16, className: styles.icon })}
+            {icon &&
+                renderIcon(icon, {
+                    size: 16,
+                    strokeWidth: 3.5,
+                    className: styles.icon,
+                })}
             {label}
           </label>)}
 

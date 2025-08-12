@@ -1,5 +1,5 @@
 const nextConfig = {
-  transpilePackages: ['@btc-wallet/ui'],
+  transpilePackages: ['@btc-wallet/ui', '@btc-wallet/my-pwa'],
   webpack: (config: any) => {
     config.experiments = {
       ...config.experiments,

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './styles/globals.css';
 import './styles/ios-pwa.css';
-import PWAProvider from './components/PWAProvider';
+import { PWAProvider } from '@btc-wallet/my-pwa';
 
 export const metadata: Metadata = {
   title: 'BTC Transaction Signer',
@@ -39,6 +39,10 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json" />
+
+        {/* Favicon fallbacks */}
+        <link rel="icon" href="/icon-180x180.png" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
 
         {/* iOS PWA Meta Tags */}
         <meta name="apple-mobile-web-app-capable" content="yes" />

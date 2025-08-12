@@ -1,0 +1,189 @@
+/* OfflineIndicator Component Styles */
+
+.offlineIndicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(90deg, #ff4444 0%, #ff6666 100%);
+  color: white;
+  padding: 8px 16px;
+  z-index: 999;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+  transition: all 0.3s ease;
+}
+
+/* Position variants */
+.positionBottom {
+  top: auto;
+  bottom: 0;
+}
+
+/* Theme variants */
+.themeWarning {
+  background: linear-gradient(90deg, #ffc107 0%, #ffdb4d 100%);
+  color: #000;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.themeInfo {
+  background: linear-gradient(90deg, #17a2b8 0%, #4fc3f7 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+.themeCustom {
+  background: var(--offline-indicator-background, #ff4444);
+  color: var(--offline-indicator-text, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.icon {
+  font-size: 16px;
+  animation: pulse 2s infinite;
+  color: inherit;
+}
+
+/* Theme-specific icon colors */
+.themeCustom .icon {
+  color: var(--offline-indicator-icon, inherit);
+}
+
+.text {
+  font-weight: 600;
+}
+
+.status {
+  opacity: 0.9;
+  font-size: 12px;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Bottom position animation */
+.positionBottom {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* iOS PWA Safe Area Support */
+@supports (padding: max(0px)) {
+  .offlineIndicator {
+    padding-top: max(8px, env(safe-area-inset-top) + 8px);
+    padding-left: max(16px, env(safe-area-inset-left) + 16px);
+    padding-right: max(16px, env(safe-area-inset-right) + 16px);
+  }
+
+  .positionBottom {
+    padding-bottom: max(8px, env(safe-area-inset-bottom) + 8px);
+    padding-top: 8px;
+  }
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  .offlineIndicator {
+    padding-top: max(8px, env(safe-area-inset-top) + 8px);
+  }
+
+  .positionBottom {
+    padding-bottom: max(8px, env(safe-area-inset-bottom) + 8px);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .content {
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .icon {
+    font-size: 14px;
+  }
+
+  .status {
+    font-size: 11px;
+  }
+
+  .offlineIndicator {
+    padding: 6px 12px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .offlineIndicator {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .offlineIndicator {
+    animation: none;
+  }
+
+  .icon {
+    animation: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .themeWarning {
+    background: linear-gradient(90deg, #b8860b 0%, #daa520 100%);
+  }
+
+  .themeInfo {
+    background: linear-gradient(90deg, #0f6674 0%, #0277bd 100%);
+  }
+}
+
+/* Print styles */
+@media print {
+  .offlineIndicator {
+    display: none;
+  }
+}

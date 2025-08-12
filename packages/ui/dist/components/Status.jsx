@@ -12,14 +12,14 @@ export default function Status({ message, type, onDismiss }) {
         warning: AlertTriangle,
     };
     return (<div className={typeStyles[type]}>
-      {React.createElement(typeIcons[type], { size: 20 })}
+      {React.createElement(typeIcons[type], { size: 20, strokeWidth: 3.5 })}
       <div>{message}</div>
       {onDismiss && (<button onClick={onDismiss} className="status-dismiss" aria-label="Dismiss" style={{
                 display: 'flex',
                 opacity: 1,
                 visibility: 'visible',
             }}>
-          <XCircle size={16}/>
+          <XCircle size={16} strokeWidth={2.5}/>
         </button>)}
     </div>);
 }

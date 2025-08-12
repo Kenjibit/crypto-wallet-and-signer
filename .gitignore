@@ -3,11 +3,17 @@
 # cursor
 .cursor
 
+# editors / IDE
+.vscode/
+.idea/
+.history/
+
 # testing
 .testing
 
 # dependencies
-/node_modules
+# ignore node_modules in all workspaces
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -27,14 +33,28 @@
 packages/btc-signer/.next/
 packages/btc-signer/out/
 packages/btc-signer/build/
+packages/btc-signer/node_modules/
 
 packages/btc-unsigned/.next/
 packages/btc-unsigned/out/
 packages/btc-unsigned/build/
+packages/btc-unsigned/node_modules/
 
 packages/ui/.next/
 packages/ui/out/
 packages/ui/build/
+packages/ui/node_modules/
+
+packages/my-pwa/.next/
+packages/my-pwa/out/
+packages/my-pwa/build/
+packages/my-pwa/node_modules/
+packages/my-pwa/dist/
+
+# generic package build outputs (non-Next libs)
+packages/*/dist/
+packages/*/build/
+packages/*/coverage/
 
 # production
 /build
@@ -42,6 +62,14 @@ packages/ui/build/
 # misc
 .DS_Store
 *.pem
+
+# logs and caches
+*.log
+logs
+lerna-debug.log*
+.eslintcache
+.cache/
+.turbo/
 
 # debug
 npm-debug.log*
