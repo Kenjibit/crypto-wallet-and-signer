@@ -1,12 +1,12 @@
 {
   "name": "btc-unsigned",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "sync-pwa": "my-pwa-sync-assets --cache-name btc-unsigned-cache-v1",
+    "sync-pwa": "my-pwa-sync-assets --cache-name $npm_package_name-$npm_package_version",
     "postinstall": "npm run sync-pwa",
     "prebuild": "npm run sync-pwa",
     "predev": "npm run sync-pwa"

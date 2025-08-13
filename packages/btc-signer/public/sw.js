@@ -1,4 +1,4 @@
-const CACHE_NAME = 'btc-signer-v1';
+const CACHE_NAME = 'btc-signer-1.0.0';
 const urlsToCache = [
   '/',
   '/manifest.json',
