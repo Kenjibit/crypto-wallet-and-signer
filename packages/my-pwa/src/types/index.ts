@@ -107,9 +107,12 @@ export interface InstallPromptConfig {
   appDescription?: string;
   installButtonText?: string;
   dismissButtonText?: string;
+  neverButtonText?: string;
   icon?: string;
   showOnIOS?: boolean;
+  showOnMac?: boolean;
   customIOSInstructions?: string;
+  customMacOSInstructions?: string;
   position?: 'bottom' | 'top' | 'center';
   theme?: 'bitcoin' | 'default' | 'custom';
   customColors?: {

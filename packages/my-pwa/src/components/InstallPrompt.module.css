@@ -130,6 +130,31 @@
   transform: translateY(0);
 }
 
+/* Never button (discouraged action) */
+.neverButton {
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  min-width: 100px;
+  opacity: 0.8;
+}
+
+.neverButton:hover {
+  opacity: 0.75;
+  transform: none;
+}
+
+.neverButton:active {
+  opacity: 0.7;
+  transform: none;
+}
+
 /* Theme-specific button colors */
 .themeCustom .installButton {
   background: var(--install-prompt-primary, #007bff);
@@ -139,6 +164,19 @@
 .themeCustom .dismissButton {
   color: var(--install-prompt-text, #000000);
   border-color: var(--install-prompt-text, #000000);
+}
+
+.themeCustom .neverButton {
+  color: color-mix(
+    in srgb,
+    var(--install-prompt-text, #000000) 60%,
+    transparent
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--install-prompt-text, #000000) 20%,
+    transparent
+  );
 }
 
 @keyframes slideUp {
@@ -212,7 +250,8 @@
   }
 
   .installButton,
-  .dismissButton {
+  .dismissButton,
+  .neverButton {
     width: 100%;
     min-width: unset;
   }
