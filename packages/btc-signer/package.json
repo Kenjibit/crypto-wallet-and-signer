@@ -1,12 +1,12 @@
 {
   "name": "btc-signer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "copy-pwa-assets": "node ../my-pwa/bin/sync-assets.js --target . --cache-name btc-signer-v1",
+    "copy-pwa-assets": "node ../my-pwa/bin/sync-assets.js --target . --cache-name $npm_package_name-$npm_package_version",
     "postinstall": "npm run copy-pwa-assets",
     "prebuild": "npm --prefix ../ui run build && npm --prefix ../my-pwa run build && npm run copy-pwa-assets",
     "predev": "npm run copy-pwa-assets"

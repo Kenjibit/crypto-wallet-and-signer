@@ -545,3 +545,72 @@ This project is licensed under the MIT License.
 
 **Status**: ✅ **Phase 3 Complete** - Advanced PWA Features Implemented  
 **Next**: 🎯 **Phase 4: Testing & Documentation** (if needed)
+
+## 🧰 Cache naming (recommended)
+
+To force clients to re-download fresh assets after a deploy, use a versioned service worker cache name tied to your app's `package.json` version. This keeps the process simple: bump your app version when you want to invalidate the cache.
+
+### Tie cache name to package version
+
+Update each app's scripts to pass a cache name composed of the app name and version to the sync CLI. NPM exposes `npm_package_name` and `npm_package_version` inside scripts.
+
+```json
+// packages/btc-unsigned/package.json
+{
+  "scripts": {
+    "sync-pwa": "my-pwa-sync-assets --cache-name $npm_package_name-$npm_package_version",
+    "postinstall": "npm run sync-pwa",
+    "prebuild": "npm run sync-pwa",
+    "predev": "npm run sync-pwa"
+  }
+}
+```
+
+```json
+// packages/btc-signer/package.json
+{
+  "scripts": {
+    "copy-pwa-assets": "node ../my-pwa/bin/sync-assets.js --target . --cache-name $npm_package_name-$npm_package_version",
+    "postinstall": "npm run copy-pwa-assets",
+    "prebuild": "npm --prefix ../ui run build && npm --prefix ../my-pwa run build && npm run copy-pwa-assets",
+    "predev": "npm run copy-pwa-assets"
+  }
+}
+```
+
+When these scripts run, the CLI writes the computed name into your `public/sw.js` as:
+
+```js
+const CACHE_NAME = '<appName>-<appVersion>';
+```
+
+Your service worker already deletes old caches during the `activate` event, so a cache-name change cleanly invalidates previous assets.
+
+### Triggering a refresh
+
+To force a refresh, bump your app version and rebuild/deploy:
+
+```bash
+# Example: bump patch version without creating a git tag
+npm version patch -w btc-unsigned --no-git-tag-version
+npm version patch -w btc-signer --no-git-tag-version
+
+# Then build/deploy as usual
+```
+
+After deploy, users may need to reload the app (or close/reopen an installed PWA) to activate the updated service worker.
+
+### Optional: manual override via env var
+
+If you prefer not to bump `package.json`, define an environment variable and include it in your script:
+
+```bash
+# .env.local (or CI env)
+PWA_CACHE_VERSION=2025-08-12
+```
+
+```json
+"sync-pwa": "my-pwa-sync-assets --cache-name $npm_package_name-$PWA_CACHE_VERSION"
+```
+
+On CI (e.g., Vercel/GitHub Actions), set the env variable per deployment to drive cache invalidation.
