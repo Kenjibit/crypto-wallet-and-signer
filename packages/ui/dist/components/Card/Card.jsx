@@ -1,7 +1,7 @@
 import { cn } from '../../utils/styles';
 import styles from './Card.module.css';
 import { renderIcon } from '../IconMap';
-export const Card = ({ title, icon, children, variant = 'default', className, padding = 'lg', }) => {
+export const Card = ({ title, icon, children, variant = 'default', className, padding = 'lg', footer, }) => {
     return (<div className={cn(styles.card, styles[`card--${variant}`], styles[`card--${padding}`], className)}>
       {title && (<h2 className={styles.title}>
           {icon &&
@@ -13,6 +13,7 @@ export const Card = ({ title, icon, children, variant = 'default', className, pa
           {title}
         </h2>)}
       <div className={styles.content}>{children}</div>
+      {footer && <div className={styles.footer}>{footer}</div>}
     </div>);
 };
 //# sourceMappingURL=Card.jsx.map

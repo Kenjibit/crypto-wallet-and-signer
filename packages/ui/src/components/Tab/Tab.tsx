@@ -48,6 +48,7 @@ interface TabButtonProps {
   children: ReactNode;
   icon?: string;
   className?: string;
+  onClick?: () => void;
 }
 
 export const TabButton = ({
@@ -55,6 +56,7 @@ export const TabButton = ({
   children,
   icon,
   className,
+  onClick,
 }: TabButtonProps) => {
   const context = useContext(TabContext);
   if (!context) {
@@ -72,7 +74,10 @@ export const TabButton = ({
         isActive && styles['tabButton--active'],
         className
       )}
-      onClick={() => setActiveTab(tabId)}
+      onClick={() => {
+        setActiveTab(tabId);
+        onClick && onClick();
+      }}
     >
       {icon &&
         renderIcon(icon, {

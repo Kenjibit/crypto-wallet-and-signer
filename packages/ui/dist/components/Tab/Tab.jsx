@@ -12,14 +12,17 @@ export const TabContainer = ({ children, defaultTab, className, }) => {
 export const TabNavigation = ({ children, className }) => {
     return <div className={cn(styles.navigation, className)}>{children}</div>;
 };
-export const TabButton = ({ tabId, children, icon, className, }) => {
+export const TabButton = ({ tabId, children, icon, className, onClick, }) => {
     const context = useContext(TabContext);
     if (!context) {
         throw new Error('TabButton must be used within TabContainer');
     }
     const { activeTab, setActiveTab } = context;
     const isActive = activeTab === tabId;
-    return (<button type="button" className={cn(styles.tabButton, isActive && styles['tabButton--active'], className)} onClick={() => setActiveTab(tabId)}>
+    return (<button type="button" className={cn(styles.tabButton, isActive && styles['tabButton--active'], className)} onClick={() => {
+            setActiveTab(tabId);
+            onClick && onClick();
+        }}>
       {icon &&
             renderIcon(icon, {
                 size: 16,

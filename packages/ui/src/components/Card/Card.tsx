@@ -10,6 +10,7 @@ export interface CardProps {
   variant?: 'default' | 'elevated' | 'outlined';
   className?: string;
   padding?: 'sm' | 'md' | 'lg' | 'xl';
+  footer?: ReactNode;
 }
 
 export const Card = ({
@@ -19,6 +20,7 @@ export const Card = ({
   variant = 'default',
   className,
   padding = 'lg',
+  footer,
 }: CardProps) => {
   return (
     <div
@@ -41,6 +43,7 @@ export const Card = ({
         </h2>
       )}
       <div className={styles.content}>{children}</div>
+      {footer && <div className={styles.footer}>{footer}</div>}
     </div>
   );
 };

@@ -8,9 +8,11 @@
   "scripts": {
     "dev:unsigned": "npm run dev --workspace=btc-unsigned",
     "dev:signer": "npm run dev --workspace=btc-signer",
+    "dev:ltc-signer": "npm run dev --workspace=ltc-signer-main-net",
     "dev:signerHttps": "npm run dev --workspace=btc-signer --experimental-https",
     "build:unsigned": "npm run build --workspace=btc-unsigned",
     "build:signer": "npm run build --workspace=btc-signer",
+    "build:ltc-signer": "npm run build --workspace=ltc-signer-main-net",
     "build:pwa": "npm run build --workspace=@btc-wallet/my-pwa",
     "build:all": "npm run build --workspaces",
     "lint:all": "npm run lint --workspaces",

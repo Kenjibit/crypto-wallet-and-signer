@@ -6,6 +6,7 @@ export interface CardProps {
     variant?: 'default' | 'elevated' | 'outlined';
     className?: string;
     padding?: 'sm' | 'md' | 'lg' | 'xl';
+    footer?: ReactNode;
 }
-export declare const Card: ({ title, icon, children, variant, className, padding, }: CardProps) => import("react").JSX.Element;
+export declare const Card: ({ title, icon, children, variant, className, padding, footer, }: CardProps) => import("react").JSX.Element;
 //# sourceMappingURL=Card.d.ts.map

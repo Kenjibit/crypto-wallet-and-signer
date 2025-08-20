@@ -17,7 +17,7 @@ function parseArgs(argv) {
     cacheName: undefined,
     quiet: false,
     dryRun: false,
-    force: true,
+    force: false, // Changed default to false - don't overwrite existing files
   };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -43,8 +43,8 @@ function parseArgs(argv) {
       i -= 0;
       continue;
     }
-    if (arg === '--no-force') {
-      args.force = false;
+    if (arg === '--force') {
+      args.force = true;
       i -= 0;
       continue;
     }
@@ -76,7 +76,7 @@ function copyFile(src, dst, { dryRun, quiet, force }) {
     return;
   }
   if (!force && fs.existsSync(dst)) {
-    log(`Skipping existing file (use --no-force to keep): ${dst}`, { quiet });
+    log(`Skipping existing file (use --force to overwrite): ${dst}`, { quiet });
     return;
   }
   const dstDir = path.dirname(dst);
