@@ -51,6 +51,15 @@ packages/my-pwa/build/
 packages/my-pwa/node_modules/
 packages/my-pwa/dist/
 
+# Add the LTC signer entries here
+packages/ltc-signer-main-net/.next/
+packages/ltc-signer-main-net/out/
+packages/ltc-signer-main-net/build/
+packages/ltc-signer-main-net/node_modules/
+packages/ltc-signer-main-net/test/
+packages/ltc-signer-main-net/*.md
+
+
 # generic package build outputs (non-Next libs)
 packages/*/dist/
 packages/*/build/

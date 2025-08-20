@@ -1,6 +1,6 @@
 {
   "name": "btc-signer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -8,12 +8,13 @@
     "lint": "next lint",
     "copy-pwa-assets": "node ../my-pwa/bin/sync-assets.js --target . --cache-name $npm_package_name-$npm_package_version",
     "postinstall": "npm run copy-pwa-assets",
-    "prebuild": "npm --prefix ../ui run build && npm --prefix ../my-pwa run build && npm run copy-pwa-assets",
-    "predev": "npm run copy-pwa-assets"
+    "prebuild": "npm --prefix ../wallet-generator run build && npm --prefix ../ui run build && npm --prefix ../my-pwa run build && npm run copy-pwa-assets",
+    "predev": "npm --prefix ../wallet-generator run build && npm run copy-pwa-assets"
   },
   "dependencies": {
     "@btc-wallet/ui": "file:../ui",
     "@btc-wallet/my-pwa": "file:../my-pwa",
+    "@btc-wallet/wallet-generator": "file:../wallet-generator",
     "axios": "^1.11.0",
     "bitcoinjs-lib": "^6.1.7",
     "ecpair": "^3.0.0",
@@ -21,6 +22,9 @@
     "qrcode.react": "^4.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "jsqr": "^1.4.0",
+    "lucide-react": "^0.539.0",
+    "hash-wasm": "^4.11.0",
     "tiny-secp256k1": "^2.2.4"
   },
   "devDependencies": {

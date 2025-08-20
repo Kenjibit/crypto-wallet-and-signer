@@ -11,7 +11,7 @@
 
 /* Variants */
 .card--default {
-  /* Default styles already applied */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
 .card--elevated {
@@ -71,7 +71,31 @@
 
 /* Content styles */
 .content {
-  /* Content inherits parent styles */
+  min-width: 0;
+}
+
+/* Footer for action groups */
+.footer {
+  margin-top: var(--spacing-lg, 20px);
+  display: flex;
+  gap: var(--spacing-sm, 8px);
+  flex-wrap: wrap;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* Make footer buttons full-width and prevent overflow */
+.footer button {
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 100%;
+  white-space: normal;
+}
+
+@media (max-width: 768px) {
+  .footer {
+    gap: var(--spacing-sm, 8px);
+  }
 }
 
 /* Responsive adjustments */

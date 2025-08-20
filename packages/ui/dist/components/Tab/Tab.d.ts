@@ -15,8 +15,9 @@ interface TabButtonProps {
     children: ReactNode;
     icon?: string;
     className?: string;
+    onClick?: () => void;
 }
-export declare const TabButton: ({ tabId, children, icon, className, }: TabButtonProps) => import("react").JSX.Element;
+export declare const TabButton: ({ tabId, children, icon, className, onClick, }: TabButtonProps) => import("react").JSX.Element;
 interface TabContentProps {
     tabId: string;
     children: ReactNode;

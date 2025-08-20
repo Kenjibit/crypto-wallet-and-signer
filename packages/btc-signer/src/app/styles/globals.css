@@ -1,3 +1,16 @@
+/* Standardized row for inline buttons under inputs */
+.button-row {
+  display: flex;
+  gap: var(--spacing-sm, 8px);
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.button-row > button {
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 100%;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -352,7 +365,7 @@ textarea:focus {
   align-items: center;
   gap: 12px;
   position: fixed;
-  top: 20px;
+  top: 68px;
   right: 20px;
   max-width: 400px;
   z-index: 100;
@@ -372,78 +385,28 @@ textarea:focus {
 }
 
 .status-dismiss {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 2px solid var(--color-gray-400) !important;
-  color: var(--color-gray-400) !important;
+  background: none;
+  border: none;
+  color: var(--color-gray-400);
   font-size: 1.5rem;
-  font-weight: bold;
   cursor: pointer;
   padding: 0;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex !important;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
   margin-left: auto;
-  opacity: 1 !important;
-  visibility: visible !important;
-  z-index: 101;
-  min-width: 28px;
-  min-height: 28px;
-  line-height: 1;
-  text-align: center;
-  position: relative;
-}
-
-.status-dismiss::before {
-  content: '×';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  line-height: 1;
-  font-size: 1.5rem;
-  font-weight: bold;
 }
 
 .status-dismiss:hover {
-  color: white !important;
-  background: rgba(255, 255, 255, 0.3) !important;
-  border-color: white !important;
-  transform: scale(1.1);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-/* Mobile-friendly dismiss button */
-@media (max-width: 768px) {
-  .status-dismiss {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 1.75rem !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-  }
-
-  .status-dismiss::before {
-    font-size: 1.75rem !important;
-  }
-}
-
-/* Extra small devices */
-@media (max-width: 375px) {
-  .status-dismiss {
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 2rem !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
-  }
-
-  .status-dismiss::before {
-    font-size: 2rem !important;
-  }
-}
+/* Removed pseudo-element and oversized mobile overrides to match shared UI design */
 
 @keyframes slideIn {
   from {
@@ -474,7 +437,7 @@ textarea:focus {
 /* Responsive adjustments for status */
 @media (max-width: 768px) {
   .status {
-    top: 10px;
+    top: 64px;
     right: 10px;
     left: 10px;
     max-width: none;
@@ -501,6 +464,13 @@ textarea:focus {
   color: var(--gray-300);
   font-size: 0.9rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure button groups never overflow their card container */
+.card .footer,
+.card .content .button-group,
+.card .footer .button-group {
+  min-width: 0;
 }
 
 /* Fee selector responsive classes */

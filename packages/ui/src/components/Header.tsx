@@ -3,9 +3,15 @@ import { Bitcoin } from 'lucide-react';
 
 interface HeaderProps {
   appType?: 'creator' | 'signer';
+  actions?: React.ReactNode;
+  network?: 'mainnet' | 'testnet';
 }
 
-export default function Header({ appType = 'creator' }: HeaderProps) {
+export default function Header({
+  appType = 'creator',
+  actions,
+  network = 'testnet',
+}: HeaderProps) {
   const getAppInfo = () => {
     switch (appType) {
       case 'signer':
@@ -24,18 +30,27 @@ export default function Header({ appType = 'creator' }: HeaderProps) {
   };
 
   const { title, description } = getAppInfo();
+  const indicatorPositionClass = actions
+    ? 'absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-semibold'
+    : 'absolute top-3 right-3 px-3 py-1 rounded-full text-sm font-semibold';
 
   return (
     <header className="text-center mb-8 py-6 relative">
       <div
-        className="network-indicator absolute top-3 right-3 px-3 py-1 rounded-full text-sm font-semibold"
+        className={`network-indicator ${indicatorPositionClass}`}
         style={{
           backgroundColor: 'rgba(247, 147, 26, 0.2)',
           color: 'var(--color-primary)',
         }}
       >
-        TESTNET
+        {network.toUpperCase()}
       </div>
+
+      {actions && (
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          {actions}
+        </div>
+      )}
 
       <div className="logo flex items-center justify-center gap-4 mb-4">
         <Bitcoin
