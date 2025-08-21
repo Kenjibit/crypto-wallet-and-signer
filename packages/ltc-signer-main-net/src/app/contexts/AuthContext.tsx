@@ -44,6 +44,14 @@ interface AuthContextType {
   resetAuth: () => void;
   logout: () => void;
   verifyCredentialExists: () => Promise<boolean>; // Add credential verification function
+  // Passkey encryption functions
+  encryptWithPasskey: (data: string) => Promise<string>;
+  decryptWithPasskey: (encryptedData: string) => Promise<string>;
+  // PIN encryption functions
+  encryptWithPin: (data: string, pin: string) => Promise<string>;
+  decryptWithPin: (encryptedData: string, pin: string) => Promise<string>;
+  // Test function
+  testPasskeyEncryption: () => Promise<boolean>;
   stressTestUtils?: {
     resetToCleanState: () => void;
     corruptAuthState: () => void;
@@ -1067,6 +1075,452 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       : null;
 
+  // Passkey-based encryption and decryption functions
+  const encryptWithPasskey = useCallback(
+    async (data: string): Promise<string> => {
+      console.log('🔐 encryptWithPasskey called');
+
+      if (!authState.credentialId) {
+        throw new Error('No passkey available for encryption');
+      }
+
+      try {
+        // Generate a random challenge for encryption
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        console.log(
+          '🔐 Generated challenge for encryption:',
+          Array.from(challenge)
+        );
+
+        // Get the passkey signature to derive encryption key
+        console.log('🔐 Requesting passkey assertion for encryption...');
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge,
+            rpId: window.location.hostname,
+            userVerification: 'required',
+            timeout: 60000,
+            allowCredentials: [
+              {
+                id: Uint8Array.from(atob(authState.credentialId), (c) =>
+                  c.charCodeAt(0)
+                ),
+                type: 'public-key',
+              },
+            ],
+          },
+        });
+
+        console.log('🔐 Received assertion:', assertion);
+
+        if (!assertion) {
+          throw new Error(
+            'No assertion returned from navigator.credentials.get'
+          );
+        }
+
+        if (!('response' in assertion)) {
+          throw new Error('Assertion does not contain response property');
+        }
+
+        // Extract the response first
+        const assertionResponse =
+          assertion.response as AuthenticatorAssertionResponse;
+
+        if (!assertionResponse.signature) {
+          throw new Error('Assertion response does not contain signature');
+        }
+
+        console.log('🔐 Assertion validation passed');
+
+        // Extract the signature and response data
+        const signature = new Uint8Array(assertionResponse.signature);
+        const clientDataHash = await crypto.subtle.digest(
+          'SHA-256',
+          assertionResponse.clientDataJSON
+        );
+        const authenticatorData = assertionResponse.authenticatorData;
+
+        // Combine signature data for key derivation
+        const keyMaterial = new Uint8Array(
+          signature.length +
+            clientDataHash.byteLength +
+            authenticatorData.byteLength
+        );
+        keyMaterial.set(signature, 0);
+        keyMaterial.set(new Uint8Array(clientDataHash), signature.length);
+        keyMaterial.set(
+          new Uint8Array(authenticatorData),
+          signature.length + clientDataHash.byteLength
+        );
+
+        // Derive encryption key using PBKDF2
+        const salt = new Uint8Array(16);
+        crypto.getRandomValues(salt);
+
+        const baseKey = await crypto.subtle.importKey(
+          'raw',
+          keyMaterial,
+          { name: 'PBKDF2' },
+          false,
+          ['deriveBits', 'deriveKey']
+        );
+
+        const encryptionKey = await crypto.subtle.deriveKey(
+          {
+            name: 'PBKDF2',
+            salt,
+            iterations: 100000,
+            hash: 'SHA-256',
+          },
+          baseKey,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt']
+        );
+
+        // Generate IV
+        const iv = new Uint8Array(12);
+        crypto.getRandomValues(iv);
+
+        // Encrypt the data
+        const encodedData = new TextEncoder().encode(data);
+        const encryptedData = await crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv },
+          encryptionKey,
+          encodedData
+        );
+
+        // Create encrypted payload with metadata
+        const encryptedPayload = {
+          version: 1,
+          algorithm: 'passkey-aes-gcm',
+          salt: Array.from(salt),
+          iv: Array.from(iv),
+          data: Array.from(new Uint8Array(encryptedData)),
+          timestamp: Date.now(),
+          challenge: Array.from(challenge), // Store challenge for decryption
+        };
+
+        // Return base64 encoded encrypted payload
+        return btoa(JSON.stringify(encryptedPayload));
+      } catch (error) {
+        console.error('🔐 Passkey encryption failed:', error);
+
+        // Log detailed error information
+        if (error instanceof Error) {
+          console.error('🔐 Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          });
+
+          // Handle specific WebAuthn errors
+          if (error.name === 'NotAllowedError') {
+            throw new Error(
+              'Passkey encryption was cancelled or timed out. Please try again.'
+            );
+          } else if (error.name === 'InvalidStateError') {
+            throw new Error(
+              'Passkey not found on this device. Please re-authenticate.'
+            );
+          } else if (error.name === 'AbortError') {
+            throw new Error(
+              'Passkey encryption was aborted. Please try again.'
+            );
+          }
+        }
+
+        throw new Error(
+          `Passkey encryption failed: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+    },
+    [authState.credentialId]
+  );
+
+  const decryptWithPasskey = useCallback(
+    async (encryptedData: string): Promise<string> => {
+      console.log('🔐 decryptWithPasskey called');
+
+      if (!authState.credentialId) {
+        throw new Error('No passkey available for decryption');
+      }
+
+      try {
+        // Parse the encrypted payload
+        const payload = JSON.parse(atob(encryptedData));
+
+        if (payload.version !== 1 || payload.algorithm !== 'passkey-aes-gcm') {
+          throw new Error('Unsupported encrypted data format');
+        }
+
+        // Use the same challenge that was used during encryption
+        const challenge = new Uint8Array(payload.challenge);
+
+        // Get the passkey signature to derive the same encryption key
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge,
+            rpId: window.location.hostname,
+            userVerification: 'required',
+            timeout: 60000,
+            allowCredentials: [
+              {
+                id: Uint8Array.from(atob(authState.credentialId), (c) =>
+                  c.charCodeAt(0)
+                ),
+                type: 'public-key',
+              },
+            ],
+          },
+        });
+
+        if (!assertion) {
+          throw new Error('No assertion returned for decryption');
+        }
+
+        if (!('response' in assertion)) {
+          throw new Error('Assertion does not contain response property');
+        }
+
+        // Extract the response first
+        const assertionResponse =
+          assertion.response as AuthenticatorAssertionResponse;
+
+        if (!assertionResponse.signature) {
+          throw new Error('Assertion response does not contain signature');
+        }
+
+        // Extract the signature and response data
+        const signature = new Uint8Array(assertionResponse.signature);
+        const clientDataHash = await crypto.subtle.digest(
+          'SHA-256',
+          assertionResponse.clientDataJSON
+        );
+        const authenticatorData = assertionResponse.authenticatorData;
+
+        // Reconstruct the same key material used during encryption
+        const keyMaterial = new Uint8Array(
+          signature.length +
+            clientDataHash.byteLength +
+            authenticatorData.byteLength
+        );
+        keyMaterial.set(signature, 0);
+        keyMaterial.set(new Uint8Array(clientDataHash), signature.length);
+        keyMaterial.set(
+          new Uint8Array(authenticatorData),
+          signature.length + clientDataHash.byteLength
+        );
+
+        // Derive the same encryption key using the stored salt
+        const salt = new Uint8Array(payload.salt);
+        const baseKey = await crypto.subtle.importKey(
+          'raw',
+          keyMaterial,
+          { name: 'PBKDF2' },
+          false,
+          ['deriveBits', 'deriveKey']
+        );
+
+        const decryptionKey = await crypto.subtle.deriveKey(
+          {
+            name: 'PBKDF2',
+            salt,
+            iterations: 100000,
+            hash: 'SHA-256',
+          },
+          baseKey,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['decrypt']
+        );
+
+        // Decrypt the data using the stored IV
+        const iv = new Uint8Array(payload.iv);
+        const data = new Uint8Array(payload.data);
+
+        const decryptedData = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv },
+          decryptionKey,
+          data
+        );
+
+        // Return the decrypted string
+        return new TextDecoder().decode(decryptedData);
+      } catch (error) {
+        console.error('🔐 Passkey decryption failed:', error);
+        throw new Error(
+          `Passkey decryption failed: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+    },
+    [authState.credentialId]
+  );
+
+  // PIN-based encryption and decryption functions
+  const encryptWithPin = useCallback(
+    async (data: string, pin: string): Promise<string> => {
+      console.log('🔐 encryptWithPin called');
+
+      try {
+        // Derive encryption key from PIN using PBKDF2
+        const salt = new Uint8Array(16);
+        crypto.getRandomValues(salt);
+
+        const keyMaterial = new TextEncoder().encode(pin);
+        const baseKey = await crypto.subtle.importKey(
+          'raw',
+          keyMaterial,
+          { name: 'PBKDF2' },
+          false,
+          ['deriveBits', 'deriveKey']
+        );
+
+        const encryptionKey = await crypto.subtle.deriveKey(
+          {
+            name: 'PBKDF2',
+            salt,
+            iterations: 100000,
+            hash: 'SHA-256',
+          },
+          baseKey,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt']
+        );
+
+        // Generate IV
+        const iv = new Uint8Array(12);
+        crypto.getRandomValues(iv);
+
+        // Encrypt the data
+        const encodedData = new TextEncoder().encode(data);
+        const encryptedData = await crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv },
+          encryptionKey,
+          encodedData
+        );
+
+        // Create encrypted payload with metadata
+        const encryptedPayload = {
+          version: 1,
+          algorithm: 'pin-aes-gcm',
+          salt: Array.from(salt),
+          iv: Array.from(iv),
+          data: Array.from(new Uint8Array(encryptedData)),
+          timestamp: Date.now(),
+        };
+
+        // Return base64 encoded encrypted payload
+        return btoa(JSON.stringify(encryptedPayload));
+      } catch (error) {
+        console.error('🔐 PIN encryption failed:', error);
+        throw new Error(
+          `PIN encryption failed: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+    },
+    []
+  );
+
+  const decryptWithPin = useCallback(
+    async (encryptedData: string, pin: string): Promise<string> => {
+      console.log('🔐 decryptWithPin called');
+
+      try {
+        // Parse the encrypted payload
+        const payload = JSON.parse(atob(encryptedData));
+
+        if (payload.version !== 1 || payload.algorithm !== 'pin-aes-gcm') {
+          throw new Error('Unsupported encrypted data format');
+        }
+
+        // Derive the same encryption key from PIN
+        const salt = new Uint8Array(payload.salt);
+        const keyMaterial = new TextEncoder().encode(pin);
+        const baseKey = await crypto.subtle.importKey(
+          'raw',
+          keyMaterial,
+          { name: 'PBKDF2' },
+          false,
+          ['deriveBits', 'deriveKey']
+        );
+
+        const decryptionKey = await crypto.subtle.deriveKey(
+          {
+            name: 'PBKDF2',
+            salt,
+            iterations: 100000,
+            hash: 'SHA-256',
+          },
+          baseKey,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['decrypt']
+        );
+
+        // Decrypt the data
+        const iv = new Uint8Array(payload.iv);
+        const data = new Uint8Array(payload.data);
+
+        const decryptedData = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv },
+          decryptionKey,
+          data
+        );
+
+        // Return the decrypted string
+        return new TextDecoder().decode(decryptedData);
+      } catch (error) {
+        console.error('🔐 PIN decryption failed:', error);
+        throw new Error(
+          `PIN decryption failed: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+    },
+    []
+  );
+
+  // Test passkey encryption/decryption
+  const testPasskeyEncryption = useCallback(async (): Promise<boolean> => {
+    try {
+      const testData = 'Test wallet data for passkey encryption';
+      console.log('🧪 Testing passkey encryption with data:', testData);
+
+      // Encrypt the test data (this will prompt for passkey)
+      console.log('🧪 Encrypting... (will prompt for passkey)');
+      const encrypted = await encryptWithPasskey(testData);
+      console.log('🧪 Data encrypted successfully');
+
+      // Decrypt the test data (this will prompt for passkey again)
+      console.log('🧪 Decrypting... (will prompt for passkey)');
+      const decrypted = await decryptWithPasskey(encrypted);
+      console.log('🧪 Data decrypted successfully');
+
+      const success = decrypted === testData;
+      console.log('🧪 Passkey encryption test result:', {
+        success,
+        original: testData,
+        decrypted,
+      });
+
+      return success;
+    } catch (error) {
+      console.error('🧪 Passkey encryption test failed:', error);
+      return false;
+    }
+  }, [encryptWithPasskey, decryptWithPasskey]);
+
   const value: AuthContextType = {
     authState,
     pinAuth,
@@ -1077,6 +1531,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     verifyPinCode,
     resetAuth,
     logout,
+    // Passkey encryption functions
+    encryptWithPasskey,
+    decryptWithPasskey,
+    // PIN encryption functions
+    encryptWithPin,
+    decryptWithPin,
+    // Test function
+    testPasskeyEncryption,
     verifyCredentialExists: async () => {
       console.log('🔐 verifyCredentialExists called');
       console.log('🔐 Current auth state for verification:', authState);

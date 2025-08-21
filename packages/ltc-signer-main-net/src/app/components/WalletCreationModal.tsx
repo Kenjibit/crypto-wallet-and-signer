@@ -2,12 +2,23 @@
 
 import { useState, useCallback } from 'react';
 import { Card, Button, Input, TextArea, Status } from '@btc-wallet/ui';
-import { Plus, Camera, Mic, Shield, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle, AlertCircle, QrCode } from 'lucide-react';
+import {
+  Plus,
+  Camera,
+  Mic,
+  Shield,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle,
+  AlertCircle,
+  QrCode,
+} from 'lucide-react';
 import { Entropy, BIP39, WalletExport } from '@btc-wallet/wallet-generator';
 import { createLTCWallet } from '../libs/ltc-wallet';
 import { QRScannerModal } from '@btc-wallet/ui';
-
-
+import { useAuth } from '../contexts/AuthContext';
 
 interface WalletCreationModalProps {
   isOpen: boolean;
@@ -26,69 +37,77 @@ interface GeneratedWallet {
   xpub: string;
 }
 
-export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: WalletCreationModalProps) {
-
+export function WalletCreationModal({
+  isOpen,
+  onClose,
+  onCreateSuccess,
+}: WalletCreationModalProps) {
   const [step, setStep] = useState<'entropy' | 'review' | 'confirm'>('entropy');
-  const [entropySource, setEntropySource] = useState<'external' | 'combined' | 'local'>('combined');
+  const [entropySource, setEntropySource] = useState<
+    'external' | 'combined' | 'local'
+  >('combined');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedMnemonic, setGeneratedMnemonic] = useState('');
   const [passphrase, setPassphrase] = useState('');
   const [showMnemonic, setShowMnemonic] = useState(false);
   const [error, setError] = useState<string>('');
   const [status, setStatus] = useState<string>('');
-  const [generatedWallet, setGeneratedWallet] = useState<GeneratedWallet | null>(null);
+  const [generatedWallet, setGeneratedWallet] =
+    useState<GeneratedWallet | null>(null);
   const [entropyProgress, setEntropyProgress] = useState(0);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannedEntropy, setScannedEntropy] = useState<string>('');
-  const [pendingExternalEntropy, setPendingExternalEntropy] = useState<boolean>(false);
-  
+  const [pendingExternalEntropy, setPendingExternalEntropy] =
+    useState<boolean>(false);
 
+  const { authState, encryptWithPasskey, encryptWithPin } = useAuth();
 
+  const createWalletFromEntropy = useCallback(
+    async (entropyData: Uint8Array) => {
+      try {
+        setIsGenerating(true);
+        setError('');
+        setEntropyProgress(0);
 
-  const createWalletFromEntropy = useCallback(async (entropyData: Uint8Array) => {
-    try {
-      setIsGenerating(true);
-      setError('');
-      setEntropyProgress(0);
-      
-      // Generate mnemonic
-      setStatus('Generating mnemonic from entropy...');
-      const mnemonic = BIP39.entropyToMnemonic(entropyData);
-      setGeneratedMnemonic(mnemonic);
-      
-      // Create wallet
-      setStatus('Creating LTC wallet...');
-      const wallet = await createLTCWallet(
-        mnemonic,
-        passphrase || '',
-        'p2wpkh', // Native SegWit for LTC
-        'mainnet', // Litecoin mainnet
-        { account: 0, change: 0, index: 0 }
-      );
+        // Generate mnemonic
+        setStatus('Generating mnemonic from entropy...');
+        const mnemonic = BIP39.entropyToMnemonic(entropyData);
+        setGeneratedMnemonic(mnemonic);
 
-      const ltcWallet: GeneratedWallet = {
-        mnemonic,
-        passphrase: passphrase || '',
-        address: wallet.address,
-        network: 'mainnet',
-        entropySource: 'external',
-        created: true,
-        wif: wallet.wif,
-        xpub: wallet.xpub
-      };
+        // Create wallet
+        setStatus('Creating LTC wallet...');
+        const wallet = await createLTCWallet(
+          mnemonic,
+          passphrase || '',
+          'p2wpkh', // Native SegWit for LTC
+          'mainnet', // Litecoin mainnet
+          { account: 0, change: 0, index: 0 }
+        );
 
-      setGeneratedWallet(ltcWallet);
-      setStatus('Wallet created successfully! Review your details.');
-      setStep('review');
-      
-    } catch (err: any) {
-      setError(err.message || 'Failed to create wallet. Please try again.');
-      setStatus('');
-    } finally {
-      setIsGenerating(false);
-      setEntropyProgress(0);
-    }
-  }, [passphrase]);
+        const ltcWallet: GeneratedWallet = {
+          mnemonic,
+          passphrase: passphrase || '',
+          address: wallet.address,
+          network: 'mainnet',
+          entropySource: 'external',
+          created: true,
+          wif: wallet.wif,
+          xpub: wallet.xpub,
+        };
+
+        setGeneratedWallet(ltcWallet);
+        setStatus('Wallet created successfully! Review your details.');
+        setStep('review');
+      } catch (err: any) {
+        setError(err.message || 'Failed to create wallet. Please try again.');
+        setStatus('');
+      } finally {
+        setIsGenerating(false);
+        setEntropyProgress(0);
+      }
+    },
+    [passphrase]
+  );
 
   const generateEntropyFromExternal = useCallback(() => {
     // Open QR scanner modal
@@ -96,50 +115,64 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
     setPendingExternalEntropy(true);
   }, []);
 
-  const handleQRCodeScanned = useCallback(async (qrData: string) => {
-    try {
-      setShowQRScanner(false);
-      setStatus('Processing scanned entropy...');
-      
-      // Validate that the QR data contains valid entropy
-      let entropyData: Uint8Array;
-      
+  const handleQRCodeScanned = useCallback(
+    async (qrData: string) => {
       try {
-        // Try to parse as hex string first
-        if (qrData.match(/^[0-9a-fA-F]+$/)) {
-          // Convert hex string to bytes
-          entropyData = new Uint8Array(qrData.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
-        } else {
-          // Try to parse as base64
-          entropyData = new Uint8Array(atob(qrData).split('').map(char => char.charCodeAt(0)));
+        setShowQRScanner(false);
+        setStatus('Processing scanned entropy...');
+
+        // Validate that the QR data contains valid entropy
+        let entropyData: Uint8Array;
+
+        try {
+          // Try to parse as hex string first
+          if (qrData.match(/^[0-9a-fA-F]+$/)) {
+            // Convert hex string to bytes
+            entropyData = new Uint8Array(
+              qrData.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || []
+            );
+          } else {
+            // Try to parse as base64
+            entropyData = new Uint8Array(
+              atob(qrData)
+                .split('')
+                .map((char) => char.charCodeAt(0))
+            );
+          }
+        } catch (parseError) {
+          throw new Error(
+            'Invalid entropy format in QR code. Expected hex string or base64.'
+          );
         }
-      } catch (parseError) {
-        throw new Error('Invalid entropy format in QR code. Expected hex string or base64.');
+
+        // Validate entropy length (should be 32 bytes for 256-bit entropy)
+        if (entropyData.length !== 32) {
+          throw new Error(
+            `Invalid entropy length. Expected 32 bytes, got ${entropyData.length} bytes.`
+          );
+        }
+
+        // Validate entropy quality using the entropy validation function
+        const validation = Entropy.validateEntropy(entropyData);
+        if (!validation.isValid) {
+          throw new Error(
+            `Entropy validation failed: ${validation.errors.join(', ')}`
+          );
+        }
+
+        setScannedEntropy(qrData);
+        setPendingExternalEntropy(false);
+
+        // Now proceed with wallet creation using the validated entropy
+        await createWalletFromEntropy(entropyData);
+      } catch (error: any) {
+        setShowQRScanner(false);
+        setPendingExternalEntropy(false);
+        setError(`QR Code Error: ${error.message}`);
       }
-      
-      // Validate entropy length (should be 32 bytes for 256-bit entropy)
-      if (entropyData.length !== 32) {
-        throw new Error(`Invalid entropy length. Expected 32 bytes, got ${entropyData.length} bytes.`);
-      }
-      
-      // Validate entropy quality using the entropy validation function
-      const validation = Entropy.validateEntropy(entropyData);
-      if (!validation.isValid) {
-        throw new Error(`Entropy validation failed: ${validation.errors.join(', ')}`);
-      }
-      
-      setScannedEntropy(qrData);
-      setPendingExternalEntropy(false);
-      
-      // Now proceed with wallet creation using the validated entropy
-      await createWalletFromEntropy(entropyData);
-      
-    } catch (error: any) {
-      setShowQRScanner(false);
-      setPendingExternalEntropy(false);
-      setError(`QR Code Error: ${error.message}`);
-    }
-  }, [createWalletFromEntropy]);
+    },
+    [createWalletFromEntropy]
+  );
 
   const handleQRScannerClose = useCallback(() => {
     setShowQRScanner(false);
@@ -147,108 +180,124 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
     setError('QR code scanning cancelled.');
   }, []);
 
-  const generateEntropyFromCamera = useCallback(async (): Promise<Uint8Array> => {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const video = document.createElement('video');
-      
-      canvas.width = 640;
-      canvas.height = 480;
-      
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          video.srcObject = stream;
-          video.play();
-          
-          let frameCount = 0;
-          const maxFrames = 30;
-          const entropyParts: Uint8Array[] = [];
-          
-          const captureFrame = () => {
-            if (frameCount >= maxFrames) {
-              stream.getTracks().forEach(track => track.stop());
-              const mixedEntropy = Entropy.mixEntropyParts(entropyParts);
-              resolve(mixedEntropy);
-              return;
-            }
-            
-            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
-            
-            if (imageData) {
-              // Extract entropy from image data (pixel variations)
-              const data = imageData.data;
+  const generateEntropyFromCamera =
+    useCallback(async (): Promise<Uint8Array> => {
+      return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const video = document.createElement('video');
+
+        canvas.width = 640;
+        canvas.height = 480;
+
+        navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then((stream) => {
+            video.srcObject = stream;
+            video.play();
+
+            let frameCount = 0;
+            const maxFrames = 30;
+            const entropyParts: Uint8Array[] = [];
+
+            const captureFrame = () => {
+              if (frameCount >= maxFrames) {
+                stream.getTracks().forEach((track) => track.stop());
+                const mixedEntropy = Entropy.mixEntropyParts(entropyParts);
+                resolve(mixedEntropy);
+                return;
+              }
+
+              ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = ctx?.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
+
+              if (imageData) {
+                // Extract entropy from image data (pixel variations)
+                const data = imageData.data;
+                const entropy = new Uint8Array(32);
+                for (let i = 0; i < 32; i++) {
+                  entropy[i] = data[i * 4] ^ data[i * 4 + 1] ^ data[i * 4 + 2];
+                }
+                entropyParts.push(entropy);
+              }
+
+              frameCount++;
+              setEntropyProgress((frameCount / maxFrames) * 100);
+              requestAnimationFrame(captureFrame);
+            };
+
+            video.addEventListener('loadeddata', captureFrame);
+          })
+          .catch(reject);
+      });
+    }, []);
+
+  const generateEntropyFromMicrophone =
+    useCallback(async (): Promise<Uint8Array> => {
+      return new Promise((resolve, reject) => {
+        const audioContext = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            let sampleCount = 0;
+            const maxSamples = 100;
+            const entropyParts: Uint8Array[] = [];
+
+            const captureAudio = () => {
+              if (sampleCount >= maxSamples) {
+                stream
+                  .getTracks()
+                  .forEach((track: MediaStreamTrack) => track.stop());
+                audioContext.close();
+                const mixedEntropy = Entropy.mixEntropyParts(entropyParts);
+                resolve(mixedEntropy);
+                return;
+              }
+
+              analyser.getByteFrequencyData(dataArray);
               const entropy = new Uint8Array(32);
               for (let i = 0; i < 32; i++) {
-                entropy[i] = data[i * 4] ^ data[i * 4 + 1] ^ data[i * 4 + 2];
+                entropy[i] =
+                  dataArray[i] ^
+                  dataArray[i + 32] ^
+                  dataArray[i + 64] ^
+                  dataArray[i + 96];
               }
               entropyParts.push(entropy);
-            }
-            
-            frameCount++;
-            setEntropyProgress((frameCount / maxFrames) * 100);
-            requestAnimationFrame(captureFrame);
-          };
-          
-          video.addEventListener('loadeddata', captureFrame);
-        })
-        .catch(reject);
-    });
-  }, []);
 
-  const generateEntropyFromMicrophone = useCallback(async (): Promise<Uint8Array> => {
-    return new Promise((resolve, reject) => {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-          const source = audioContext.createMediaStreamSource(stream);
-          source.connect(analyser);
-          analyser.fftSize = 256;
-          const bufferLength = analyser.frequencyBinCount;
-          const dataArray = new Uint8Array(bufferLength);
-          
-          let sampleCount = 0;
-          const maxSamples = 100;
-          const entropyParts: Uint8Array[] = [];
-          
-          const captureAudio = () => {
-            if (sampleCount >= maxSamples) {
-              stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
-              audioContext.close();
-              const mixedEntropy = Entropy.mixEntropyParts(entropyParts);
-              resolve(mixedEntropy);
-              return;
-            }
-            
-            analyser.getByteFrequencyData(dataArray);
-            const entropy = new Uint8Array(32);
-            for (let i = 0; i < 32; i++) {
-              entropy[i] = dataArray[i] ^ dataArray[i + 32] ^ dataArray[i + 64] ^ dataArray[i + 96];
-            }
-            entropyParts.push(entropy);
-            
-            sampleCount++;
-            setEntropyProgress((sampleCount / maxSamples) * 100);
-            requestAnimationFrame(captureAudio);
-          };
-          
-          captureAudio();
-        })
-        .catch(reject);
-    });
-  }, []);
+              sampleCount++;
+              setEntropyProgress((sampleCount / maxSamples) * 100);
+              requestAnimationFrame(captureAudio);
+            };
+
+            captureAudio();
+          })
+          .catch(reject);
+      });
+    }, []);
 
   const handleGenerateEntropy = async () => {
     try {
       setIsGenerating(true);
       setError('');
       setEntropyProgress(0);
-      
+
       let entropyData: Uint8Array;
-      
+
       switch (entropySource) {
         case 'external':
           setStatus('Opening QR scanner for external entropy...');
@@ -259,7 +308,11 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
           const cameraEntropy = await generateEntropyFromCamera();
           const micEntropy = await generateEntropyFromMicrophone();
           const osEntropy = Entropy.generateEntropy(256);
-          entropyData = await Entropy.mixEntropyParts([cameraEntropy, micEntropy, osEntropy]);
+          entropyData = await Entropy.mixEntropyParts([
+            cameraEntropy,
+            micEntropy,
+            osEntropy,
+          ]);
           break;
         case 'local':
           setStatus('Generating local entropy...');
@@ -273,14 +326,16 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
       // Validate entropy
       const validation = Entropy.validateEntropy(entropyData);
       if (!validation.isValid) {
-        throw new Error(`Entropy validation failed: ${validation.errors.join(', ')}`);
+        throw new Error(
+          `Entropy validation failed: ${validation.errors.join(', ')}`
+        );
       }
 
       // Generate mnemonic
       setStatus('Generating mnemonic from entropy...');
       const mnemonic = BIP39.entropyToMnemonic(entropyData);
       setGeneratedMnemonic(mnemonic);
-      
+
       // Create wallet
       setStatus('Creating LTC wallet...');
       const wallet = await createLTCWallet(
@@ -299,13 +354,12 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
         entropySource: entropySource,
         created: true,
         wif: wallet.wif,
-        xpub: wallet.xpub
+        xpub: wallet.xpub,
       };
 
       setGeneratedWallet(ltcWallet);
       setStatus('Wallet created successfully! Review your details.');
       setStep('review');
-      
     } catch (err: any) {
       setError(err.message || 'Failed to generate entropy. Please try again.');
       setStatus('');
@@ -342,33 +396,134 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
 
   const handleAddAndSave = async () => {
     if (!generatedWallet) return;
-    
-    // User is already authenticated to reach this screen, no need for additional verification
+
     try {
-      // Use standard password "123456" as requested
-      const password = "123456";
-      
-      // Encrypt the WIF using the same encryption as btc-signer
-      const encrypted = await WalletExport.encryptText(generatedWallet.wif, password);
-      const b64 = WalletExport.serializeEncryptedExportToBase64(encrypted);
-      
-      // Create filename using wallet address
-      const filename = `${generatedWallet.address}.enc`;
-      
+      let encrypted: string;
+      let filename: string;
+
+      // Prepare wallet data for encryption
+      const walletData = JSON.stringify({
+        mnemonic: generatedWallet.mnemonic,
+        wif: generatedWallet.wif,
+        address: generatedWallet.address,
+        network: generatedWallet.network,
+        timestamp: Date.now(),
+      });
+
+      // Encrypt based on authentication method
+      if (
+        authState.method === 'passkey' &&
+        authState.status === 'authenticated'
+      ) {
+        console.log('🔐 Encrypting wallet with passkey...');
+        encrypted = await encryptWithPasskey(walletData);
+        filename = `${generatedWallet.address}.passkey.enc`;
+      } else if (
+        authState.method === 'pin' &&
+        authState.status === 'authenticated'
+      ) {
+        console.log('🔐 Encrypting wallet with PIN...');
+        // For PIN encryption, we need to prompt the user for their PIN
+        const userPin = prompt('Enter your PIN to encrypt the wallet:');
+        if (!userPin) {
+          setError('PIN is required for encryption');
+          return;
+        }
+        encrypted = await encryptWithPin(walletData, userPin);
+        filename = `${generatedWallet.address}.pin.enc`;
+      } else {
+        // Fallback to standard password encryption if not authenticated
+        console.log('🔐 Using fallback password encryption...');
+        const password = '123456';
+        const encryptedExport = await WalletExport.encryptText(
+          generatedWallet.wif,
+          password
+        );
+        encrypted =
+          WalletExport.serializeEncryptedExportToBase64(encryptedExport);
+        filename = `${generatedWallet.address}.password.enc`;
+      }
+
       // Create and download the encrypted file
-      const blob = new Blob([b64], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      
+      const blob = new Blob([encrypted], { type: 'text/plain' });
+
+      // iOS Safari compatible file download
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        // For iOS, use the share API or open in new tab with download attribute
+        try {
+          // Try to use the Web Share API if available (iOS 12.2+)
+          if (navigator.share && typeof navigator.canShare === 'function') {
+            const file = new File([blob], filename, { type: 'text/plain' });
+            try {
+              await navigator.share({
+                title: 'Encrypted Wallet',
+                text: `Encrypted wallet file: ${filename}`,
+                files: [file],
+              });
+              console.log('✅ File shared via Web Share API');
+              setStatus(
+                '✅ File shared successfully! Check your Files app or shared location.'
+              );
+            } catch (shareError) {
+              console.warn('Web Share API failed:', shareError);
+              // Fall through to fallback method
+              throw shareError;
+            }
+          } else {
+            // Fallback: open in new tab with download attribute
+            const url = URL.createObjectURL(blob);
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+              // Try to trigger download in the new window
+              setTimeout(() => {
+                const downloadLink = newWindow.document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+                newWindow.close();
+                URL.revokeObjectURL(url);
+              }, 100);
+            } else {
+              // Last resort: show the encrypted content for manual copy
+              const url = URL.createObjectURL(blob);
+              window.open(url, '_blank');
+              URL.revokeObjectURL(url);
+              setStatus(
+                '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
+              );
+            }
+          }
+        } catch (shareError) {
+          console.warn('Web Share API failed, using fallback:', shareError);
+          // Fallback to opening in new tab
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          URL.revokeObjectURL(url);
+          setStatus(
+            '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
+          );
+        }
+      } else {
+        // Standard download for desktop browsers
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      console.log('✅ Wallet encrypted and downloaded successfully');
+
       // Proceed to confirm step
       setStep('confirm');
     } catch (error) {
       console.error('Failed to export encrypted file:', error);
-      setError('Failed to export encrypted file. Please try again.');
+      setError(
+        `Failed to export encrypted file: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   };
 
@@ -377,7 +532,7 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
   return (
     <div className="wallet-creation-modal">
       <div className="modal-header">
-        <button 
+        <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -387,7 +542,7 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
             } else {
               onClose();
             }
-          }} 
+          }}
           className="back-button"
           type="button"
         >
@@ -402,13 +557,15 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
             <div className="entropy-source-selector">
               <h3>Choose Entropy Source</h3>
               <p className="description">
-                Select how to generate random entropy for your wallet. 
-                Combined sources provide the highest security.
+                Select how to generate random entropy for your wallet. Combined
+                sources provide the highest security.
               </p>
-              
+
               <div className="source-options">
                 <button
-                  className={`source-option ${entropySource === 'external' ? 'selected' : ''}`}
+                  className={`source-option ${
+                    entropySource === 'external' ? 'selected' : ''
+                  }`}
                   onClick={() => setEntropySource('external')}
                 >
                   <Camera size={24} className="icon-left" />
@@ -420,7 +577,9 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
                 </button>
 
                 <button
-                  className={`source-option ${entropySource === 'combined' ? 'selected' : ''}`}
+                  className={`source-option ${
+                    entropySource === 'combined' ? 'selected' : ''
+                  }`}
                   onClick={() => setEntropySource('combined')}
                 >
                   <Shield size={24} className="icon-left" />
@@ -432,7 +591,9 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
                 </button>
 
                 <button
-                  className={`source-option ${entropySource === 'local' ? 'selected' : ''}`}
+                  className={`source-option ${
+                    entropySource === 'local' ? 'selected' : ''
+                  }`}
                   onClick={() => setEntropySource('local')}
                 >
                   <Shield size={24} className="icon-left" />
@@ -458,12 +619,12 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
                 </div>
                 <ArrowLeft size={20} className="icon-right" />
               </button>
-              
+
               {isGenerating && (
                 <div className="generation-progress">
                   <div className="progress-bar">
-                    <div 
-                      className="progress-fill" 
+                    <div
+                      className="progress-fill"
                       style={{ width: `${entropyProgress}%` }}
                     ></div>
                   </div>
@@ -484,8 +645,6 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
           <div className="review-step">
             <div className="wallet-summary">
               <h3>Wallet Created Successfully!</h3>
-              
-
 
               <div className="mnemonic-section">
                 <div className="section-header">
@@ -498,26 +657,29 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
                     {showMnemonic ? 'Hide' : 'Show'}
                   </button>
                 </div>
-                
+
                 <div className="mnemonic-display">
                   {showMnemonic ? (
                     <div className="mnemonic-words">
-                      {generatedWallet.mnemonic.split(' ').map((word, index) => (
-                        <span key={index} className="word">
-                          {index + 1}. {word}
-                        </span>
-                      ))}
+                      {generatedWallet.mnemonic
+                        .split(' ')
+                        .map((word, index) => (
+                          <span key={index} className="word">
+                            {index + 1}. {word}
+                          </span>
+                        ))}
                     </div>
                   ) : (
                     <div className="mnemonic-hidden">
-                      •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
+                      •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
+                      ••••
                     </div>
                   )}
                 </div>
-                
+
                 <p className="mnemonic-warning">
                   <AlertCircle size={16} />
-                  Write down these 24 words and store them securely offline. 
+                  Write down these 24 words and store them securely offline.
                   Never share them with anyone.
                 </p>
               </div>
@@ -526,8 +688,10 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
                 <h4>Your Litecoin Address</h4>
                 <div className="address-display">
                   <code>{generatedWallet.address}</code>
-                  <button 
-                    onClick={() => navigator.clipboard.writeText(generatedWallet.address)}
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(generatedWallet.address)
+                    }
                     className="copy-button"
                   >
                     Copy
@@ -544,9 +708,36 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
             </div>
 
             <div className="review-actions-single">
-              <Button onClick={handleAddAndSave} variant="primary" className="add-save-button">
+              <Button
+                onClick={handleAddAndSave}
+                variant="primary"
+                className="add-save-button"
+              >
                 Add & Save
               </Button>
+
+              {/* iOS-specific instructions */}
+              {/iPad|iPhone|iPod/.test(navigator.userAgent) && (
+                <div
+                  style={{
+                    marginTop: '15px',
+                    padding: '12px',
+                    backgroundColor: '#f0f8ff',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#0066cc',
+                  }}
+                >
+                  <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>
+                    📱 iOS Instructions:
+                  </p>
+                  <ul style={{ margin: '0', paddingLeft: '20px' }}>
+                    <li>Tap "Add & Save" to encrypt your wallet</li>
+                    <li>Use the Share button to save to Files app</li>
+                    <li>Or long press the file and select "Save to Files"</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -557,9 +748,13 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
               <CheckCircle size={64} className="success-icon" />
               <h3>Wallet Ready!</h3>
               <p>Your Litecoin wallet has been created successfully.</p>
-              
+
               <div className="final-actions">
-                <Button onClick={handleConfirmWallet} variant="primary" className="confirm-button">
+                <Button
+                  onClick={handleConfirmWallet}
+                  variant="primary"
+                  className="confirm-button"
+                >
                   <Plus size={20} />
                   Use This Wallet
                 </Button>
@@ -568,7 +763,7 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
           </div>
         )}
       </div>
-      
+
       {/* QR Scanner Modal for External Entropy */}
       {showQRScanner && (
         <QRScannerModal
@@ -577,8 +772,6 @@ export function WalletCreationModal({ isOpen, onClose, onCreateSuccess }: Wallet
           onScanResult={handleQRCodeScanned}
         />
       )}
-
-
     </div>
   );
 }
