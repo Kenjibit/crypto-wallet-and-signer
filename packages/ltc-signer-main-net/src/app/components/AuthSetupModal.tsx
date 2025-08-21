@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { Card, Button } from '@btc-wallet/ui';
-import { 
-  Fingerprint, 
-  Smartphone, 
-  Shield, 
+import {
+  Fingerprint,
+  Smartphone,
+  Shield,
   ArrowLeft,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth, AuthMethod } from '../contexts/AuthContext';
 import { useEffect } from 'react';
@@ -28,7 +28,7 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
-  
+
   // Use ref to track current auth state for polling
   const currentAuthState = useRef(authState);
   currentAuthState.current = authState;
@@ -36,10 +36,16 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   // Monitor auth state changes in the modal
   useEffect(() => {
     console.log('🔍 AuthSetupModal: Auth state changed in modal:', authState);
-    
+
     // Auto-advance to confirm step when authentication succeeds
-    if (authState.status === 'authenticated' && step === 'choose' && selectedMethod === 'passkey') {
-      console.log('🔍 AuthSetupModal: Auto-advancing to confirm step due to auth state change');
+    if (
+      authState.status === 'authenticated' &&
+      step === 'choose' &&
+      selectedMethod === 'passkey'
+    ) {
+      console.log(
+        '🔍 AuthSetupModal: Auto-advancing to confirm step due to auth state change'
+      );
       setStep('confirm');
     }
   }, [authState, step, selectedMethod]);
@@ -47,7 +53,9 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   // Monitor when auth state becomes authenticated
   useEffect(() => {
     if (authState.status === 'authenticated') {
-      console.log('🔍 AuthSetupModal: Auth state is now authenticated in modal!');
+      console.log(
+        '🔍 AuthSetupModal: Auth state is now authenticated in modal!'
+      );
     }
   }, [authState.status]);
 
@@ -67,38 +75,62 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   const handlePasskeySetup = async () => {
     // Auto-generate a username for wallet app (user doesn't need to remember it)
     const autoUsername = `ltc-wallet-${Date.now()}`;
-    
-    console.log('📱 AuthSetupModal: Starting passkey setup with username:', autoUsername);
-    console.log('📱 AuthSetupModal: Auth state before createPasskey:', authState);
-    
+
+    console.log(
+      '📱 AuthSetupModal: Starting passkey setup with username:',
+      autoUsername
+    );
+    console.log(
+      '📱 AuthSetupModal: Auth state before createPasskey:',
+      authState
+    );
+
     const success = await createPasskey(autoUsername, 'LTC Wallet User');
-    
+
     console.log('📱 AuthSetupModal: createPasskey returned:', success);
-    
+
     if (success) {
       // Passkey created successfully
       // The useEffect will automatically advance to confirm step when auth state updates
       console.log('📱 AuthSetupModal: Passkey creation returned success');
-      console.log('📱 AuthSetupModal: Waiting for auth state to update via useEffect...');
+      console.log(
+        '📱 AuthSetupModal: Waiting for auth state to update via useEffect...'
+      );
     } else {
       console.log('📱 AuthSetupModal: Passkey creation failed');
-      setError('Failed to create passkey. Please try again or use PIN code instead.');
+      setError(
+        'Failed to create passkey. Please try again or use PIN code instead.'
+      );
     }
   };
 
   const handlePinSetup = () => {
     console.log('📱 AuthSetupModal: handlePinSetup called');
-    console.log('📱 AuthSetupModal: PIN length:', pin.length, 'Confirm PIN length:', confirmPin.length);
-    console.log('📱 AuthSetupModal: PIN validation:', /^\d{4}$/.test(pin), 'PINs match:', pin === confirmPin);
-    
+    console.log(
+      '📱 AuthSetupModal: PIN length:',
+      pin.length,
+      'Confirm PIN length:',
+      confirmPin.length
+    );
+    console.log(
+      '📱 AuthSetupModal: PIN validation:',
+      /^\d{4}$/.test(pin),
+      'PINs match:',
+      pin === confirmPin
+    );
+
     if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-      console.log('📱 AuthSetupModal: PIN validation failed - length or format');
+      console.log(
+        '📱 AuthSetupModal: PIN validation failed - length or format'
+      );
       setError('PIN must be exactly 4 digits');
       return;
     }
 
     if (pin !== confirmPin) {
-      console.log('📱 AuthSetupModal: PIN confirmation failed - PINs do not match');
+      console.log(
+        '📱 AuthSetupModal: PIN confirmation failed - PINs do not match'
+      );
       setError('PINs do not match');
       return;
     }
@@ -106,9 +138,11 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
     console.log('📱 AuthSetupModal: Calling setPinCode with PIN:', pin);
     const success = setPinCode(pin, confirmPin);
     console.log('📱 AuthSetupModal: setPinCode returned:', success);
-    
+
     if (success) {
-      console.log('📱 AuthSetupModal: PIN setup successful, moving to confirm step');
+      console.log(
+        '📱 AuthSetupModal: PIN setup successful, moving to confirm step'
+      );
       setStep('confirm');
     } else {
       console.log('📱 AuthSetupModal: PIN setup failed');
@@ -131,13 +165,21 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   const handleComplete = () => {
     console.log('📱 AuthSetupModal: handleComplete called');
     console.log('📱 AuthSetupModal: Current auth state in modal:', authState);
-    
+
     // Additional validation: Ensure we're actually authenticated
-    if (authState.status === 'authenticated' || authState.method === 'passkey' || authState.method === 'pin') {
-      console.log('📱 AuthSetupModal: Auth state validated, proceeding with completion');
+    if (
+      authState.status === 'authenticated' ||
+      authState.method === 'passkey' ||
+      authState.method === 'pin'
+    ) {
+      console.log(
+        '📱 AuthSetupModal: Auth state validated, proceeding with completion'
+      );
       onComplete();
     } else {
-      console.warn('📱 AuthSetupModal: Auth state not properly authenticated, but proceeding anyway');
+      console.warn(
+        '📱 AuthSetupModal: Auth state not properly authenticated, but proceeding anyway'
+      );
       // Proceed anyway since the context should have the correct state
       onComplete();
     }
@@ -153,8 +195,10 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
 
       <div className="auth-options">
         {authState.isPasskeySupported && (
-          <div 
-            className={`auth-option ${selectedMethod === 'passkey' ? 'selected' : ''}`}
+          <div
+            className={`auth-option ${
+              selectedMethod === 'passkey' ? 'selected' : ''
+            }`}
             onClick={() => handleMethodSelect('passkey')}
           >
             <div className="option-icon">
@@ -162,7 +206,9 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
             </div>
             <div className="option-content">
               <h3>Passkey (Recommended)</h3>
-              <p>Use Face ID, Touch ID, or fingerprint for secure authentication</p>
+              <p>
+                Use Face ID, Touch ID, or fingerprint for secure authentication
+              </p>
             </div>
             <div className="option-check">
               {selectedMethod === 'passkey' && <CheckCircle size={24} />}
@@ -170,8 +216,10 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
           </div>
         )}
 
-        <div 
-          className={`auth-option ${selectedMethod === 'pin' ? 'selected' : ''}`}
+        <div
+          className={`auth-option ${
+            selectedMethod === 'pin' ? 'selected' : ''
+          }`}
           onClick={() => handleMethodSelect('pin')}
         >
           <div className="option-icon">
@@ -190,7 +238,9 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
       {!authState.isPasskeySupported && (
         <div className="passkey-notice">
           <AlertCircle size={20} />
-          <span>Passkeys not supported on this device. Using PIN code instead.</span>
+          <span>
+            Passkeys not supported on this device. Using PIN code instead.
+          </span>
         </div>
       )}
     </div>
@@ -211,7 +261,9 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
             id="pin"
             type="password"
             value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            onChange={(e) =>
+              setPin(e.target.value.replace(/\D/g, '').slice(0, 4))
+            }
             placeholder="Enter 4-digit PIN"
             className="form-input"
             maxLength={4}
@@ -225,7 +277,9 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
             id="confirmPin"
             type="password"
             value={confirmPin}
-            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            onChange={(e) =>
+              setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))
+            }
             placeholder="Confirm 4-digit PIN"
             className="form-input"
             maxLength={4}
@@ -240,7 +294,10 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
             <ArrowLeft size={20} />
             Back
           </Button>
-          <Button onClick={handlePinSetup} disabled={pin.length !== 4 || confirmPin.length !== 4}>
+          <Button
+            onClick={handlePinSetup}
+            disabled={pin.length !== 4 || confirmPin.length !== 4}
+          >
             Set PIN Code
           </Button>
         </div>
@@ -253,13 +310,18 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
       <div className="auth-header">
         <CheckCircle size={48} className="auth-icon success" />
         <h2>Authentication Setup Complete!</h2>
-        <p>Your wallet is now secured with {selectedMethod === 'passkey' ? 'a passkey' : 'a PIN code'}</p>
+        <p>
+          Your wallet is now secured with{' '}
+          {selectedMethod === 'passkey' ? 'a passkey' : 'a PIN code'}
+        </p>
       </div>
 
       <div className="auth-summary">
         <div className="summary-item">
           <span className="label">Method:</span>
-          <span className="value">{selectedMethod === 'passkey' ? 'Passkey' : 'PIN Code'}</span>
+          <span className="value">
+            {selectedMethod === 'passkey' ? 'Passkey' : 'PIN Code'}
+          </span>
         </div>
       </div>
 

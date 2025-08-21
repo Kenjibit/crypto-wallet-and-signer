@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button } from '@btc-wallet/ui';
-import { 
-  Fingerprint, 
-  Smartphone, 
-  Shield, 
+import {
+  Fingerprint,
+  Smartphone,
+  Shield,
   ArrowLeft,
   AlertCircle,
-  Lock
+  Lock,
 } from 'lucide-react';
 import { useAuth, AuthMethod } from '../contexts/AuthContext';
 
@@ -39,7 +39,7 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
   const handlePasskeyVerification = async () => {
     setIsVerifying(true);
     setError('');
-    
+
     try {
       const success = await verifyPasskey();
       if (success) {
@@ -129,13 +129,19 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
                   ) : (
                     <div className="ready">
                       <Fingerprint size={32} />
-                      <p>Use Face ID, Touch ID, or fingerprint to authenticate</p>
+                      <p>
+                        Use Face ID, Touch ID, or fingerprint to authenticate
+                      </p>
                     </div>
                   )}
                 </div>
 
                 <div className="auth-actions">
-                  <Button onClick={handleRetry} variant="ghost" disabled={isVerifying}>
+                  <Button
+                    onClick={handleRetry}
+                    variant="ghost"
+                    disabled={isVerifying}
+                  >
                     Try Again
                   </Button>
                   <Button onClick={handleLogout} variant="ghost">
@@ -151,7 +157,9 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
                     id="verification-pin"
                     type="password"
                     value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    onChange={(e) =>
+                      setPin(e.target.value.replace(/\D/g, '').slice(0, 4))
+                    }
                     placeholder="Enter 4-digit PIN"
                     className="form-input"
                     maxLength={4}
@@ -162,11 +170,15 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
                 </div>
 
                 <div className="auth-actions">
-                  <Button onClick={onClose} variant="ghost" disabled={isVerifying}>
+                  <Button
+                    onClick={onClose}
+                    variant="ghost"
+                    disabled={isVerifying}
+                  >
                     Cancel
                   </Button>
-                  <Button 
-                    onClick={handlePinVerification} 
+                  <Button
+                    onClick={handlePinVerification}
                     disabled={pin.length !== 4 || isVerifying}
                   >
                     Verify PIN
@@ -177,7 +189,8 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
 
             <div className="auth-footer">
               <p className="auth-method-info">
-                Using {authState.method === 'passkey' ? 'passkey' : 'PIN code'} authentication
+                Using {authState.method === 'passkey' ? 'passkey' : 'PIN code'}{' '}
+                authentication
               </p>
             </div>
           </div>

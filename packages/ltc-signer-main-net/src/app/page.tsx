@@ -1,7 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MainContainer, Header, Card, Button, Status, QRScannerModal } from '@btc-wallet/ui';
+import {
+  MainContainer,
+  Header,
+  Card,
+  Button,
+  Status,
+  QRScannerModal,
+} from '@btc-wallet/ui';
 import { OfflineIndicator, InstallPrompt } from '@btc-wallet/my-pwa';
 import { WalletImportModal } from './components/WalletImportModal';
 import { WalletCreationModal } from './components/WalletCreationModal';
@@ -10,20 +17,20 @@ import { AuthSetupModal } from './components/AuthSetupModal';
 import { AuthVerificationModal } from './components/AuthVerificationModal';
 // TestControlPanel import removed for production
 import { useAuth } from './contexts/AuthContext';
-import { 
-  QrCode, 
-  Upload, 
-  Plus, 
-  ArrowLeft, 
+import {
+  QrCode,
+  Upload,
+  Plus,
+  ArrowLeft,
   Camera,
   Wallet,
-  Shield
+  Shield,
 } from 'lucide-react';
 
 type AppMode = 'main' | 'scan' | 'import' | 'create' | 'signing';
 
 export default function LTCMainPage() {
-  const { authState } = useAuth();
+  const { authState, sessionAuthenticated } = useAuth();
   const [currentMode, setCurrentMode] = useState<AppMode>('main');
   const [scannedData, setScannedData] = useState<string>('');
   const [importedWallet, setImportedWallet] = useState<any>(null);
@@ -32,7 +39,7 @@ export default function LTCMainPage() {
     message: string;
     type: 'success' | 'error' | 'warning';
   } | null>(null);
-  
+
   // Authentication modals
   const [showAuthSetup, setShowAuthSetup] = useState(false);
   const [showAuthVerification, setShowAuthVerification] = useState(false);
@@ -43,8 +50,6 @@ export default function LTCMainPage() {
   useEffect(() => {
     // Auth state monitoring for debugging purposes
   }, [authState]);
-
-
 
   const handleBackToMain = () => {
     setCurrentMode('main');
@@ -76,27 +81,42 @@ export default function LTCMainPage() {
       action();
       return;
     }
-    
-    // If user is authenticated with passkey, execute action directly (passkey is persistent)
-    if (authState.status === 'authenticated' && authState.method === 'passkey') {
+
+    // If user is authenticated with passkey AND has authenticated in this session, execute action directly
+    if (
+      authState.status === 'authenticated' &&
+      authState.method === 'passkey' &&
+      sessionAuthenticated
+    ) {
       action();
       return;
     }
-    
-    // If user is authenticated with PIN, require PIN verification for each action
-    if (authState.status === 'authenticated' && authState.method === 'pin') {
+
+    // If user is authenticated with PIN AND has authenticated in this session, require PIN verification for each action
+    if (
+      authState.status === 'authenticated' &&
+      authState.method === 'pin' &&
+      sessionAuthenticated
+    ) {
       setPendingAction(() => action);
       setShowAuthVerification(true);
       return;
     }
-    
+
+    // If user has stored credentials but hasn't authenticated in this session, show verification
+    if (authState.status === 'authenticated' && !sessionAuthenticated) {
+      setPendingAction(() => action);
+      setShowAuthVerification(true);
+      return;
+    }
+
     // If user is unauthenticated, show auth setup
     if (authState.status === 'unauthenticated') {
       setPendingAction(() => action);
       setShowAuthSetup(true);
       return;
     }
-    
+
     // Fallback: show auth verification
     setPendingAction(() => action);
     setShowAuthVerification(true);
@@ -108,19 +128,23 @@ export default function LTCMainPage() {
     console.log('✅ authState.status in main page:', authState.status);
     console.log('✅ authState.method in main page:', authState.method);
     console.log('✅ Setting justCompletedAuthSetup to true');
-    
+
     setShowAuthSetup(false);
-    
+
     // After passkey setup, user is automatically authenticated
     // Set flag to bypass additional verification
     setJustCompletedAuthSetup(true);
-    
+
     if (pendingAction) {
       console.log('✅ Executing pending action directly');
       console.log('✅ About to call pendingAction, authState is:', authState);
-      
+
       // Additional safeguard: Ensure auth state is consistent
-      if (authState.status === 'authenticated' || authState.method === 'passkey' || authState.method === 'pin') {
+      if (
+        authState.status === 'authenticated' ||
+        authState.method === 'passkey' ||
+        authState.method === 'pin'
+      ) {
         console.log('✅ Auth state validated, proceeding with action');
         // Execute the action directly - no need for additional verification
         pendingAction();
@@ -151,7 +175,7 @@ export default function LTCMainPage() {
     <div className="main-screen">
       <div className="main-content">
         <div className="action-buttons">
-          <div 
+          <div
             className="action-card scan-card clickable"
             onClick={() => requireAuth(() => setCurrentMode('scan'))}
           >
@@ -166,7 +190,7 @@ export default function LTCMainPage() {
             </Card>
           </div>
 
-          <div 
+          <div
             className="action-card import-card clickable"
             onClick={() => requireAuth(() => setCurrentMode('import'))}
           >
@@ -181,7 +205,7 @@ export default function LTCMainPage() {
             </Card>
           </div>
 
-          <div 
+          <div
             className="action-card create-card clickable"
             onClick={() => {
               requireAuth(() => {
@@ -217,7 +241,7 @@ export default function LTCMainPage() {
         </Button>
         <h2>Scan PSBT</h2>
       </div>
-      
+
       <div className="scan-content">
         <Card title="Scan PSBT QR Code" className="scan-card">
           <div className="scan-instructions">
@@ -246,7 +270,7 @@ export default function LTCMainPage() {
         </Button>
         <h2>Import Wallet</h2>
       </div>
-      
+
       <WalletImportModal
         isOpen={true}
         onClose={handleBackToMain}
@@ -268,7 +292,7 @@ export default function LTCMainPage() {
         </Button>
         <h2>Create Wallet</h2>
       </div>
-      
+
       <WalletCreationModal
         isOpen={true}
         onClose={handleBackToMain}
@@ -290,7 +314,7 @@ export default function LTCMainPage() {
         </Button>
         <h2>Sign Transaction</h2>
       </div>
-      
+
       <SigningFlow
         scannedData={scannedData}
         importedWallet={importedWallet}
@@ -319,7 +343,7 @@ export default function LTCMainPage() {
     <>
       <MainContainer>
         <OfflineIndicator />
-        
+
         {renderCurrentMode()}
 
         {status && (
@@ -331,7 +355,7 @@ export default function LTCMainPage() {
         )}
 
         <InstallPrompt />
-        
+
         {/* Test Control Panel removed for production */}
       </MainContainer>
 
@@ -341,7 +365,7 @@ export default function LTCMainPage() {
         onComplete={handleAuthSetupComplete}
         onClose={() => setShowAuthSetup(false)}
       />
-      
+
       <AuthVerificationModal
         isOpen={showAuthVerification}
         onSuccess={handleAuthVerificationSuccess}

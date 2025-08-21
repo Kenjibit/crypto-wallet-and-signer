@@ -1,10 +1,24 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { validateAuthState, validatePasskeyCreation } from '../utils/auth-validation';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
+import {
+  validateAuthState,
+  validatePasskeyCreation,
+} from '../utils/auth-validation';
 
 export type AuthMethod = 'passkey' | 'pin';
-export type AuthStatus = 'unauthenticated' | 'authenticating' | 'authenticated' | 'failed';
+export type AuthStatus =
+  | 'unauthenticated'
+  | 'authenticating'
+  | 'authenticated'
+  | 'failed';
 
 export interface AuthState {
   method: AuthMethod | null;
@@ -22,6 +36,7 @@ export interface PinAuth {
 interface AuthContextType {
   authState: AuthState;
   pinAuth: PinAuth;
+  sessionAuthenticated: boolean; // Add session authentication status
   createPasskey: (username: string, displayName: string) => Promise<boolean>;
   verifyPasskey: () => Promise<boolean>;
   setPinCode: (pin: string, confirmPin: string) => boolean;
@@ -57,37 +72,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const validateAndCorrectAuthState = (state: AuthState): AuthState => {
     let corrected = { ...state };
     let hasChanges = false;
-    
+
     // Rule 1: PIN method should never have credentialId
     if (corrected.method === 'pin' && corrected.credentialId) {
-      console.warn('🚨 Validation: PIN method with credentialId detected, removing credentialId');
+      console.warn(
+        '🚨 Validation: PIN method with credentialId detected, removing credentialId'
+      );
       corrected.credentialId = undefined;
       hasChanges = true;
     }
-    
+
     // Rule 2: Passkey method should have credentialId when authenticated
-    if (corrected.method === 'passkey' && corrected.status === 'authenticated' && !corrected.credentialId) {
-      console.warn('🚨 Validation: Authenticated passkey without credentialId, resetting to unauthenticated');
+    if (
+      corrected.method === 'passkey' &&
+      corrected.status === 'authenticated' &&
+      !corrected.credentialId
+    ) {
+      console.warn(
+        '🚨 Validation: Authenticated passkey without credentialId, resetting to unauthenticated'
+      );
       corrected.status = 'unauthenticated';
       hasChanges = true;
     }
-    
+
     // Rule 3: Failed status should reset to unauthenticated (not clear method/credentialId)
     if (corrected.status === 'failed') {
-      console.warn('🚨 Validation: Failed status detected, resetting to unauthenticated');
+      console.warn(
+        '🚨 Validation: Failed status detected, resetting to unauthenticated'
+      );
       corrected.status = 'unauthenticated';
       hasChanges = true;
     }
-    
+
+    // Rule 4: Authenticating status with null method is invalid
+    if (corrected.status === 'authenticating' && corrected.method === null) {
+      console.warn(
+        '🚨 Validation: Authenticating status with null method detected, resetting to unauthenticated'
+      );
+      corrected.status = 'unauthenticated';
+      corrected.method = null;
+      hasChanges = true;
+    }
+
     if (hasChanges) {
-      console.log('🛠️ Auth state corrected:', { 
-        original: state, 
-        corrected: corrected 
+      console.log('🛠️ Auth state corrected:', {
+        original: state,
+        corrected: corrected,
       });
     }
-    
+
     return corrected;
   };
+
+  // Add session authentication tracking
+  const [sessionAuthenticated, setSessionAuthenticated] = useState(false);
 
   const [authState, setAuthStateInternal] = useState<AuthState>(() => {
     // Try to restore authentication state from localStorage
@@ -110,7 +148,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Failed to restore auth state:', error);
       }
     }
-    
+
     return {
       method: null,
       status: 'unauthenticated',
@@ -120,14 +158,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   // Validated wrapper for setAuthState
-  const setAuthState = (newState: AuthState | ((prev: AuthState) => AuthState)) => {
+  const setAuthState = (
+    newState: AuthState | ((prev: AuthState) => AuthState)
+  ) => {
     if (typeof newState === 'function') {
-      setAuthStateInternal(prev => {
+      setAuthStateInternal((prev) => {
         const computed = newState(prev);
-        return validateAndCorrectAuthState(computed);
+        const validated = validateAndCorrectAuthState(computed);
+
+        // Reset session authentication if auth state becomes invalid
+        if (
+          validated.status === 'unauthenticated' ||
+          validated.method === null
+        ) {
+          setSessionAuthenticated(false);
+        }
+
+        return validated;
       });
     } else {
-      setAuthStateInternal(validateAndCorrectAuthState(newState));
+      const validated = validateAndCorrectAuthState(newState);
+
+      // Reset session authentication if auth state becomes invalid
+      if (validated.status === 'unauthenticated' || validated.method === null) {
+        setSessionAuthenticated(false);
+      }
+
+      setAuthStateInternal(validated);
     }
   };
 
@@ -154,40 +211,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkPasskeySupport = async () => {
       // Check basic WebAuthn support
-      const hasWebAuthn = typeof window !== 'undefined' && window.PublicKeyCredential;
-      
+      const hasWebAuthn =
+        typeof window !== 'undefined' && window.PublicKeyCredential;
+
       // Check platform authenticator support (this is what iOS 16+ provides)
-      const hasPlatformAuthenticator = 
-        hasWebAuthn && 
-        typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function';
-      
+      const hasPlatformAuthenticator =
+        hasWebAuthn &&
+        typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable ===
+          'function';
+
       // Check conditional mediation (iOS 16.1+ feature)
-      const hasConditionalMediation = 
-        hasWebAuthn && 
-        typeof PublicKeyCredential.isConditionalMediationAvailable === 'function';
-      
+      const hasConditionalMediation =
+        hasWebAuthn &&
+        typeof PublicKeyCredential.isConditionalMediationAvailable ===
+          'function';
+
       // Detect iOS specifically with more comprehensive patterns
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isIOS16Plus = isIOS && /OS 1[6-9]|OS [2-9][0-9]/.test(navigator.userAgent);
-      const isIOS18Plus = isIOS && /OS 1[8-9]|OS [2-9][0-9]/.test(navigator.userAgent);
-      
+      const isIOS16Plus =
+        isIOS && /OS 1[6-9]|OS [2-9][0-9]/.test(navigator.userAgent);
+      const isIOS18Plus =
+        isIOS && /OS 1[8-9]|OS [2-9][0-9]/.test(navigator.userAgent);
+
       // Check if actually available (not just API presence)
       let platformAuthenticatorAvailable = false;
       if (hasPlatformAuthenticator) {
         try {
-          platformAuthenticatorAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+          platformAuthenticatorAvailable =
+            await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         } catch (error) {
-          console.warn('Failed to check platform authenticator availability:', error);
+          console.warn(
+            'Failed to check platform authenticator availability:',
+            error
+          );
           platformAuthenticatorAvailable = false;
         }
       }
-      
+
       // iOS 16+ supports passkeys with platform authenticator
       // Also check actual availability, not just API presence
-      let isSupported = hasPlatformAuthenticator && platformAuthenticatorAvailable;
-      
+      let isSupported =
+        hasPlatformAuthenticator && platformAuthenticatorAvailable;
 
-      
       // Log detection results for debugging
       if (typeof window !== 'undefined') {
         console.log('🔍 Passkey Support Detection:', {
@@ -204,28 +269,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           location: {
             hostname: window.location.hostname,
             protocol: window.location.protocol,
-            origin: window.location.origin
+            origin: window.location.origin,
           },
           // Check if credentials API is available
           credentialsAPI: {
             available: !!navigator.credentials,
             create: !!(navigator.credentials && navigator.credentials.create),
-            get: !!(navigator.credentials && navigator.credentials.get)
-          }
+            get: !!(navigator.credentials && navigator.credentials.get),
+          },
         });
       }
 
-      const isPWA = 
-        typeof window !== 'undefined' &&
-        window.matchMedia('(display-mode: standalone)').matches ||
+      const isPWA =
+        (typeof window !== 'undefined' &&
+          window.matchMedia('(display-mode: standalone)').matches) ||
         (window.navigator as any).standalone === true;
 
       // Additional iOS-specific checks
       let finalSupported = isSupported;
-      
 
-
-      setAuthState(prev => ({
+      setAuthState((prev) => ({
         ...prev,
         isPasskeySupported: finalSupported || false,
         isPWA,
@@ -239,38 +302,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               challenge: new Uint8Array(32),
               rpId: window.location.hostname,
               userVerification: 'discouraged',
-              allowCredentials: [{
-                id: Uint8Array.from(atob(authState.credentialId), c => c.charCodeAt(0)),
-                type: 'public-key'
-              }]
+              allowCredentials: [
+                {
+                  id: Uint8Array.from(atob(authState.credentialId), (c) =>
+                    c.charCodeAt(0)
+                  ),
+                  type: 'public-key',
+                },
+              ],
             },
             mediation: 'silent',
           });
-          
+
           if (existingCredential) {
             // Credential still exists, keep user authenticated
-            setAuthState(prev => ({
+            setAuthState((prev) => ({
               ...prev,
               status: 'authenticated',
-              method: 'passkey'
+              method: 'passkey',
             }));
           } else {
             // Credential no longer exists, clear it
-            setAuthState(prev => ({
+            setAuthState((prev) => ({
               ...prev,
               status: 'unauthenticated',
               method: null,
-              credentialId: undefined
+              credentialId: undefined,
             }));
             localStorage.removeItem('ltc-signer-auth');
           }
         } catch (error) {
           // Credential verification failed, clear it
-          setAuthState(prev => ({
+          setAuthState((prev) => ({
             ...prev,
             status: 'unauthenticated',
             method: null,
-            credentialId: undefined
+            credentialId: undefined,
           }));
           localStorage.removeItem('ltc-signer-auth');
         }
@@ -282,111 +349,160 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Save authentication state to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && authState.status !== 'unauthenticated') {
+    if (
+      typeof window !== 'undefined' &&
+      authState.status !== 'unauthenticated' &&
+      authState.method !== null // Only save if method is selected
+    ) {
       try {
-        localStorage.setItem('ltc-signer-auth', JSON.stringify({
-          method: authState.method,
-          status: authState.status,
-          credentialId: authState.credentialId,
-        }));
+        localStorage.setItem(
+          'ltc-signer-auth',
+          JSON.stringify({
+            method: authState.method,
+            status: authState.status,
+            credentialId: authState.credentialId,
+          })
+        );
       } catch (error) {
         console.error('Failed to save auth state:', error);
+      }
+    } else if (
+      typeof window !== 'undefined' &&
+      (authState.status === 'unauthenticated' || authState.method === null)
+    ) {
+      // Clear localStorage when state is invalid or unauthenticated
+      try {
+        localStorage.removeItem('ltc-signer-auth');
+      } catch (error) {
+        console.error('Failed to clear auth state:', error);
       }
     }
   }, [authState.method, authState.status, authState.credentialId]);
 
   // Create passkey
-  const createPasskey = useCallback(async (username: string, displayName: string) => {
-    try {
-      setAuthState(prev => ({ ...prev, status: 'authenticating' }));
+  const createPasskey = useCallback(
+    async (username: string, displayName: string) => {
+      try {
+        setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
 
-      // Generate a random challenge
-      const challenge = new Uint8Array(32);
-      crypto.getRandomValues(challenge);
+        // Generate a random challenge
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
 
-      // Create passkey with both ES256 and RS256 to avoid warnings
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: {
-            name: 'LTC Signer',
-            id: window.location.hostname,
-          },
-          user: {
-            id: new Uint8Array(16),
-            name: username,
-            displayName,
-          },
-          pubKeyCredParams: [
-            {
-              type: 'public-key',
-              alg: -7, // ES256
+        // Create passkey with both ES256 and RS256 to avoid warnings
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge,
+            rp: {
+              name: 'LTC Signer',
+              id: window.location.hostname,
             },
-            {
-              type: 'public-key',
-              alg: -257, // RS256
+            user: {
+              id: new Uint8Array(16),
+              name: username,
+              displayName,
             },
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: 'platform',
-            userVerification: 'required',
+            pubKeyCredParams: [
+              {
+                type: 'public-key',
+                alg: -7, // ES256
+              },
+              {
+                type: 'public-key',
+                alg: -257, // RS256
+              },
+            ],
+            authenticatorSelection: {
+              authenticatorAttachment: 'platform',
+              userVerification: 'required',
+            },
+            timeout: 60000,
           },
-          timeout: 60000,
-        },
-      });
+        });
 
-      if (credential && 'rawId' in credential) {
-        // Store the credential ID for future reference
-        const publicKeyCredential = credential as PublicKeyCredential;
-        const credentialId = btoa(String.fromCharCode(...new Uint8Array(publicKeyCredential.rawId)));
-        
-        // Validate that the credential is properly formed
-        if (!credentialId || credentialId.length === 0) {
-          console.error('Invalid credential ID generated');
-          setAuthState(prev => ({ ...prev, status: 'failed' }));
-          return false;
-        }
-        
-        const newState = { 
-          ...authState, 
-          method: 'passkey' as AuthMethod,
-          status: 'authenticated' as AuthStatus,
-          credentialId
-        };
-        
-        // Validate the new state before setting it
-        const validation = validateAuthState(newState);
-        if (!validation.isValid) {
-          console.error('Auth state validation failed before setting:', validation.errors);
-          setAuthState(prev => ({ ...prev, status: 'failed' }));
-          return false;
-        }
-        
-        setAuthState(newState);
-        
-        // Additional validation: Ensure state was actually set correctly
-        setTimeout(() => {
-          const postValidation = validatePasskeyCreation(newState);
-          if (!postValidation) {
-            console.error('🔐 Post-creation validation failed');
+        if (credential && 'rawId' in credential) {
+          // Store the credential ID for future reference
+          const publicKeyCredential = credential as PublicKeyCredential;
+          const credentialId = btoa(
+            String.fromCharCode(...new Uint8Array(publicKeyCredential.rawId))
+          );
+
+          // Validate that the credential is properly formed
+          if (!credentialId || credentialId.length === 0) {
+            console.error('Invalid credential ID generated');
+            setAuthState((prev) => ({ ...prev, status: 'failed' }));
+            return false;
           }
-        }, 50);
-        
-        return true;
-      } else {
-        console.log('🔐 No credential or rawId, passkey creation failed');
+
+          const newState = {
+            ...authState,
+            method: 'passkey' as AuthMethod,
+            status: 'authenticated' as AuthStatus,
+            credentialId,
+          };
+
+          // Validate the new state before setting it
+          const validation = validateAuthState(newState);
+          if (!validation.isValid) {
+            console.error(
+              'Auth state validation failed before setting:',
+              validation.errors
+            );
+            setAuthState((prev) => ({ ...prev, status: 'failed' }));
+            return false;
+          }
+
+          setAuthState(newState);
+
+          // Additional validation: Ensure state was actually set correctly
+          setTimeout(() => {
+            const postValidation = validatePasskeyCreation(newState);
+            if (!postValidation) {
+              console.error('🔐 Post-creation validation failed');
+            }
+          }, 50);
+
+          return true;
+        } else {
+          console.log('🔐 No credential or rawId, passkey creation failed');
+        }
+      } catch (error) {
+        console.error('🔐 Passkey creation failed:', error);
+
+        // Handle different types of errors properly
+        if (error instanceof Error) {
+          // Check if this is a user cancellation
+          if (
+            error.name === 'NotAllowedError' ||
+            error.message.includes('User cancelled') ||
+            error.message.includes('aborted')
+          ) {
+            console.log('🔐 Passkey creation cancelled by user');
+            // Reset to clean state when user cancels
+            setAuthState((prev) => ({
+              ...prev,
+              method: null,
+              status: 'unauthenticated',
+              credentialId: undefined,
+            }));
+          } else {
+            // Other errors - set to failed state
+            setAuthState((prev) => ({ ...prev, status: 'failed' }));
+          }
+        } else {
+          // Unknown error - set to failed state
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+        }
       }
-    } catch (error) {
-      console.error('🔐 Passkey creation failed:', error);
-      setAuthState(prev => ({ ...prev, status: 'failed' }));
-    }
-    return false;
-  }, []);
+      return false;
+    },
+    []
+  );
 
   // Verify passkey
   const verifyPasskey = useCallback(async () => {
     try {
-      setAuthState(prev => ({ ...prev, status: 'authenticating' }));
+      setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
 
       // Generate a random challenge
       const challenge = new Uint8Array(32);
@@ -401,73 +517,86 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           timeout: 60000,
           // If we have a stored credential ID, use it to find the specific credential
           ...(authState.credentialId && {
-            allowCredentials: [{
-              id: Uint8Array.from(atob(authState.credentialId), c => c.charCodeAt(0)),
-              type: 'public-key'
-            }]
-          })
+            allowCredentials: [
+              {
+                id: Uint8Array.from(atob(authState.credentialId), (c) =>
+                  c.charCodeAt(0)
+                ),
+                type: 'public-key',
+              },
+            ],
+          }),
         },
         mediation: 'conditional',
       });
 
       if (assertion) {
-        setAuthState(prev => ({ ...prev, status: 'authenticated' }));
+        setAuthState((prev) => ({ ...prev, status: 'authenticated' }));
+        setSessionAuthenticated(true); // Mark as authenticated in this session
         return true;
       }
     } catch (error) {
       console.error('Passkey verification failed:', error);
-      setAuthState(prev => ({ ...prev, status: 'failed' }));
+      setAuthState((prev) => ({ ...prev, status: 'failed' }));
     }
     return false;
   }, [authState.credentialId]);
 
   // Set PIN code
-  const setPinCode = useCallback((pin: string, confirmPin: string) => {
-    if (pin === confirmPin && pin.length === 4 && /^\d{4}$/.test(pin)) {
-      setAuthState(prev => ({ 
-        ...prev, 
-        method: 'pin',
-        status: 'authenticated' 
-      }));
-      const newPinAuth = { pin, confirmPin };
-      setPinAuth(newPinAuth);
-      
-      // Save PIN to localStorage
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('ltc-signer-pin', JSON.stringify(newPinAuth));
-        } catch (error) {
-          console.error('Failed to save PIN to localStorage:', error);
+  const setPinCode = useCallback(
+    (pin: string, confirmPin: string) => {
+      if (pin === confirmPin && pin.length === 4 && /^\d{4}$/.test(pin)) {
+        setAuthState((prev) => ({
+          ...prev,
+          method: 'pin',
+          status: 'authenticated',
+        }));
+        const newPinAuth = { pin, confirmPin };
+        setPinAuth(newPinAuth);
+
+        // Save PIN to localStorage
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('ltc-signer-pin', JSON.stringify(newPinAuth));
+          } catch (error) {
+            console.error('Failed to save PIN to localStorage:', error);
+          }
         }
+
+        return true;
+      } else {
+        return false;
       }
-      
-      return true;
-    } else {
-      return false;
-    }
-  }, [pinAuth]);
+    },
+    [pinAuth]
+  );
 
   // Verify PIN code
-  const verifyPinCode = useCallback((pin: string) => {
-    if (pin === pinAuth.pin) {
-      setAuthState(prev => ({ ...prev, status: 'authenticated' }));
-      return true;
-    } else {
-      setAuthState(prev => ({ ...prev, status: 'failed' }));
-      return false;
-    }
-  }, [pinAuth.pin]);
+  const verifyPinCode = useCallback(
+    (pin: string) => {
+      if (pin === pinAuth.pin) {
+        setAuthState((prev) => ({ ...prev, status: 'authenticated' }));
+        setSessionAuthenticated(true); // Mark as authenticated in this session
+        return true;
+      } else {
+        setAuthState((prev) => ({ ...prev, status: 'failed' }));
+        return false;
+      }
+    },
+    [pinAuth.pin]
+  );
 
   // Reset authentication
   const resetAuth = useCallback(() => {
-    setAuthState(prev => ({ 
-      ...prev, 
+    setAuthState((prev) => ({
+      ...prev,
       method: null,
       status: 'unauthenticated',
-      credentialId: undefined
+      credentialId: undefined,
     }));
     setPinAuth({ pin: '', confirmPin: '' });
-    
+    setSessionAuthenticated(false); // Reset session authentication
+
     // Clear from localStorage
     if (typeof window !== 'undefined') {
       try {
@@ -481,14 +610,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Logout
   const logout = useCallback(() => {
-    setAuthState(prev => ({ 
-      ...prev, 
+    setAuthState((prev) => ({
+      ...prev,
       status: 'unauthenticated',
       method: null,
-      credentialId: undefined
+      credentialId: undefined,
     }));
     setPinAuth({ pin: '', confirmPin: '' });
-    
+    setSessionAuthenticated(false); // Reset session authentication
+
     // Clear from localStorage
     if (typeof window !== 'undefined') {
       try {
@@ -501,90 +631,114 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Stress test utilities (development only)
-  const stressTestUtils = process.env.NODE_ENV === 'development' ? {
-    // Reset to clean state before testing
-    resetToCleanState: () => {
-      console.warn('🧪 STRESS TEST: Resetting to clean state');
-      setAuthStateInternal({
-        method: null,
-        status: 'unauthenticated',
-        isPasskeySupported: authState.isPasskeySupported,
-        isPWA: authState.isPWA,
-      });
-      setPinAuth({ pin: '', confirmPin: '' });
-      localStorage.removeItem('ltc-signer-auth');
-      localStorage.removeItem('ltc-signer-pin');
-    },
-    
-    // Corrupt auth state for testing (bypasses validation)
-    corruptAuthState: () => {
-      console.warn('🧪 STRESS TEST: Corrupting auth state (bypassing validation)');
-      setAuthStateInternal({
-        method: 'pin' as AuthMethod,
-        status: 'authenticated' as AuthStatus,
-        isPasskeySupported: false,
-        isPWA: false,
-        credentialId: 'corrupted-credential'
-      });
-    },
-    
-    // Corrupt PIN data for testing
-    corruptPinData: () => {
-      console.warn('🧪 STRESS TEST: Corrupting PIN data');
-      setPinAuth({ pin: 'corrupted', confirmPin: 'corrupted' });
-    },
-    
-    // Simulate network failure
-    simulateNetworkFailure: () => {
-      console.warn('🧪 STRESS TEST: Simulating network failure');
-      setAuthStateInternal(prev => ({ ...prev, status: 'failed' }));
-    },
-    
-    // Test validation by setting invalid state through normal setter
-    testValidation: () => {
-      console.warn('🧪 STRESS TEST: Testing validation with invalid state');
-      setAuthState({
-        method: 'pin' as AuthMethod,
-        status: 'authenticated' as AuthStatus,
-        isPasskeySupported: false,
-        isPWA: false,
-        credentialId: 'should-be-removed'
-      });
-    },
-    
-    // Get current auth state for debugging
-    getDebugInfo: () => {
-      return {
-        authState,
-        pinAuth,
-        localStorage: {
-          auth: typeof window !== 'undefined' ? localStorage.getItem('ltc-signer-auth') : null,
-          pin: typeof window !== 'undefined' ? localStorage.getItem('ltc-signer-pin') : null
-        },
-        validationRules: {
-          'PIN method with credentialId': authState.method === 'pin' && authState.credentialId ? 'INVALID' : 'OK',
-          'Authenticated passkey without credentialId': authState.method === 'passkey' && authState.status === 'authenticated' && !authState.credentialId ? 'INVALID' : 'OK',
-          'Failed status': authState.status === 'failed' ? 'INVALID' : 'OK'
+  const stressTestUtils =
+    process.env.NODE_ENV === 'development'
+      ? {
+          // Reset to clean state before testing
+          resetToCleanState: () => {
+            console.warn('🧪 STRESS TEST: Resetting to clean state');
+            setAuthStateInternal({
+              method: null,
+              status: 'unauthenticated',
+              isPasskeySupported: authState.isPasskeySupported,
+              isPWA: authState.isPWA,
+            });
+            setPinAuth({ pin: '', confirmPin: '' });
+            setSessionAuthenticated(false);
+            localStorage.removeItem('ltc-signer-auth');
+            localStorage.removeItem('ltc-signer-pin');
+          },
+
+          // Corrupt auth state for testing (bypasses validation)
+          corruptAuthState: () => {
+            console.warn(
+              '🧪 STRESS TEST: Corrupting auth state (bypassing validation)'
+            );
+            setAuthStateInternal({
+              method: 'pin' as AuthMethod,
+              status: 'authenticated' as AuthStatus,
+              isPasskeySupported: false,
+              isPWA: false,
+              credentialId: 'corrupted-credential',
+            });
+          },
+
+          // Corrupt PIN data for testing
+          corruptPinData: () => {
+            console.warn('🧪 STRESS TEST: Corrupting PIN data');
+            setPinAuth({ pin: 'corrupted', confirmPin: 'corrupted' });
+          },
+
+          // Simulate network failure
+          simulateNetworkFailure: () => {
+            console.warn('🧪 STRESS TEST: Simulating network failure');
+            setAuthStateInternal((prev) => ({ ...prev, status: 'failed' }));
+          },
+
+          // Test validation by setting invalid state through normal setter
+          testValidation: () => {
+            console.warn(
+              '🧪 STRESS TEST: Testing validation with invalid state'
+            );
+            setAuthState({
+              method: 'pin' as AuthMethod,
+              status: 'authenticated' as AuthStatus,
+              isPasskeySupported: false,
+              isPWA: false,
+              credentialId: 'should-be-removed',
+            });
+          },
+
+          // Get current auth state for debugging
+          getDebugInfo: () => {
+            return {
+              authState,
+              pinAuth,
+              sessionAuthenticated,
+              localStorage: {
+                auth:
+                  typeof window !== 'undefined'
+                    ? localStorage.getItem('ltc-signer-auth')
+                    : null,
+                pin:
+                  typeof window !== 'undefined'
+                    ? localStorage.getItem('ltc-signer-pin')
+                    : null,
+              },
+              validationRules: {
+                'PIN method with credentialId':
+                  authState.method === 'pin' && authState.credentialId
+                    ? 'INVALID'
+                    : 'OK',
+                'Authenticated passkey without credentialId':
+                  authState.method === 'passkey' &&
+                  authState.status === 'authenticated' &&
+                  !authState.credentialId
+                    ? 'INVALID'
+                    : 'OK',
+                'Failed status':
+                  authState.status === 'failed' ? 'INVALID' : 'OK',
+                'Session authentication': sessionAuthenticated
+                  ? 'AUTHENTICATED'
+                  : 'NOT AUTHENTICATED',
+              },
+            };
+          },
         }
-      };
-    }
-  } : null;
+      : null;
 
   const value: AuthContextType = {
     authState,
     pinAuth,
+    sessionAuthenticated,
     createPasskey,
     verifyPasskey,
     setPinCode,
     verifyPinCode,
     resetAuth,
     logout,
-    ...(stressTestUtils && { stressTestUtils })
+    ...(stressTestUtils && { stressTestUtils }),
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
