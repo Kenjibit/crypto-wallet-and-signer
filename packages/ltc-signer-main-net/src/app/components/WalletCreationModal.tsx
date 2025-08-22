@@ -62,6 +62,19 @@ export function WalletCreationModal({
 
   const { authState, encryptWithPasskey, encryptWithPin } = useAuth();
 
+  // Helper function to detect iOS version
+  const getIOSVersion = (): number | null => {
+    const userAgent = navigator.userAgent;
+    const match = userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/);
+    if (match) {
+      const major = parseInt(match[1], 10);
+      const minor = parseInt(match[2], 10);
+      const patch = match[3] ? parseInt(match[3], 10) : 0;
+      return major + minor / 10 + patch / 100;
+    }
+    return null;
+  };
+
   const createWalletFromEntropy = useCallback(
     async (entropyData: Uint8Array) => {
       try {
@@ -447,61 +460,121 @@ export function WalletCreationModal({
       // Create and download the encrypted file
       const blob = new Blob([encrypted], { type: 'text/plain' });
 
-      // iOS Safari compatible file download
+      // iOS Safari compatible file download with version detection
       if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        // For iOS, use the share API or open in new tab with download attribute
-        try {
-          // Try to use the Web Share API if available (iOS 12.2+)
-          if (navigator.share && typeof navigator.canShare === 'function') {
-            const file = new File([blob], filename, { type: 'text/plain' });
-            try {
-              await navigator.share({
-                title: 'Encrypted Wallet',
-                text: `Encrypted wallet file: ${filename}`,
-                files: [file],
-              });
-              console.log('✅ File shared via Web Share API');
-              setStatus(
-                '✅ File shared successfully! Check your Files app or shared location.'
-              );
-            } catch (shareError) {
-              console.warn('Web Share API failed:', shareError);
-              // Fall through to fallback method
-              throw shareError;
-            }
-          } else {
-            // Fallback: open in new tab with download attribute
-            const url = URL.createObjectURL(blob);
-            const newWindow = window.open(url, '_blank');
-            if (newWindow) {
-              // Try to trigger download in the new window
-              setTimeout(() => {
-                const downloadLink = newWindow.document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = filename;
-                downloadLink.click();
-                newWindow.close();
-                URL.revokeObjectURL(url);
-              }, 100);
-            } else {
-              // Last resort: show the encrypted content for manual copy
-              const url = URL.createObjectURL(blob);
-              window.open(url, '_blank');
-              URL.revokeObjectURL(url);
-              setStatus(
-                '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
-              );
-            }
-          }
-        } catch (shareError) {
-          console.warn('Web Share API failed, using fallback:', shareError);
-          // Fallback to opening in new tab
+        // Detect iOS version for better compatibility
+        const iosVersion = getIOSVersion();
+        console.log('📱 iOS version detected:', iosVersion);
+
+        if (iosVersion && iosVersion < 16) {
+          // iOS 15 and below - use basic fallback methods
+          console.log('📱 Using iOS 15 compatible download method');
+
+          // Method 1: Try to open in new tab with manual save instructions
           const url = URL.createObjectURL(blob);
-          window.open(url, '_blank');
+          const newWindow = window.open(url, '_blank');
+
+          if (newWindow) {
+            // Add download instructions to the new window
+            setTimeout(() => {
+              try {
+                newWindow.document.body.innerHTML = `
+                  <div style="padding: 20px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+                    <h2>📱 Save Your Encrypted Wallet</h2>
+                    <p><strong>File:</strong> ${filename}</p>
+                    <p><strong>Size:</strong> ${(
+                      encrypted.length / 1024
+                    ).toFixed(1)} KB</p>
+                    <hr>
+                    <h3>How to Save:</h3>
+                    <ol>
+                      <li><strong>Long press</strong> anywhere on this page</li>
+                      <li>Select <strong>"Save to Files"</strong></li>
+                      <li>Choose your preferred folder</li>
+                      <li>Tap <strong>"Save"</strong></li>
+                    </ol>
+                    <hr>
+                    <h3>Alternative Method:</h3>
+                    <ol>
+                      <li>Tap the <strong>Share button</strong> (square with arrow)</li>
+                      <li>Select <strong>"Copy"</strong> to copy content</li>
+                      <li>Paste into Notes app and save</li>
+                    </ol>
+                    <hr>
+                    <p><em>This file contains your encrypted wallet. Keep it safe!</em></p>
+                  </div>
+                `;
+              } catch (e) {
+                console.warn('Could not modify new window content:', e);
+              }
+            }, 100);
+
+            setStatus(
+              '📱 File opened in new tab. Follow the instructions to save it.'
+            );
+          } else {
+            // Last resort: show content directly with instructions
+            setStatus(
+              '📱 File ready. Long press and select "Save to Files" or use Share button.'
+            );
+          }
+
           URL.revokeObjectURL(url);
-          setStatus(
-            '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
-          );
+        } else {
+          // iOS 16+ - try modern methods first
+          try {
+            // Try to use the Web Share API if available
+            if (navigator.share && typeof navigator.canShare === 'function') {
+              const file = new File([blob], filename, { type: 'text/plain' });
+              try {
+                await navigator.share({
+                  title: 'Encrypted Wallet',
+                  text: `Encrypted wallet file: ${filename}`,
+                  files: [file],
+                });
+                console.log('✅ File shared via Web Share API');
+                setStatus(
+                  '✅ File shared successfully! Check your Files app or shared location.'
+                );
+              } catch (shareError) {
+                console.warn('Web Share API failed:', shareError);
+                // Fall through to fallback method
+                throw shareError;
+              }
+            } else {
+              // Fallback: open in new tab with download attribute
+              const url = URL.createObjectURL(blob);
+              const newWindow = window.open(url, '_blank');
+              if (newWindow) {
+                // Try to trigger download in the new window
+                setTimeout(() => {
+                  const downloadLink = newWindow.document.createElement('a');
+                  downloadLink.href = url;
+                  downloadLink.download = filename;
+                  downloadLink.click();
+                  newWindow.close();
+                  URL.revokeObjectURL(url);
+                }, 100);
+              } else {
+                // Last resort: show the encrypted content for manual copy
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                URL.revokeObjectURL(url);
+                setStatus(
+                  '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
+                );
+              }
+            }
+          } catch (shareError) {
+            console.warn('Web Share API failed, using fallback:', shareError);
+            // Fallback to opening in new tab
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            URL.revokeObjectURL(url);
+            setStatus(
+              '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
+            );
+          }
         }
       } else {
         // Standard download for desktop browsers
@@ -733,8 +806,22 @@ export function WalletCreationModal({
                   </p>
                   <ul style={{ margin: '0', paddingLeft: '20px' }}>
                     <li>Tap "Add & Save" to encrypt your wallet</li>
-                    <li>Use the Share button to save to Files app</li>
-                    <li>Or long press the file and select "Save to Files"</li>
+                    {getIOSVersion() && getIOSVersion()! < 16 ? (
+                      <>
+                        <li>
+                          <strong>iOS 15:</strong> File will open in new tab
+                        </li>
+                        <li>Long press and select "Save to Files"</li>
+                        <li>Or use Share button → Copy → Paste in Notes</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Use the Share button to save to Files app</li>
+                        <li>
+                          Or long press the file and select "Save to Files"
+                        </li>
+                      </>
+                    )}
                   </ul>
                 </div>
               )}
