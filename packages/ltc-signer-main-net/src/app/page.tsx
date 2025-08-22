@@ -10,11 +10,14 @@ import {
   QRScannerModal,
 } from '@btc-wallet/ui';
 import { OfflineIndicator, InstallPrompt } from '@btc-wallet/my-pwa';
-import { WalletImportModal } from './components/WalletImportModal';
-import { WalletCreationModal } from './components/WalletCreationModal';
-import { SigningFlow } from './components/SigningFlow';
-import { AuthSetupModal } from './components/AuthSetupModal';
-import { AuthVerificationModal } from './components/AuthVerificationModal';
+import {
+  WalletImportModal,
+  WalletCreationModal,
+  SigningFlow,
+  AuthSetupModal,
+  HelperModal,
+  AuthVerificationModal,
+} from './components';
 // TestControlPanel import removed for production
 import { useAuth } from './contexts/AuthContext';
 import {
@@ -45,6 +48,11 @@ export default function LTCMainPage() {
   const [showAuthVerification, setShowAuthVerification] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [justCompletedAuthSetup, setJustCompletedAuthSetup] = useState(false);
+  const [helperInfo, setHelperInfo] = useState<{
+    show: boolean;
+    title: string;
+    content: string;
+  }>({ show: false, title: '', content: '' });
 
   // Monitor auth state changes in main page
   useEffect(() => {
@@ -71,6 +79,15 @@ export default function LTCMainPage() {
   const handleCreateSuccess = (wallet: any) => {
     setCreatedWallet(wallet);
     setCurrentMode('signing');
+  };
+
+  const handleHelperClick = (
+    title: string,
+    content: string,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    setHelperInfo({ show: true, title, content });
   };
 
   // Authentication handlers
@@ -185,7 +202,18 @@ export default function LTCMainPage() {
                   <QrCode size={48} />
                 </div>
                 <h3>Scan to Sign</h3>
-                <p>Scan a PSBT QR code to sign transactions</p>
+              </div>
+              <div
+                className="helper-icon"
+                onClick={(e) =>
+                  handleHelperClick(
+                    'PSBT Signing',
+                    'Scan a Partially Signed Bitcoin Transaction (PSBT) QR code from your wallet or transaction builder. This allows you to sign transactions offline for enhanced security.',
+                    e
+                  )
+                }
+              >
+                ?
               </div>
             </Card>
           </div>
@@ -200,7 +228,18 @@ export default function LTCMainPage() {
                   <Upload size={48} />
                 </div>
                 <h3>Import Wallet</h3>
-                <p>Import existing wallet from mnemonic or private key</p>
+              </div>
+              <div
+                className="helper-icon"
+                onClick={(e) =>
+                  handleHelperClick(
+                    'Wallet Import',
+                    "Import an existing wallet using your 12 or 24-word recovery phrase (mnemonic) or private key. This allows you to manage wallets you've created elsewhere.",
+                    e
+                  )
+                }
+              >
+                ?
               </div>
             </Card>
           </div>
@@ -219,12 +258,31 @@ export default function LTCMainPage() {
                   <Plus size={48} />
                 </div>
                 <h3>Create Wallet</h3>
-                <p>Generate a new wallet with enhanced entropy</p>
+              </div>
+              <div
+                className="helper-icon"
+                onClick={(e) =>
+                  handleHelperClick(
+                    'Wallet Creation',
+                    'Create a new wallet with cryptographically secure random generation. The system combines camera, microphone, and OS entropy sources to ensure maximum security for your private keys.',
+                    e
+                  )
+                }
+              >
+                ?
               </div>
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Helper Modal */}
+      <HelperModal
+        isOpen={helperInfo.show}
+        title={helperInfo.title}
+        content={helperInfo.content}
+        onClose={() => setHelperInfo({ show: false, title: '', content: '' })}
+      />
     </div>
   );
 
