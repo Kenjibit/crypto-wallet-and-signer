@@ -61,8 +61,7 @@ export default function WalletPage() {
     false | { mode: 'wallet-json' | 'wif-only' }
   >(false);
   const [exportPassword, setExportPassword] = useState('');
-  const [isCombiningEntropy, setIsCombiningEntropy] = useState(false);
-  const [diagnostics, setDiagnostics] = useState<string>('');
+  const [diagnostics, setDiagnostics] = useState('');
 
   function handleReset() {
     setNetwork('testnet');
@@ -77,7 +76,6 @@ export default function WalletPage() {
     setNetworkConfirmed(false);
     setIsPasswordPromptOpen(false);
     setExportPassword('');
-    setIsCombiningEntropy(false);
   }
 
   const coinType = useMemo(
@@ -161,14 +159,14 @@ export default function WalletPage() {
     const video = document.createElement('video');
     video.autoplay = true;
     video.muted = true;
-    video.playsInline = true as any;
+    video.playsInline = true;
     video.srcObject = useStream;
 
     await new Promise<void>((resolve, reject) => {
       const onLoaded = () => resolve();
       const onError = () => reject(new Error('Video failed to load'));
       video.onloadedmetadata = onLoaded;
-      video.onerror = onError as any;
+      video.onerror = onError;
       setTimeout(() => resolve(), 1000);
     });
     // Ensure playing
@@ -219,7 +217,8 @@ export default function WalletPage() {
     const useStream =
       stream ?? (await navigator.mediaDevices.getUserMedia({ audio: true }));
     const audioCtx = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
+      (window as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext)();
     const source = audioCtx.createMediaStreamSource(useStream);
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 2048;
@@ -442,6 +441,7 @@ export default function WalletPage() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAssembleFromMnemonic = async () => {
     try {
       if (!BIP39.isValidMnemonic(mnemonic)) {
@@ -501,6 +501,7 @@ export default function WalletPage() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleExport = (format: 'json' | 'txt') => {
     if (!wallet) return;
     const fileName = `wallet-${wallet.network}-${wallet.kind}.` + format;
@@ -587,7 +588,7 @@ export default function WalletPage() {
                 onClick={() => {
                   (async () => {
                     try {
-                      setIsCombiningEntropy(true);
+                      setIsGenerating(true);
                       setStatus({
                         message: 'Collecting camera and microphone noise...',
                         type: 'warning',
@@ -631,7 +632,7 @@ export default function WalletPage() {
                         type: 'error',
                       });
                     } finally {
-                      setIsCombiningEntropy(false);
+                      setIsGenerating(false);
                     }
                   })();
                 }}

@@ -1,0 +1,228 @@
+/* === SHARED MODAL COMPONENTS CSS === */
+/* Reusable modal components for consistent design across all modals */
+
+/* === BASE MODAL FOUNDATION === */
+/* Common modal base styles - apply to any modal */
+.modal-base {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--modal-backdrop);
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(8px);
+}
+
+/* === MODAL HEADER COMPONENT === */
+/* Standard header for all modals */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: transparent;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
+.modal-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+/* Back button component for all modals */
+.modal-header .back-button {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+}
+
+.modal-header .back-button:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* === MODAL CONTENT CONTAINER === */
+/* Standard content area for all modals */
+.modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+  background: var(--bg-secondary);
+}
+
+/* === MODAL STEP COMPONENT === */
+/* Reusable step container for multi-step flows */
+.modal-step {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.modal-step--narrow {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.modal-step--wide {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Step header component */
+.modal-step-header h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+.modal-step-description {
+  text-align: center;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+/* === OPTION SELECTION SYSTEM === */
+/* Reusable option grid and individual options */
+.option-system {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.option-system--vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Individual option component */
+.option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.option-item:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.option-item.selected {
+  background: var(--color-primary-10);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px var(--color-primary-20);
+}
+
+.option-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Option icon components */
+.option-item .icon-left {
+  width: 24px;
+  height: 24px;
+  color: var(--color-primary-light);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-item .icon-right {
+  width: 24px;
+  height: 24px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.option-item.selected .icon-right {
+  opacity: 1;
+}
+
+/* Option content component */
+.option-content {
+  flex: 1;
+  text-align: center;
+  margin: 0 var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.option-content h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.option-content p {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+/* === RESPONSIVE DESIGN === */
+/* Moved to utilities/responsive.css for centralized responsive design management */

@@ -1,0 +1,6 @@
+/* === FOUNDATION: INDEX === */
+/* Import all foundation styles in dependency order */
+
+@import './reset.css';
+@import './typography.css';
+@import './base.css';

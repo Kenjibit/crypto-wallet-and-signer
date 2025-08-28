@@ -17,12 +17,18 @@ export interface AuthState {
 export function validateAuthenticatedState(authState: AuthState): boolean {
   // Must have authenticated status
   if (authState.status !== 'authenticated') {
-    console.warn('🔒 Auth validation failed: status is not authenticated', authState.status);
+    console.warn(
+      '🔒 Auth validation failed: status is not authenticated',
+      authState.status
+    );
     return false;
   }
 
   // Must have a valid method
-  if (!authState.method || (authState.method !== 'passkey' && authState.method !== 'pin')) {
+  if (
+    !authState.method ||
+    (authState.method !== 'passkey' && authState.method !== 'pin')
+  ) {
     console.warn('🔒 Auth validation failed: invalid method', authState.method);
     return false;
   }
@@ -30,7 +36,10 @@ export function validateAuthenticatedState(authState: AuthState): boolean {
   // If passkey method, must have credential ID
   if (authState.method === 'passkey') {
     if (!authState.credentialId || authState.credentialId.length === 0) {
-      console.warn('🔒 Auth validation failed: passkey method but no credential ID', authState.credentialId);
+      console.warn(
+        '🔒 Auth validation failed: passkey method but no credential ID',
+        authState.credentialId
+      );
       return false;
     }
   }
@@ -44,25 +53,37 @@ export function validateAuthenticatedState(authState: AuthState): boolean {
  */
 export function validatePasskeyCreation(authState: AuthState): boolean {
   if (authState.method !== 'passkey') {
-    console.warn('🔒 Passkey validation failed: method is not passkey', authState.method);
+    console.warn(
+      '🔒 Passkey validation failed: method is not passkey',
+      authState.method
+    );
     return false;
   }
 
   if (authState.status !== 'authenticated') {
-    console.warn('🔒 Passkey validation failed: status is not authenticated', authState.status);
+    console.warn(
+      '🔒 Passkey validation failed: status is not authenticated',
+      authState.status
+    );
     return false;
   }
 
   if (!authState.credentialId) {
-    console.warn('🔒 Passkey validation failed: no credential ID', authState.credentialId);
+    console.warn(
+      '🔒 Passkey validation failed: no credential ID',
+      authState.credentialId
+    );
     return false;
   }
 
   // Validate credential ID format (should be base64)
   try {
     atob(authState.credentialId);
-  } catch (error) {
-    console.warn('🔒 Passkey validation failed: invalid credential ID format', authState.credentialId);
+  } catch {
+    console.warn(
+      '🔒 Passkey validation failed: invalid credential ID format',
+      authState.credentialId
+    );
     return false;
   }
 
@@ -75,12 +96,18 @@ export function validatePasskeyCreation(authState: AuthState): boolean {
  */
 export function validatePinAuth(authState: AuthState): boolean {
   if (authState.method !== 'pin') {
-    console.warn('🔒 PIN validation failed: method is not pin', authState.method);
+    console.warn(
+      '🔒 PIN validation failed: method is not pin',
+      authState.method
+    );
     return false;
   }
 
   if (authState.status !== 'authenticated') {
-    console.warn('🔒 PIN validation failed: status is not authenticated', authState.status);
+    console.warn(
+      '🔒 PIN validation failed: status is not authenticated',
+      authState.status
+    );
     return false;
   }
 
@@ -101,18 +128,26 @@ export function checkAuthStateConsistency(authState: AuthState): boolean {
   // If unauthenticated, should not have method or credential
   if (authState.status === 'unauthenticated') {
     if (authState.method !== null) {
-      console.warn('🔒 Consistency check failed: unauthenticated but has method', authState.method);
+      console.warn(
+        '🔒 Consistency check failed: unauthenticated but has method',
+        authState.method
+      );
       return false;
     }
     if (authState.credentialId) {
-      console.warn('🔒 Consistency check failed: unauthenticated but has credential ID');
+      console.warn(
+        '🔒 Consistency check failed: unauthenticated but has credential ID'
+      );
       return false;
     }
   }
 
   // If has credential ID, method should be passkey
   if (authState.credentialId && authState.method !== 'passkey') {
-    console.warn('🔒 Consistency check failed: has credential ID but method is not passkey', authState.method);
+    console.warn(
+      '🔒 Consistency check failed: has credential ID but method is not passkey',
+      authState.method
+    );
     return false;
   }
 
@@ -151,7 +186,7 @@ export function validateAuthState(authState: AuthState): {
   }
 
   const isValid = errors.length === 0;
-  
+
   if (!isValid) {
     console.error('🔒 Auth state validation failed:', errors, authState);
   } else {

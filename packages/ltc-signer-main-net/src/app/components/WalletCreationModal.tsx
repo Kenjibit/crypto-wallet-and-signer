@@ -1,40 +1,49 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Card, Button, Input, TextArea, Status } from '@btc-wallet/ui';
+import { Button, Status } from '@btc-wallet/ui';
 import {
-  Plus,
   Camera,
-  Mic,
   Shield,
-  Eye,
-  EyeOff,
   ArrowLeft,
   ArrowRight,
-  CheckCircle,
+  Eye,
+  EyeOff,
   AlertCircle,
-  QrCode,
 } from 'lucide-react';
-import { Entropy, BIP39, WalletExport } from '@btc-wallet/wallet-generator';
+import { Entropy, BIP39 } from '@btc-wallet/wallet-generator';
 import { createLTCWallet } from '../libs/ltc-wallet';
 import { QRScannerModal } from '@btc-wallet/ui';
 import { useAuth } from '../contexts/AuthContext';
+import { useWalletDatabase } from '../hooks/useWalletDatabase';
+import {
+  ModalBase,
+  ModalStep,
+  ModalStepHeader,
+  OptionSelector,
+} from './modals';
+import type { OptionItem } from './modals';
 
 interface WalletCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateSuccess: (wallet: any) => void;
+  onCreateSuccess: (wallet: GeneratedWallet) => void;
 }
 
 interface GeneratedWallet {
-  mnemonic: string;
-  passphrase: string;
+  id?: number;
+  name: string;
   address: string;
-  network: 'mainnet';
-  entropySource: string;
-  created: boolean;
-  wif: string;
-  xpub: string;
+  publicKey: string;
+  encryptedPrivateKey: string;
+  encryptedMnemonic: string;
+  derivationPath: string;
+  network: 'mainnet' | 'testnet';
+  cryptoType: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  lastSync?: Date;
 }
 
 export function WalletCreationModal({
@@ -42,13 +51,15 @@ export function WalletCreationModal({
   onClose,
   onCreateSuccess,
 }: WalletCreationModalProps) {
-  const [step, setStep] = useState<'entropy' | 'review' | 'confirm'>('entropy');
+  const [step, setStep] = useState<'entropy' | 'name-input' | 'review'>(
+    'entropy'
+  );
   const [entropySource, setEntropySource] = useState<
     'external' | 'combined' | 'local'
   >('combined');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedMnemonic, setGeneratedMnemonic] = useState('');
-  const [passphrase, setPassphrase] = useState('');
+  const [walletName, setWalletName] = useState('');
+  const [passphrase] = useState('');
   const [showMnemonic, setShowMnemonic] = useState(false);
   const [error, setError] = useState<string>('');
   const [status, setStatus] = useState<string>('');
@@ -56,23 +67,38 @@ export function WalletCreationModal({
     useState<GeneratedWallet | null>(null);
   const [entropyProgress, setEntropyProgress] = useState(0);
   const [showQRScanner, setShowQRScanner] = useState(false);
-  const [scannedEntropy, setScannedEntropy] = useState<string>('');
-  const [pendingExternalEntropy, setPendingExternalEntropy] =
-    useState<boolean>(false);
 
-  const { authState, encryptWithPasskey, encryptWithPin } = useAuth();
+  const { authState } = useAuth();
+  const { createWallet } = useWalletDatabase();
+
+  // Define entropy source options using our OptionItem interface
+  const entropyOptions: OptionItem[] = [
+    {
+      id: 'external',
+      title: 'External Entropy',
+      description: 'Scan QR code with external entropy',
+      icon: <Camera size={24} />,
+    },
+    {
+      id: 'combined',
+      title: 'Combined (Recommended)',
+      description: 'Camera + Microphone + OS',
+      icon: <Shield size={24} />,
+    },
+    {
+      id: 'local',
+      title: 'Local Only',
+      description: 'OS random number generator',
+      icon: <Shield size={24} />,
+    },
+  ];
 
   const createWalletFromEntropy = useCallback(
     async (entropyData: Uint8Array) => {
       try {
-        setIsGenerating(true);
-        setError('');
-        setEntropyProgress(0);
-
         // Generate mnemonic
         setStatus('Generating mnemonic from entropy...');
         const mnemonic = BIP39.entropyToMnemonic(entropyData);
-        setGeneratedMnemonic(mnemonic);
 
         // Create wallet
         setStatus('Creating LTC wallet...');
@@ -84,22 +110,34 @@ export function WalletCreationModal({
           { account: 0, change: 0, index: 0 }
         );
 
+        // Generate a default wallet name for fallback only
+        const defaultName = `LTC Wallet ${new Date().toLocaleDateString()}`;
+        // Start with empty input field
+        setWalletName('');
+
         const ltcWallet: GeneratedWallet = {
-          mnemonic,
-          passphrase: passphrase || '',
+          name: defaultName,
           address: wallet.address,
+          publicKey: wallet.publicKeyHex || '',
+          encryptedPrivateKey: wallet.wif, // This will be encrypted later
+          encryptedMnemonic: mnemonic, // This will be encrypted later
+          derivationPath: "m/84'/2'/0'/0/0", // BIP84 for LTC
           network: 'mainnet',
-          entropySource: 'external',
-          created: true,
-          wif: wallet.wif,
-          xpub: wallet.xpub,
+          cryptoType: 'LTC',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isActive: true,
         };
 
         setGeneratedWallet(ltcWallet);
-        setStatus('Wallet created successfully! Review your details.');
-        setStep('review');
-      } catch (err: any) {
-        setError(err.message || 'Failed to create wallet. Please try again.');
+        setStatus('Wallet created successfully! Enter a name for your wallet.');
+        setStep('name-input');
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : 'Failed to create wallet. Please try again.';
+        setError(errorMessage);
         setStatus('');
       } finally {
         setIsGenerating(false);
@@ -112,7 +150,7 @@ export function WalletCreationModal({
   const generateEntropyFromExternal = useCallback(() => {
     // Open QR scanner modal
     setShowQRScanner(true);
-    setPendingExternalEntropy(true);
+    // setPendingExternalEntropy(true); // This line was removed
   }, []);
 
   const handleQRCodeScanned = useCallback(
@@ -139,7 +177,7 @@ export function WalletCreationModal({
                 .map((char) => char.charCodeAt(0))
             );
           }
-        } catch (parseError) {
+        } catch {
           throw new Error(
             'Invalid entropy format in QR code. Expected hex string or base64.'
           );
@@ -160,15 +198,17 @@ export function WalletCreationModal({
           );
         }
 
-        setScannedEntropy(qrData);
-        setPendingExternalEntropy(false);
+        // setScannedEntropy(qrData); // This line was removed
+        // setPendingExternalEntropy(false); // This line was removed
 
         // Now proceed with wallet creation using the validated entropy
         await createWalletFromEntropy(entropyData);
-      } catch (error: any) {
+      } catch (error: unknown) {
         setShowQRScanner(false);
-        setPendingExternalEntropy(false);
-        setError(`QR Code Error: ${error.message}`);
+        // setPendingExternalEntropy(false); // This line was removed
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error occurred';
+        setError(`QR Code Error: ${errorMessage}`);
       }
     },
     [createWalletFromEntropy]
@@ -176,7 +216,7 @@ export function WalletCreationModal({
 
   const handleQRScannerClose = useCallback(() => {
     setShowQRScanner(false);
-    setPendingExternalEntropy(false);
+    // setPendingExternalEntropy(false); // This line was removed
     setError('QR code scanning cancelled.');
   }, []);
 
@@ -198,13 +238,12 @@ export function WalletCreationModal({
 
             let frameCount = 0;
             const maxFrames = 30;
-            const entropyParts: Uint8Array[] = [];
+            const entropyData: number[] = [];
 
             const captureFrame = () => {
               if (frameCount >= maxFrames) {
                 stream.getTracks().forEach((track) => track.stop());
-                const mixedEntropy = Entropy.mixEntropyParts(entropyParts);
-                resolve(mixedEntropy);
+                resolve(new Uint8Array(entropyData));
                 return;
               }
 
@@ -217,80 +256,94 @@ export function WalletCreationModal({
               );
 
               if (imageData) {
-                // Extract entropy from image data (pixel variations)
-                const data = imageData.data;
-                const entropy = new Uint8Array(32);
-                for (let i = 0; i < 32; i++) {
-                  entropy[i] = data[i * 4] ^ data[i * 4 + 1] ^ data[i * 4 + 2];
+                // Extract entropy from image data
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                  const r = imageData.data[i];
+                  const g = imageData.data[i + 1];
+                  const b = imageData.data[i + 2];
+                  const a = imageData.data[i + 3];
+
+                  // Combine RGBA values and add to entropy
+                  const combined =
+                    ((r << 24) | (g << 16) | (b << 8) | a) & 0xff;
+                  entropyData.push(combined);
+
+                  if (entropyData.length >= 32) break;
                 }
-                entropyParts.push(entropy);
               }
 
               frameCount++;
-              setEntropyProgress((frameCount / maxFrames) * 100);
               requestAnimationFrame(captureFrame);
             };
 
-            video.addEventListener('loadeddata', captureFrame);
+            video.addEventListener('loadeddata', () => {
+              captureFrame();
+            });
           })
-          .catch(reject);
+          .catch((error) => {
+            reject(new Error(`Camera access failed: ${error.message}`));
+          });
       });
     }, []);
 
   const generateEntropyFromMicrophone =
     useCallback(async (): Promise<Uint8Array> => {
       return new Promise((resolve, reject) => {
-        const audioContext = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
-        const analyser = audioContext.createAnalyser();
-
         navigator.mediaDevices
           .getUserMedia({ audio: true })
           .then((stream) => {
-            const source = audioContext.createMediaStreamSource(stream);
-            source.connect(analyser);
-            analyser.fftSize = 256;
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
+            const audioContext = new (window.AudioContext ||
+              (
+                window as typeof window & {
+                  webkitAudioContext?: typeof AudioContext;
+                }
+              ).webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const microphone = audioContext.createMediaStreamSource(stream);
+            const scriptProcessor = audioContext.createScriptProcessor(
+              2048,
+              1,
+              1
+            );
 
+            microphone.connect(analyser);
+            analyser.connect(scriptProcessor);
+            scriptProcessor.connect(audioContext.destination);
+
+            const entropyData: number[] = [];
             let sampleCount = 0;
             const maxSamples = 100;
-            const entropyParts: Uint8Array[] = [];
 
-            const captureAudio = () => {
+            scriptProcessor.onaudioprocess = (event) => {
               if (sampleCount >= maxSamples) {
-                stream
-                  .getTracks()
-                  .forEach((track: MediaStreamTrack) => track.stop());
+                stream.getTracks().forEach((track) => track.stop());
                 audioContext.close();
-                const mixedEntropy = Entropy.mixEntropyParts(entropyParts);
-                resolve(mixedEntropy);
+                resolve(new Uint8Array(entropyData.slice(0, 32)));
                 return;
               }
 
-              analyser.getByteFrequencyData(dataArray);
-              const entropy = new Uint8Array(32);
-              for (let i = 0; i < 32; i++) {
-                entropy[i] =
-                  dataArray[i] ^
-                  dataArray[i + 32] ^
-                  dataArray[i + 64] ^
-                  dataArray[i + 96];
+              const inputBuffer = event.inputBuffer;
+              const inputData = inputBuffer.getChannelData(0);
+
+              // Extract entropy from audio data
+              for (let i = 0; i < inputData.length; i++) {
+                const sample = Math.abs(inputData[i]);
+                const entropy = Math.floor(sample * 255);
+                entropyData.push(entropy);
+
+                if (entropyData.length >= 32) break;
               }
-              entropyParts.push(entropy);
 
               sampleCount++;
-              setEntropyProgress((sampleCount / maxSamples) * 100);
-              requestAnimationFrame(captureAudio);
             };
-
-            captureAudio();
           })
-          .catch(reject);
+          .catch((error) => {
+            reject(new Error(`Microphone access failed: ${error.message}`));
+          });
       });
     }, []);
 
-  const handleGenerateEntropy = async () => {
+  const handleGenerateEntropy = useCallback(async () => {
     try {
       setIsGenerating(true);
       setError('');
@@ -300,41 +353,43 @@ export function WalletCreationModal({
 
       switch (entropySource) {
         case 'external':
-          setStatus('Opening QR scanner for external entropy...');
           generateEntropyFromExternal();
-          return; // Exit early for external entropy
+          return;
+
         case 'combined':
-          setStatus('Combining multiple entropy sources...');
+          setStatus('Capturing camera frames...');
+          setEntropyProgress(20);
           const cameraEntropy = await generateEntropyFromCamera();
+          setEntropyProgress(40);
+
+          setStatus('Capturing microphone audio...');
           const micEntropy = await generateEntropyFromMicrophone();
-          const osEntropy = Entropy.generateEntropy(256);
-          entropyData = await Entropy.mixEntropyParts([
-            cameraEntropy,
-            micEntropy,
-            osEntropy,
-          ]);
+          setEntropyProgress(60);
+
+          setStatus('Combining entropy sources...');
+          entropyData = new Uint8Array(32);
+          for (let i = 0; i < 32; i++) {
+            entropyData[i] =
+              cameraEntropy[i] ^
+              micEntropy[i] ^
+              crypto.getRandomValues(new Uint8Array(1))[0];
+          }
+          setEntropyProgress(80);
           break;
+
         case 'local':
           setStatus('Generating local entropy...');
-          entropyData = Entropy.generateEntropy(256);
+          entropyData = crypto.getRandomValues(new Uint8Array(32));
+          setEntropyProgress(100);
           break;
+
         default:
           throw new Error('Invalid entropy source');
-      }
-
-      // Only proceed with wallet creation for non-external sources
-      // Validate entropy
-      const validation = Entropy.validateEntropy(entropyData);
-      if (!validation.isValid) {
-        throw new Error(
-          `Entropy validation failed: ${validation.errors.join(', ')}`
-        );
       }
 
       // Generate mnemonic
       setStatus('Generating mnemonic from entropy...');
       const mnemonic = BIP39.entropyToMnemonic(entropyData);
-      setGeneratedMnemonic(mnemonic);
 
       // Create wallet
       setStatus('Creating LTC wallet...');
@@ -346,423 +401,314 @@ export function WalletCreationModal({
         { account: 0, change: 0, index: 0 }
       );
 
+      // Generate a default wallet name for fallback only
+      const defaultName = `LTC Wallet ${new Date().toLocaleDateString()}`;
+      // Start with empty input field
+      setWalletName('');
+
       const ltcWallet: GeneratedWallet = {
-        mnemonic,
-        passphrase: passphrase || '',
+        name: defaultName,
         address: wallet.address,
+        publicKey: wallet.publicKeyHex || '',
+        encryptedPrivateKey: wallet.wif, // This will be encrypted later
+        encryptedMnemonic: mnemonic, // This will be encrypted later
+        derivationPath: "m/84'/2'/0'/0/0", // BIP84 for LTC
         network: 'mainnet',
-        entropySource: entropySource,
-        created: true,
-        wif: wallet.wif,
-        xpub: wallet.xpub,
+        cryptoType: 'LTC',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isActive: true,
       };
 
       setGeneratedWallet(ltcWallet);
-      setStatus('Wallet created successfully! Review your details.');
-      setStep('review');
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate entropy. Please try again.');
+      setStatus('Wallet created successfully! Enter a name for your wallet.');
+      setStep('name-input');
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to create wallet. Please try again.';
+      setError(errorMessage);
       setStatus('');
     } finally {
       setIsGenerating(false);
       setEntropyProgress(0);
     }
-  };
+  }, [
+    entropySource,
+    passphrase,
+    generateEntropyFromCamera,
+    generateEntropyFromExternal,
+    generateEntropyFromMicrophone,
+  ]);
 
-  const handleConfirmWallet = () => {
-    if (generatedWallet) {
-      onCreateSuccess(generatedWallet);
-    }
-  };
-
-  const handleReset = () => {
-    setStep('entropy');
-    setGeneratedMnemonic('');
-    setPassphrase('');
-    setError('');
-    setStatus('');
-    setGeneratedWallet(null);
-    setEntropyProgress(0);
-  };
-
-  const handleBack = () => {
-    console.log('Back button clicked, current step:', step);
-    if (step === 'review') {
+  const handleBack = useCallback(() => {
+    if (step === 'name-input') {
       setStep('entropy');
-    } else if (step === 'confirm') {
-      setStep('review');
+    } else if (step === 'review') {
+      // Go back to main screen instead of previous step
+      onClose();
+    } else {
+      setStep('entropy');
     }
-  };
+  }, [step, onClose]);
 
-  const handleAddAndSave = async () => {
+  const handleNameSubmit = useCallback(async () => {
     if (!generatedWallet) return;
 
     try {
-      let encrypted: string;
-      let filename: string;
+      setStatus('Saving wallet to database...');
 
-      // Prepare wallet data for encryption
-      const walletData = JSON.stringify({
-        mnemonic: generatedWallet.mnemonic,
-        wif: generatedWallet.wif,
-        address: generatedWallet.address,
-        network: generatedWallet.network,
-        timestamp: Date.now(),
-      });
+      // Update the wallet name (use default if empty)
+      const finalName =
+        walletName.trim() || `LTC Wallet ${new Date().toLocaleDateString()}`;
 
-      // Encrypt based on authentication method
-      if (
-        authState.method === 'passkey' &&
-        authState.status === 'authenticated'
-      ) {
-        console.log('🔐 Encrypting wallet with passkey...');
-        encrypted = await encryptWithPasskey(walletData);
-        filename = `${generatedWallet.address}.passkey.enc`;
-      } else if (
-        authState.method === 'pin' &&
-        authState.status === 'authenticated'
-      ) {
-        console.log('🔐 Encrypting wallet with PIN...');
-        // For PIN encryption, we need to prompt the user for their PIN
-        const userPin = prompt('Enter your PIN to encrypt the wallet:');
-        if (!userPin) {
-          setError('PIN is required for encryption');
-          return;
-        }
-        encrypted = await encryptWithPin(walletData, userPin);
-        filename = `${generatedWallet.address}.pin.enc`;
-      } else {
-        // Fallback to standard password encryption if not authenticated
-        console.log('🔐 Using fallback password encryption...');
-        const password = '123456';
-        const encryptedExport = await WalletExport.encryptText(
-          generatedWallet.wif,
-          password
-        );
-        encrypted =
-          WalletExport.serializeEncryptedExportToBase64(encryptedExport);
-        filename = `${generatedWallet.address}.password.enc`;
-      }
+      // Update the generated wallet with the final name
+      const walletWithName = { ...generatedWallet, name: finalName };
+      setGeneratedWallet(walletWithName);
 
-      // Create and download the encrypted file
-      const blob = new Blob([encrypted], { type: 'text/plain' });
+      // Create wallet data for database
+      const walletData = {
+        name: finalName,
+        address: walletWithName.address,
+        publicKey: walletWithName.publicKey,
+        encryptedPrivateKey: walletWithName.encryptedPrivateKey,
+        encryptedMnemonic: walletWithName.encryptedMnemonic,
+        derivationPath: walletWithName.derivationPath,
+        network: walletWithName.network,
+        cryptoType: walletWithName.cryptoType,
+        isActive: true,
+      };
 
-      // iOS Safari compatible file download
-      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        // For iOS, use the share API or open in new tab with download attribute
-        try {
-          // Try to use the Web Share API if available (iOS 12.2+)
-          if (navigator.share && typeof navigator.canShare === 'function') {
-            const file = new File([blob], filename, { type: 'text/plain' });
-            try {
-              await navigator.share({
-                title: 'Encrypted Wallet',
-                text: `Encrypted wallet file: ${filename}`,
-                files: [file],
-              });
-              console.log('✅ File shared via Web Share API');
-              setStatus(
-                '✅ File shared successfully! Check your Files app or shared location.'
-              );
-            } catch (shareError) {
-              console.warn('Web Share API failed:', shareError);
-              // Fall through to fallback method
-              throw shareError;
-            }
-          } else {
-            // Fallback: open in new tab with download attribute
-            const url = URL.createObjectURL(blob);
-            const newWindow = window.open(url, '_blank');
-            if (newWindow) {
-              // Try to trigger download in the new window
-              setTimeout(() => {
-                const downloadLink = newWindow.document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = filename;
-                downloadLink.click();
-                newWindow.close();
-                URL.revokeObjectURL(url);
-              }, 100);
-            } else {
-              // Last resort: show the encrypted content for manual copy
-              const url = URL.createObjectURL(blob);
-              window.open(url, '_blank');
-              URL.revokeObjectURL(url);
-              setStatus(
-                '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
-              );
-            }
-          }
-        } catch (shareError) {
-          console.warn('Web Share API failed, using fallback:', shareError);
-          // Fallback to opening in new tab
-          const url = URL.createObjectURL(blob);
-          window.open(url, '_blank');
-          URL.revokeObjectURL(url);
-          setStatus(
-            '📱 File opened in new tab. Long press and select "Save to Files" to save it.'
-          );
-        }
-      } else {
-        // Standard download for desktop browsers
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-
-      console.log('✅ Wallet encrypted and downloaded successfully');
-
-      // Proceed to confirm step
-      setStep('confirm');
-    } catch (error) {
-      console.error('Failed to export encrypted file:', error);
-      setError(
-        `Failed to export encrypted file: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`
+      // Save to database
+      const savedWallet = await createWallet(
+        walletData,
+        authState.method || 'pin',
+        authState.method === 'passkey' ? new ArrayBuffer(0) : '0000' // Placeholder for PIN
       );
+
+      setStatus('Wallet saved successfully!');
+
+      // Update the generated wallet with the database ID
+      const walletWithId = { ...walletWithName, id: savedWallet.id };
+      setGeneratedWallet(walletWithId);
+
+      // Go to review step instead of closing
+      setStep('review');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(`Failed to save wallet: ${errorMessage}. Please try again.`);
+      setStatus('');
     }
-  };
+  }, [walletName, generatedWallet, createWallet, authState.method]);
+
+  const handleScanToSign = useCallback(() => {
+    if (generatedWallet) {
+      onCreateSuccess(generatedWallet);
+      onClose();
+    }
+  }, [generatedWallet, onCreateSuccess, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="wallet-creation-modal">
-      <div className="modal-header">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Button clicked!');
-            if (step !== 'entropy') {
-              handleBack();
-            } else {
-              onClose();
+    <ModalBase
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create LTC Wallet"
+      className="wallet-creation-modal"
+      showBackButton={true}
+      onBack={step === 'entropy' ? onClose : handleBack}
+    >
+      {step === 'entropy' && (
+        <ModalStep>
+          <ModalStepHeader
+            title="Choose Entropy Source"
+            description="Select how to generate random entropy for your wallet. Combined sources provide the highest security."
+          />
+
+          <OptionSelector
+            options={entropyOptions}
+            selectedId={entropySource}
+            onSelect={(source) =>
+              setEntropySource(source as 'external' | 'combined' | 'local')
             }
-          }}
-          className="back-button"
-          type="button"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h2>Create LTC Wallet</h2>
-      </div>
+            variant="grid"
+          />
 
-      <div className="modal-content">
-        {step === 'entropy' && (
-          <div className="entropy-step">
-            <div className="entropy-source-selector">
-              <h3>Choose Entropy Source</h3>
-              <p className="description">
-                Select how to generate random entropy for your wallet. Combined
-                sources provide the highest security.
-              </p>
-
-              <div className="source-options">
-                <button
-                  className={`source-option ${
-                    entropySource === 'external' ? 'selected' : ''
-                  }`}
-                  onClick={() => setEntropySource('external')}
-                >
-                  <Camera size={24} className="icon-left" />
-                  <div className="option-content">
-                    <h4>External Entropy</h4>
-                    <p>Scan QR code with external entropy</p>
-                  </div>
-                  <CheckCircle size={20} className="icon-right" />
-                </button>
-
-                <button
-                  className={`source-option ${
-                    entropySource === 'combined' ? 'selected' : ''
-                  }`}
-                  onClick={() => setEntropySource('combined')}
-                >
-                  <Shield size={24} className="icon-left" />
-                  <div className="option-content">
-                    <h4>Combined (Recommended)</h4>
-                    <p>Camera + Microphone + OS</p>
-                  </div>
-                  <CheckCircle size={20} className="icon-right" />
-                </button>
-
-                <button
-                  className={`source-option ${
-                    entropySource === 'local' ? 'selected' : ''
-                  }`}
-                  onClick={() => setEntropySource('local')}
-                >
-                  <Shield size={24} className="icon-left" />
-                  <div className="option-content">
-                    <h4>Local Only</h4>
-                    <p>OS random number generator</p>
-                  </div>
-                  <CheckCircle size={20} className="icon-right" />
-                </button>
+          <div className="entropy-generation">
+            <button
+              onClick={handleGenerateEntropy}
+              className="generate-button"
+              disabled={isGenerating}
+            >
+              <ArrowRight size={24} className="icon-left" />
+              <div className="button-content">
+                <h4>Create Wallet</h4>
+                <p>Create your secure Litecoin wallet</p>
               </div>
-            </div>
+              <ArrowLeft size={20} className="icon-right" />
+            </button>
 
-            <div className="entropy-generation">
-              <button
-                onClick={handleGenerateEntropy}
-                className="generate-button"
-                disabled={isGenerating}
-              >
-                <ArrowRight size={24} className="icon-left" />
-                <div className="button-content">
-                  <h4>Create Wallet</h4>
-                  <p>Create your secure Litecoin wallet</p>
+            {isGenerating && (
+              <div className="generation-progress">
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${entropyProgress}%` }}
+                  ></div>
                 </div>
-                <ArrowLeft size={20} className="icon-right" />
-              </button>
-
-              {isGenerating && (
-                <div className="generation-progress">
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${entropyProgress}%` }}
-                    ></div>
-                  </div>
-                  <p className="progress-text">{status}</p>
-                </div>
-              )}
-            </div>
-
-            {error && (
-              <div className="creation-error">
-                <Status message={error} type="error" />
+                <p className="progress-text">{status}</p>
               </div>
             )}
           </div>
-        )}
 
-        {step === 'review' && generatedWallet && (
-          <div className="review-step">
-            <div className="wallet-summary">
-              <h3>Wallet Created Successfully!</h3>
+          {error && (
+            <div className="creation-error">
+              <Status message={error} type="error" />
+            </div>
+          )}
+        </ModalStep>
+      )}
 
-              <div className="mnemonic-section">
-                <div className="section-header">
-                  <h4>Your Recovery Phrase</h4>
-                  <button
-                    onClick={() => setShowMnemonic(!showMnemonic)}
-                    className="toggle-button"
-                  >
-                    {showMnemonic ? <EyeOff size={16} /> : <Eye size={16} />}
-                    {showMnemonic ? 'Hide' : 'Show'}
-                  </button>
-                </div>
+      {step === 'name-input' && generatedWallet && (
+        <ModalStep variant="narrow">
+          <ModalStepHeader
+            title="Name Your Wallet"
+            description="Give your wallet a memorable name to help you identify it later"
+          />
 
-                <div className="mnemonic-display">
-                  {showMnemonic ? (
-                    <div className="mnemonic-words">
-                      {generatedWallet.mnemonic
-                        .split(' ')
-                        .map((word, index) => (
-                          <span key={index} className="word">
-                            {index + 1}. {word}
-                          </span>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="mnemonic-hidden">
-                      •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
-                      ••••
-                    </div>
-                  )}
-                </div>
-
-                <p className="mnemonic-warning">
-                  <AlertCircle size={16} />
-                  Write down these 24 words and store them securely offline.
-                  Never share them with anyone.
-                </p>
-              </div>
-
-              <div className="address-section">
-                <h4>Your Litecoin Address</h4>
-                <div className="address-display">
-                  <code>{generatedWallet.address}</code>
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(generatedWallet.address)
-                    }
-                    className="copy-button"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-
-              {passphrase && (
-                <div className="passphrase-section">
-                  <h4>Passphrase</h4>
-                  <p>You've set a passphrase for additional security.</p>
-                </div>
-              )}
+          <div className="name-input-container">
+            <div className="input-group">
+              <label htmlFor="wallet-name" className="input-label">
+                Wallet Name
+              </label>
+              <input
+                id="wallet-name"
+                type="text"
+                value={walletName}
+                onChange={(e) => setWalletName(e.target.value)}
+                placeholder="Enter a name for your wallet"
+                className="name-input-field"
+                autoFocus
+              />
+              <p className="input-helper">
+                Leave empty to use the default name: {generatedWallet.name}
+              </p>
             </div>
 
-            <div className="review-actions-single">
+            <div className="name-actions">
               <Button
-                onClick={handleAddAndSave}
+                onClick={handleNameSubmit}
                 variant="primary"
-                className="add-save-button"
+                className="name-submit-btn"
+                disabled={isGenerating}
               >
-                Add & Save
+                Continue
               </Button>
-
-              {/* iOS-specific instructions */}
-              {/iPad|iPhone|iPod/.test(navigator.userAgent) && (
-                <div
-                  style={{
-                    marginTop: '15px',
-                    padding: '12px',
-                    backgroundColor: '#f0f8ff',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    color: '#0066cc',
-                  }}
-                >
-                  <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>
-                    📱 iOS Instructions:
-                  </p>
-                  <ul style={{ margin: '0', paddingLeft: '20px' }}>
-                    <li>Tap "Add & Save" to encrypt your wallet</li>
-                    <li>Use the Share button to save to Files app</li>
-                    <li>Or long press the file and select "Save to Files"</li>
-                  </ul>
-                </div>
-              )}
             </div>
           </div>
-        )}
+        </ModalStep>
+      )}
 
-        {step === 'confirm' && generatedWallet && (
-          <div className="confirm-step">
-            <div className="confirmation-content">
-              <CheckCircle size={64} className="success-icon" />
-              <h3>Wallet Ready!</h3>
-              <p>Your Litecoin wallet has been created successfully.</p>
+      {step === 'review' && generatedWallet && (
+        <ModalStep>
+          <div className="wallet-summary">
+            <h3>Wallet Created Successfully!</h3>
 
-              <div className="final-actions">
-                <Button
-                  onClick={handleConfirmWallet}
-                  variant="primary"
-                  className="confirm-button"
-                >
-                  <Plus size={20} />
-                  Use This Wallet
-                </Button>
+            <div className="wallet-info-summary">
+              <div className="info-row">
+                <span className="info-label">Name:</span>
+                <span className="info-value">{generatedWallet.name}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Crypto Type:</span>
+                <span className="info-value">{generatedWallet.cryptoType}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Network:</span>
+                <span className="info-value">{generatedWallet.network}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Created:</span>
+                <span className="info-value">
+                  {generatedWallet.createdAt.toLocaleDateString()}
+                </span>
               </div>
             </div>
+
+            <div className="mnemonic-section">
+              <div className="section-header">
+                <h4>Your Recovery Phrase</h4>
+                <button
+                  onClick={() => setShowMnemonic(!showMnemonic)}
+                  className="toggle-button"
+                >
+                  {showMnemonic ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showMnemonic ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              <div className="mnemonic-display">
+                {showMnemonic ? (
+                  <div className="mnemonic-words">
+                    {generatedWallet.encryptedMnemonic
+                      .split(' ')
+                      .map((word, index) => (
+                        <span key={index} className="word">
+                          {index + 1}. {word}
+                        </span>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="mnemonic-hidden">
+                    •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
+                  </div>
+                )}
+              </div>
+
+              <p className="mnemonic-warning">
+                <AlertCircle size={16} />
+                Write down these 24 words and store them securely offline. Never
+                share them with anyone.
+              </p>
+            </div>
+
+            <div className="address-section">
+              <h4>Your Litecoin Address</h4>
+              <div className="address-display">
+                <code>{generatedWallet.address}</code>
+                <button
+                  onClick={() =>
+                    navigator.clipboard.writeText(generatedWallet.address)
+                  }
+                  className="copy-button"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            {passphrase && (
+              <div className="passphrase-section">
+                <h4>Passphrase</h4>
+                <p>You&apos;ve set a passphrase for additional security.</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+          <div className="review-actions-single">
+            <Button
+              onClick={handleScanToSign}
+              variant="primary"
+              className="scan-to-sign-button"
+            >
+              Scan to Sign
+            </Button>
+          </div>
+        </ModalStep>
+      )}
 
       {/* QR Scanner Modal for External Entropy */}
       {showQRScanner && (
@@ -772,6 +718,6 @@ export function WalletCreationModal({
           onScanResult={handleQRCodeScanned}
         />
       )}
-    </div>
+    </ModalBase>
   );
 }

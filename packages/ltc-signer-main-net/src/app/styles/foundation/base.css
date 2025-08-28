@@ -1,0 +1,91 @@
+/* === FOUNDATION: BASE ELEMENT STYLES === */
+
+/* Base styles now use fluid variables automatically */
+body {
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+/* Main screen padding using fluid spacing */
+.main-screen {
+  padding: calc(env(safe-area-inset-top) * 0.5)
+    calc(env(safe-area-inset-right) * 0.5)
+    calc(env(safe-area-inset-bottom) * 0.5)
+    calc(env(safe-area-inset-left) * 0.5);
+  /* Ensure proper height calculation and prevent scrolling */
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Action buttons using fluid spacing */
+.action-buttons {
+  margin: var(--space-lg) 0;
+  padding: 0 var(--space-md);
+  gap: var(--space-sm);
+}
+
+/* Action cards using fluid spacing and sizing */
+.action-card {
+  padding: var(--space-md);
+  margin: var(--space-xs) 0;
+  border-radius: var(--radius-md);
+  position: relative;
+}
+
+/* Card content using fluid typography */
+.action-card h3 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-xs);
+}
+
+/* Form elements moved to components/forms.css */
+
+/* List spacing using fluid spacing */
+ul,
+ol {
+  padding-left: var(--space-lg);
+}
+
+li {
+  margin-bottom: var(--space-xs);
+}
+
+/* Status messages using fluid spacing */
+.status-message {
+  font-size: var(--font-size-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+}
+
+/* QR scanner modal using fluid spacing */
+.qr-scanner-modal {
+  padding: var(--space-md);
+}
+
+.qr-scanner-modal h3 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-sm);
+}
+
+/* Modal padding using fluid spacing */
+.modal-content {
+  padding: var(--space-md);
+}
+
+.modal-header {
+  padding: var(--space-md) var(--space-md);
+}
+
+.modal-header h2 {
+  font-size: var(--font-size-xl);
+}
+
+/* Button sizes using fluid spacing */
+.btn-primary,
+.btn-secondary {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+}

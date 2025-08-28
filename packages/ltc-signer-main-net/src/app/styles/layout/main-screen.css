@@ -1,0 +1,66 @@
+/* Main Screen Layout */
+/* Core layout system for the main application screen */
+
+/* === SAFE AREA OPTIMIZATION === */
+@supports (padding: max(0px)) {
+  .main-screen {
+    padding-left: max(env(safe-area-inset-left), 0.5rem);
+    padding-right: max(env(safe-area-inset-right), 0.5rem);
+    padding-top: max(env(safe-area-inset-top), 0.5rem);
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+}
+
+/* Main screen layout - 80/20 design */
+.main-screen {
+  min-height: 100vh;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+
+  /* === PHASE 2: CONTAINER QUERY SYSTEM === */
+  /* Define container context for component-based scaling */
+  container-type: inline-size;
+  container-name: main;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Changed from space-between to center for better distribution */
+  padding: 0;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+  /* Ensure proper height calculation */
+  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* Ensure no scrolling on main screen */
+.main-screen {
+  overflow: hidden !important;
+}
+
+.main-content {
+  overflow: hidden !important;
+}
+
+/* CSS containment for better performance */
+.main-screen {
+  contain: layout;
+}
+
+/* Critical CSS optimizations */
+/* Inline critical styles for above-the-fold content */
+.main-screen {
+  /* These styles are critical for initial render */
+  display: flex;
+  flex-direction: column;
+}
+

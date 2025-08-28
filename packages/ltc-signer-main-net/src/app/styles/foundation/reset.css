@@ -1,0 +1,32 @@
+/* === FOUNDATION: CSS RESET & BASE ELEMENTS === */
+
+/* CSS Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  min-height: 100vh;
+  height: auto;
+}
+
+/* Hide network indicator */
+.network-indicator {
+  display: none !important;
+}

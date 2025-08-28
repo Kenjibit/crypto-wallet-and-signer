@@ -1,0 +1,521 @@
+/* === WALLET IMPORT MODAL === */
+
+/* Modal Base Styles */
+.wallet-import-modal .modal-content {
+  padding: var(--spacing-xl);
+}
+
+/* Import Input Section */
+.import-input-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Input Labels */
+.input-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mnemonic Input */
+.mnemonic-input {
+  margin-bottom: var(--spacing-xl);
+}
+
+.mnemonic-textarea {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  resize: vertical;
+  transition: all var(--transition-fast);
+  min-height: 120px;
+}
+
+.mnemonic-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-20);
+}
+
+/* Private Key Input */
+.private-key-input {
+  margin-bottom: var(--spacing-xl);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.private-key-input-field {
+  flex: 1;
+  width: 100%;
+  padding: var(--spacing-md);
+  padding-right: 60px !important; /* Make room for the eye icon - force override */
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  transition: all var(--transition-fast);
+}
+
+.private-key-input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-20);
+}
+
+.private-key-input .input-wrapper .toggle-button {
+  position: absolute !important;
+  right: 12px !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  margin: auto 0 !important;
+  transform: none !important;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+}
+
+.private-key-input .input-wrapper .toggle-button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+/* Passphrase Input */
+.passphrase-input-field {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  transition: all var(--transition-fast);
+}
+
+.passphrase-input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-20);
+}
+
+/* Input Helper Text */
+.input-helper {
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+/* Import Actions */
+.import-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-xl);
+  padding: 0;
+}
+
+.import-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  background: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.import-button .icon-left {
+  width: 24px;
+  height: 24px;
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.import-button .icon-right {
+  width: 24px;
+  height: 24px;
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.import-button:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.import-button:active {
+  transform: translateY(0);
+}
+
+.import-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.button-content {
+  flex: 1;
+  text-align: center;
+  margin: 0 var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.button-content h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-on-primary);
+  margin: 0 0 var(--space-xs) 0;
+  width: 100%;
+  text-align: center;
+}
+
+.button-content p {
+  font-size: var(--font-size-sm);
+  color: var(--text-on-primary);
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.4;
+  width: 100%;
+  text-align: center;
+}
+
+/* Name Input Step */
+.name-input-container {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.input-group {
+  margin-bottom: var(--spacing-xl);
+}
+
+.name-input-field {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  transition: all var(--transition-fast);
+}
+
+.name-input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-20);
+}
+
+.name-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.name-submit-btn {
+  min-width: 140px;
+}
+
+/* Wallet Info Summary */
+.wallet-info-summary {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+}
+
+/* Mnemonic Section */
+.mnemonic-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.section-header h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mnemonic-display {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mnemonic-words {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.word {
+  background: var(--bg-secondary);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.mnemonic-hidden {
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-lg);
+  font-family: monospace;
+  letter-spacing: 2px;
+}
+
+.mnemonic-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-warning-10);
+  border: 1px solid var(--color-warning-20);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.mnemonic-warning svg {
+  color: var(--color-warning);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Address Section */
+.address-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.address-section h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.address-display {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+}
+
+.address-display code {
+  flex: 1;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-button:hover {
+  color: var(--color-primary);
+  background: var(--bg-hover);
+}
+
+/* Passphrase Section */
+.passphrase-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.passphrase-section h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.passphrase-section p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  margin: 0;
+}
+
+/* Review Actions */
+.review-actions-single {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-xl);
+}
+
+.scan-to-sign-button {
+  min-width: 200px;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+/* Status and Error Styles */
+.import-status,
+.import-error {
+  margin: var(--spacing-lg) 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wallet-import-modal .modal-content {
+    padding: var(--spacing-lg);
+  }
+
+  .import-actions,
+  .review-actions-single {
+    padding: 0;
+  }
+
+  .input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .private-key-input .input-wrapper .toggle-button {
+    position: static;
+    transform: none;
+    margin-top: var(--spacing-xs);
+    align-self: flex-end;
+  }
+
+  .private-key-input-field {
+    padding-right: var(--spacing-md);
+  }
+
+  .mnemonic-words {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .address-display {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .address-display code {
+    word-break: break-word;
+  }
+}
+
+/* Dark Mode Enhancements */
+@media (prefers-color-scheme: dark) {
+  .mnemonic-textarea,
+  .private-key-input-field,
+  .passphrase-input-field,
+  .name-input-field {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+  }
+
+  .wallet-info-summary,
+  .mnemonic-display,
+  .address-display {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+  }
+
+  .mnemonic-warning {
+    background: var(--color-warning-5);
+    border-color: var(--color-warning-10);
+  }
+
+  .word {
+    background: var(--bg-tertiary);
+  }
+}

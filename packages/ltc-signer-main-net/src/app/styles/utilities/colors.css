@@ -1,0 +1,335 @@
+/* === COLOR UTILITIES === */
+/* Background, text, and border color utilities using design tokens */
+
+/* === BACKGROUND COLORS === */
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+.bg-secondary {
+  background-color: var(--bg-secondary);
+}
+.bg-tertiary {
+  background-color: var(--bg-tertiary);
+}
+.bg-elevated {
+  background-color: var(--bg-elevated);
+}
+.bg-overlay {
+  background-color: var(--bg-overlay);
+}
+
+/* Primary color backgrounds */
+.bg-primary-color {
+  background-color: var(--color-primary);
+}
+.bg-primary-light {
+  background-color: var(--color-primary-light);
+}
+.bg-primary-lighter {
+  background-color: var(--color-primary-lighter);
+}
+.bg-primary-dark {
+  background-color: var(--color-primary-dark);
+}
+.bg-primary-darker {
+  background-color: var(--color-primary-darker);
+}
+
+/* Primary color backgrounds with opacity */
+.bg-primary-10 {
+  background-color: var(--color-primary-10);
+}
+.bg-primary-20 {
+  background-color: var(--color-primary-20);
+}
+.bg-primary-30 {
+  background-color: var(--color-primary-30);
+}
+.bg-primary-50 {
+  background-color: var(--color-primary-50);
+}
+.bg-primary-80 {
+  background-color: var(--color-primary-80);
+}
+
+/* Status color backgrounds */
+.bg-success {
+  background-color: var(--color-success);
+}
+.bg-success-light {
+  background-color: var(--color-success-light);
+}
+.bg-success-dark {
+  background-color: var(--color-success-dark);
+}
+.bg-success-bg {
+  background-color: var(--color-success-bg);
+}
+
+.bg-warning {
+  background-color: var(--color-warning);
+}
+.bg-warning-light {
+  background-color: var(--color-warning-light);
+}
+.bg-warning-dark {
+  background-color: var(--color-warning-dark);
+}
+.bg-warning-bg {
+  background-color: var(--color-warning-bg);
+}
+
+.bg-error {
+  background-color: var(--color-error);
+}
+.bg-error-light {
+  background-color: var(--color-error-light);
+}
+.bg-error-dark {
+  background-color: var(--color-error-dark);
+}
+.bg-error-bg {
+  background-color: var(--color-error-bg);
+}
+
+.bg-info {
+  background-color: var(--color-info);
+}
+.bg-info-light {
+  background-color: var(--color-info-light);
+}
+.bg-info-dark {
+  background-color: var(--color-info-dark);
+}
+.bg-info-bg {
+  background-color: var(--color-info-bg);
+}
+
+/* Component backgrounds */
+.bg-card {
+  background-color: var(--card-bg);
+}
+.bg-card-hover {
+  background-color: var(--card-bg-hover);
+}
+.bg-card-active {
+  background-color: var(--card-bg-active);
+}
+
+.bg-button-primary {
+  background-color: var(--button-primary-bg);
+}
+.bg-button-primary-hover {
+  background-color: var(--button-primary-bg-hover);
+}
+.bg-button-primary-active {
+  background-color: var(--button-primary-bg-active);
+}
+
+.bg-button-secondary {
+  background-color: var(--button-secondary-bg);
+}
+.bg-button-secondary-hover {
+  background-color: var(--button-secondary-bg-hover);
+}
+.bg-button-secondary-active {
+  background-color: var(--button-secondary-bg-active);
+}
+
+.bg-button-ghost {
+  background-color: var(--button-ghost-bg);
+}
+.bg-button-ghost-hover {
+  background-color: var(--button-ghost-bg-hover);
+}
+.bg-button-ghost-active {
+  background-color: var(--button-ghost-bg-active);
+}
+
+/* Form backgrounds */
+.bg-input {
+  background-color: var(--input-bg);
+}
+.bg-input-focus {
+  background-color: var(--input-bg-focus);
+}
+
+/* === TEXT COLORS === */
+.text-primary {
+  color: var(--text-primary);
+}
+.text-secondary {
+  color: var(--text-secondary);
+}
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+.text-quaternary {
+  color: var(--text-quaternary);
+}
+.text-inverse {
+  color: var(--text-inverse);
+}
+
+/* Text on colored backgrounds */
+.text-on-primary {
+  color: var(--text-on-primary);
+}
+.text-on-success {
+  color: var(--text-on-success);
+}
+.text-on-warning {
+  color: var(--text-on-warning);
+}
+.text-on-error {
+  color: var(--text-on-error);
+}
+
+/* Status text colors */
+.text-success {
+  color: var(--color-success);
+}
+.text-success-light {
+  color: var(--color-success-light);
+}
+.text-success-dark {
+  color: var(--color-success-dark);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+.text-warning-light {
+  color: var(--color-warning-light);
+}
+.text-warning-dark {
+  color: var(--color-warning-dark);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+.text-error-light {
+  color: var(--color-error-light);
+}
+.text-error-dark {
+  color: var(--color-error-dark);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+.text-info-light {
+  color: var(--color-info-light);
+}
+.text-info-dark {
+  color: var(--color-info-dark);
+}
+
+/* Component text colors */
+.text-button-primary {
+  color: var(--button-primary-text);
+}
+.text-button-secondary {
+  color: var(--button-secondary-text);
+}
+.text-button-ghost {
+  color: var(--button-ghost-text);
+}
+
+/* === BORDER COLORS === */
+.border-primary {
+  border-color: var(--border-primary);
+}
+.border-secondary {
+  border-color: var(--border-secondary);
+}
+.border-hover {
+  border-color: var(--border-hover);
+}
+.border-focus {
+  border-color: var(--border-focus);
+}
+
+/* Status border colors */
+.border-success {
+  border-color: var(--border-success);
+}
+.border-success-bg {
+  border-color: var(--color-success-bg);
+}
+.border-success-border {
+  border-color: var(--color-success-border);
+}
+
+.border-warning {
+  border-color: var(--border-warning);
+}
+.border-warning-bg {
+  border-color: var(--color-warning-bg);
+}
+.border-warning-border {
+  border-color: var(--color-warning-border);
+}
+
+.border-error {
+  border-color: var(--border-error);
+}
+.border-error-bg {
+  border-color: var(--color-error-bg);
+}
+.border-error-border {
+  border-color: var(--color-error-border);
+}
+
+.border-info {
+  border-color: var(--border-info);
+}
+.border-info-bg {
+  border-color: var(--color-info-bg);
+}
+.border-info-border {
+  border-color: var(--color-info-border);
+}
+
+/* Component border colors */
+.border-card {
+  border-color: var(--card-border);
+}
+.border-card-hover {
+  border-color: var(--card-border-hover);
+}
+.border-button-secondary {
+  border-color: var(--button-secondary-border);
+}
+.border-input {
+  border-color: var(--input-border);
+}
+
+/* === TRANSPARENCY UTILITIES === */
+.bg-transparent {
+  background-color: transparent;
+}
+.text-transparent {
+  color: transparent;
+}
+.border-transparent {
+  border-color: transparent;
+}
+
+/* === OPACITY UTILITIES === */
+.opacity-0 {
+  opacity: 0;
+}
+.opacity-25 {
+  opacity: 0.25;
+}
+.opacity-50 {
+  opacity: 0.5;
+}
+.opacity-75 {
+  opacity: 0.75;
+}
+.opacity-100 {
+  opacity: 1;
+}

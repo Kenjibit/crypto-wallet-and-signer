@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
   MainContainer,
-  Header,
   Card,
   Button,
   Status,
@@ -17,27 +16,51 @@ import {
   AuthSetupModal,
   HelperModal,
   AuthVerificationModal,
+  WalletSelectorModal,
 } from './components';
 // TestControlPanel import removed for production
 import { useAuth } from './contexts/AuthContext';
-import {
-  QrCode,
-  Upload,
-  Plus,
-  ArrowLeft,
-  Camera,
-  Wallet,
-  Shield,
-} from 'lucide-react';
+import { QrCode, Upload, Plus, ArrowLeft, Wallet } from 'lucide-react';
 
-type AppMode = 'main' | 'scan' | 'import' | 'create' | 'signing';
+type AppMode = 'main' | 'scan' | 'scan-qr' | 'import' | 'create' | 'signing';
+
+interface Wallet {
+  id?: number;
+  name: string;
+  address: string;
+  publicKey: string;
+  encryptedPrivateKey: string;
+  encryptedMnemonic?: string;
+  derivationPath: string;
+  network: 'mainnet' | 'testnet';
+  cryptoType: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  lastSync?: Date;
+}
+
+interface ImportedWallet {
+  id?: number;
+  name?: string;
+  address: string;
+  publicKey?: string;
+  encryptedPrivateKey?: string;
+  encryptedMnemonic?: string;
+  derivationPath?: string;
+  network: string;
+  cryptoType?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  isActive?: boolean;
+}
 
 export default function LTCMainPage() {
   const { authState, sessionAuthenticated } = useAuth();
   const [currentMode, setCurrentMode] = useState<AppMode>('main');
   const [scannedData, setScannedData] = useState<string>('');
-  const [importedWallet, setImportedWallet] = useState<any>(null);
-  const [createdWallet, setCreatedWallet] = useState<any>(null);
+  const [importedWallet, setImportedWallet] = useState<Wallet | null>(null);
+  const [createdWallet, setCreatedWallet] = useState<Wallet | null>(null);
   const [status, setStatus] = useState<{
     message: string;
     type: 'success' | 'error' | 'warning';
@@ -56,8 +79,27 @@ export default function LTCMainPage() {
 
   // Monitor auth state changes in main page
   useEffect(() => {
-    // Auth state monitoring for debugging purposes
-  }, [authState]);
+    console.log('🔍 Main page: Auth state changed:', {
+      status: authState.status,
+      method: authState.method,
+      hasCredentialId: !!authState.credentialId,
+      sessionAuthenticated,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Check localStorage state for debugging
+    if (typeof window !== 'undefined') {
+      try {
+        const savedAuth = localStorage.getItem('ltc-signer-auth');
+        console.log(
+          '🔍 Main page: localStorage auth state:',
+          savedAuth ? JSON.parse(savedAuth) : null
+        );
+      } catch (error) {
+        console.error('🔍 Main page: Failed to read localStorage:', error);
+      }
+    }
+  }, [authState, sessionAuthenticated]);
 
   const handleBackToMain = () => {
     setCurrentMode('main');
@@ -71,12 +113,27 @@ export default function LTCMainPage() {
     setCurrentMode('signing');
   };
 
-  const handleImportSuccess = (wallet: any) => {
-    setImportedWallet(wallet);
+  const handleImportSuccess = (wallet: ImportedWallet) => {
+    // Convert ImportedWallet to Wallet format for internal use
+    const convertedWallet: Wallet = {
+      id: wallet.id || Date.now(),
+      name: wallet.name || 'Imported Wallet',
+      address: wallet.address,
+      publicKey: wallet.publicKey || '',
+      encryptedPrivateKey: wallet.encryptedPrivateKey || '',
+      encryptedMnemonic: wallet.encryptedMnemonic,
+      derivationPath: wallet.derivationPath || "m/84'/2'/0'/0/0",
+      network: wallet.network as 'mainnet' | 'testnet',
+      cryptoType: wallet.cryptoType || 'LTC',
+      createdAt: wallet.createdAt || new Date(),
+      updatedAt: wallet.updatedAt || new Date(),
+      isActive: wallet.isActive ?? true,
+    };
+    setImportedWallet(convertedWallet);
     setCurrentMode('signing');
   };
 
-  const handleCreateSuccess = (wallet: any) => {
+  const handleCreateSuccess = (wallet: Wallet) => {
     setCreatedWallet(wallet);
     setCurrentMode('signing');
   };
@@ -92,11 +149,50 @@ export default function LTCMainPage() {
 
   // Authentication handlers
   const requireAuth = (action: () => void) => {
+    console.log('🔐 requireAuth called:', {
+      justCompletedAuthSetup,
+      authState: {
+        status: authState.status,
+        method: authState.method,
+        hasCredentialId: !!authState.credentialId,
+      },
+      sessionAuthenticated,
+      timestamp: new Date().toISOString(),
+    });
+
     // If user just completed auth setup, execute action directly
     if (justCompletedAuthSetup) {
+      console.log('🔐 Executing action directly due to justCompletedAuthSetup');
       setJustCompletedAuthSetup(false); // Reset the flag
       action();
       return;
+    }
+
+    // Check if there's existing authentication in localStorage
+    let hasExistingAuth = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const savedAuth = localStorage.getItem('ltc-signer-auth');
+        console.log(
+          '🔐 requireAuth: localStorage auth state:',
+          savedAuth ? JSON.parse(savedAuth) : null
+        );
+        if (savedAuth) {
+          const parsedAuth = JSON.parse(savedAuth);
+          hasExistingAuth =
+            parsedAuth &&
+            parsedAuth.method &&
+            (parsedAuth.status === 'authenticated' || parsedAuth.credentialId);
+          console.log('🔐 requireAuth: hasExistingAuth:', hasExistingAuth, {
+            parsedAuth,
+            hasMethod: !!parsedAuth.method,
+            hasStatus: !!parsedAuth.status,
+            hasCredentialId: !!parsedAuth.credentialId,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to check localStorage auth state:', error);
+      }
     }
 
     // If user is authenticated with passkey AND has authenticated in this session, execute action directly
@@ -127,14 +223,27 @@ export default function LTCMainPage() {
       return;
     }
 
-    // If user is unauthenticated, show auth setup
-    if (authState.status === 'unauthenticated') {
+    // If user has existing auth in localStorage but current authState is not authenticated,
+    // show verification instead of auth setup
+    if (hasExistingAuth && authState.status !== 'authenticated') {
+      console.log(
+        '🔐 requireAuth: Showing auth verification due to existing auth in localStorage'
+      );
+      setPendingAction(() => action);
+      setShowAuthVerification(true);
+      return;
+    }
+
+    // If user is unauthenticated and has no existing auth, show auth setup
+    if (authState.status === 'unauthenticated' && !hasExistingAuth) {
+      console.log('🔐 requireAuth: Showing auth setup due to no existing auth');
       setPendingAction(() => action);
       setShowAuthSetup(true);
       return;
     }
 
     // Fallback: show auth verification
+    console.log('🔐 requireAuth: Fallback - showing auth verification');
     setPendingAction(() => action);
     setShowAuthVerification(true);
   };
@@ -195,15 +304,24 @@ export default function LTCMainPage() {
           <div
             className="action-card scan-card clickable"
             onClick={() => requireAuth(() => setCurrentMode('scan'))}
+            role="button"
+            tabIndex={0}
+            aria-label="Scan to Sign - Scan a PSBT QR code to sign Bitcoin transactions"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                requireAuth(() => setCurrentMode('scan'));
+              }
+            }}
           >
             <Card className="card-content-wrapper">
               <div className="card-content">
-                <div className="card-icon">
+                <div className="card-icon" aria-hidden="true">
                   <QrCode size={48} />
                 </div>
                 <h3>Scan to Sign</h3>
               </div>
-              <div
+              <button
                 className="helper-icon"
                 onClick={(e) =>
                   handleHelperClick(
@@ -212,24 +330,36 @@ export default function LTCMainPage() {
                     e
                   )
                 }
+                aria-label="Get help about PSBT signing"
+                type="button"
+                tabIndex={0}
               >
                 ?
-              </div>
+              </button>
             </Card>
           </div>
 
           <div
             className="action-card import-card clickable"
             onClick={() => requireAuth(() => setCurrentMode('import'))}
+            role="button"
+            tabIndex={0}
+            aria-label="Import Wallet - Import an existing wallet using your recovery phrase"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                requireAuth(() => setCurrentMode('import'));
+              }
+            }}
           >
             <Card className="card-content-wrapper">
               <div className="card-content">
-                <div className="card-icon">
+                <div className="card-icon" aria-hidden="true">
                   <Upload size={48} />
                 </div>
                 <h3>Import Wallet</h3>
               </div>
-              <div
+              <button
                 className="helper-icon"
                 onClick={(e) =>
                   handleHelperClick(
@@ -238,9 +368,12 @@ export default function LTCMainPage() {
                     e
                   )
                 }
+                aria-label="Get help about wallet import"
+                type="button"
+                tabIndex={0}
               >
                 ?
-              </div>
+              </button>
             </Card>
           </div>
 
@@ -251,15 +384,26 @@ export default function LTCMainPage() {
                 setCurrentMode('create');
               });
             }}
+            role="button"
+            tabIndex={0}
+            aria-label="Create Wallet - Create a new wallet with secure random generation"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                requireAuth(() => {
+                  setCurrentMode('create');
+                });
+              }
+            }}
           >
             <Card className="card-content-wrapper">
               <div className="card-content">
-                <div className="card-icon">
+                <div className="card-icon" aria-hidden="true">
                   <Plus size={48} />
                 </div>
                 <h3>Create Wallet</h3>
               </div>
-              <div
+              <button
                 className="helper-icon"
                 onClick={(e) =>
                   handleHelperClick(
@@ -268,9 +412,12 @@ export default function LTCMainPage() {
                     e
                   )
                 }
+                aria-label="Get help about wallet creation"
+                type="button"
+                tabIndex={0}
               >
                 ?
-              </div>
+              </button>
             </Card>
           </div>
         </div>
@@ -297,6 +444,35 @@ export default function LTCMainPage() {
           <ArrowLeft size={20} />
           Back
         </Button>
+        <h2>Select Wallet for Signing</h2>
+      </div>
+
+      <WalletSelectorModal
+        isOpen={true}
+        onClose={handleBackToMain}
+        onWalletSelect={() => {
+          // After wallet selection, proceed to QR scanning
+          setCurrentMode('scan-qr');
+        }}
+        title="Select Wallet for Signing"
+        description="Choose a wallet to use for signing this transaction"
+        showCreateOption={false}
+        showImportOption={false}
+      />
+    </div>
+  );
+
+  const renderScanQRScreen = () => (
+    <div className="scan-screen">
+      <div className="screen-header">
+        <Button
+          onClick={() => setCurrentMode('scan')}
+          variant="ghost"
+          className="back-button"
+        >
+          <ArrowLeft size={20} />
+          Back to Wallet Selection
+        </Button>
         <h2>Scan PSBT</h2>
       </div>
 
@@ -307,7 +483,7 @@ export default function LTCMainPage() {
           </div>
           <QRScannerModal
             isOpen={true}
-            onClose={handleBackToMain}
+            onClose={() => setCurrentMode('scan')}
             onScanResult={handleScanSuccess}
           />
         </Card>
@@ -386,6 +562,8 @@ export default function LTCMainPage() {
     switch (currentMode) {
       case 'scan':
         return renderScanScreen();
+      case 'scan-qr':
+        return renderScanQRScreen();
       case 'import':
         return renderImportScreen();
       case 'create':

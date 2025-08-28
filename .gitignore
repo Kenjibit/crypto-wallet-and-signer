@@ -59,6 +59,24 @@ packages/ltc-signer-main-net/node_modules/
 packages/ltc-signer-main-net/test/
 packages/ltc-signer-main-net/*.md
 
+# Fluid UI package
+packages/fluid-ui/.next/
+packages/fluid-ui/out/
+packages/fluid-ui/build/
+packages/fluid-ui/node_modules/
+packages/fluid-ui/dist/
+packages/fluid-ui/test/
+packages/fluid-ui/*.md
+
+# Presentation Fluid UI package
+packages/presentation-fluid-ui/.next/
+packages/presentation-fluid-ui/out/
+packages/presentation-fluid-ui/build/
+packages/presentation-fluid-ui/node_modules/
+packages/presentation-fluid-ui/dist/
+packages/presentation-fluid-ui/test/
+packages/presentation-fluid-ui/*.md
+
 
 # generic package build outputs (non-Next libs)
 packages/*/dist/

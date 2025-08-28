@@ -24,14 +24,14 @@ export async function captureCameraNoiseBytes(
   const video = document.createElement('video');
   video.autoplay = true;
   video.muted = true;
-  video.playsInline = true as any;
+  video.playsInline = true;
   video.srcObject = useStream;
 
   await new Promise<void>((resolve, reject) => {
     const onLoaded = () => resolve();
     const onError = () => reject(new Error('Video failed to load'));
     video.onloadedmetadata = onLoaded;
-    video.onerror = onError as any;
+    video.onerror = onError;
     setTimeout(() => resolve(), 1000);
   });
   try {
@@ -71,7 +71,8 @@ export async function captureMicNoiseBytes(
   const useStream =
     stream ?? (await navigator.mediaDevices.getUserMedia({ audio: true }));
   const audioCtx = new (window.AudioContext ||
-    (window as any).webkitAudioContext)();
+    (window as { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext)();
   const source = audioCtx.createMediaStreamSource(useStream);
   const analyser = audioCtx.createAnalyser();
   analyser.fftSize = 2048;

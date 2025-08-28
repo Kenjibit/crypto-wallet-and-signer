@@ -58,7 +58,21 @@ interface AuthContextType {
     corruptPinData: () => void;
     simulateNetworkFailure: () => void;
     testValidation: () => void;
-    getDebugInfo: () => any;
+    getDebugInfo: () => {
+      authState: AuthState;
+      pinAuth: PinAuth;
+      sessionAuthenticated: boolean;
+      localStorage: {
+        auth: string | null;
+        pin: string | null;
+      };
+      validationRules: {
+        'PIN method with credentialId': string;
+        'Authenticated passkey without credentialId': string;
+        'Failed status': string;
+        'Session authentication': string;
+      };
+    };
   } | null;
 }
 
@@ -80,7 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Validation function for auth state
   const validateAndCorrectAuthState = (state: AuthState): AuthState => {
     console.log('🔍 validateAndCorrectAuthState called with:', state);
-    let corrected = { ...state };
+    const corrected = { ...state };
     let hasChanges = false;
 
     // Rule 1: PIN method should never have credentialId
@@ -189,14 +203,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   // Validated wrapper for setAuthState
-  const setAuthState = (
-    newState: AuthState | ((prev: AuthState) => AuthState)
-  ) => {
-    console.log('🔄 setAuthState called with:', newState);
-    if (typeof newState === 'function') {
-      setAuthStateInternal((prev) => {
-        const computed = newState(prev);
-        const validated = validateAndCorrectAuthState(computed);
+  const setAuthState = useCallback(
+    (newState: AuthState | ((prev: AuthState) => AuthState)) => {
+      console.log('🔄 setAuthState called with:', newState);
+      if (typeof newState === 'function') {
+        setAuthStateInternal((prev) => {
+          const computed = newState(prev);
+          const validated = validateAndCorrectAuthState(computed);
+
+          // Reset session authentication if auth state becomes invalid
+          if (
+            validated.status === 'unauthenticated' ||
+            validated.method === null
+          ) {
+            setSessionAuthenticated(false);
+          }
+
+          console.log('🛠️ Auth state after setAuthState:', validated);
+          return validated;
+        });
+      } else {
+        const validated = validateAndCorrectAuthState(newState);
 
         // Reset session authentication if auth state becomes invalid
         if (
@@ -206,21 +233,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSessionAuthenticated(false);
         }
 
+        setAuthStateInternal(validated);
         console.log('🛠️ Auth state after setAuthState:', validated);
-        return validated;
-      });
-    } else {
-      const validated = validateAndCorrectAuthState(newState);
-
-      // Reset session authentication if auth state becomes invalid
-      if (validated.status === 'unauthenticated' || validated.method === null) {
-        setSessionAuthenticated(false);
       }
-
-      setAuthStateInternal(validated);
-      console.log('🛠️ Auth state after setAuthState:', validated);
-    }
-  };
+    },
+    [setAuthStateInternal, setSessionAuthenticated]
+  );
 
   // Track page visibility changes
   useEffect(() => {
@@ -361,7 +379,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // iOS 16+ supports passkeys with platform authenticator
       // Also check actual availability, not just API presence
-      let isSupported =
+      const isSupported =
         hasPlatformAuthenticator && platformAuthenticatorAvailable;
       console.log('🔍 Final passkey support:', isSupported);
 
@@ -395,11 +413,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const isPWA =
         (typeof window !== 'undefined' &&
           window.matchMedia('(display-mode: standalone)').matches) ||
-        (window.navigator as any).standalone === true;
+        (window.navigator as typeof window.navigator & { standalone?: boolean })
+          .standalone === true;
       console.log('🔍 PWA detection:', isPWA);
 
       // Additional iOS-specific checks
-      let finalSupported = isSupported;
+      const finalSupported = isSupported;
       console.log('🔍 Final supported value:', finalSupported);
 
       console.log('🔍 Setting auth state with passkey support...');
@@ -410,30 +429,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }));
       console.log('🔍 Auth state updated with passkey support');
 
-      // If we have a stored credential ID, verify it still exists on the device
-      if (authState.credentialId && isSupported) {
-        console.log(
-          '🔍 Found stored credential ID, but skipping verification during initialization to avoid NotAllowedError'
-        );
-        console.log(
-          '🔍 Credential will be verified when user actually tries to use it'
-        );
-
-        // Don't verify credential during initialization - this causes NotAllowedError
-        // Credential will be verified when user actually tries to authenticate
-        // Just keep the stored state for now
-      } else {
-        console.log('🔍 No stored credential ID or passkey not supported');
-      }
+      // Note: We don't check for existing credentials during initialization
+      // to avoid NotAllowedError. Credentials will be verified when user
+      // actually tries to authenticate.
+      console.log('🔍 Skipping credential verification during initialization');
     };
 
     checkPasskeySupport();
-  }, []); // Remove dependency on authState.credentialId to prevent infinite loop
+  }, [setAuthState]); // Only depend on setAuthState to avoid infinite loops
 
   // Save authentication state to localStorage whenever it changes
   useEffect(() => {
     console.log('🔄 localStorage effect triggered:', {
-      authState,
       window: typeof window !== 'undefined',
       status: authState.status,
       method: authState.method,
@@ -621,15 +628,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             error.message.includes('aborted')
           ) {
             console.log('🔐 Passkey creation cancelled by user');
-            console.log('🔐 Resetting to clean state...');
-            // Reset to clean state when user cancels
-            setAuthState((prev) => ({
-              ...prev,
-              method: null,
-              status: 'unauthenticated',
-              credentialId: undefined,
-            }));
-            console.log('🔐 State reset to clean state');
+            console.log('🔐 Checking for existing authentication...');
+
+            // Check if there's existing authentication in localStorage
+            let hasExistingAuth = false;
+            if (typeof window !== 'undefined') {
+              try {
+                const savedAuth = localStorage.getItem('ltc-signer-auth');
+                if (savedAuth) {
+                  const parsedAuth = JSON.parse(savedAuth);
+                  hasExistingAuth =
+                    parsedAuth &&
+                    parsedAuth.method &&
+                    (parsedAuth.status === 'authenticated' ||
+                      parsedAuth.credentialId);
+                }
+              } catch (localError) {
+                console.error(
+                  '🔐 Failed to check localStorage auth state:',
+                  localError
+                );
+              }
+            }
+
+            if (hasExistingAuth) {
+              console.log(
+                '🔐 Found existing authentication, preserving state and setting to failed'
+              );
+              // Preserve existing authentication state but set status to failed
+              // This will require re-verification instead of showing auth setup
+              setAuthState((prev) => ({
+                ...prev,
+                status: 'failed',
+                // Keep the existing method and credentialId
+              }));
+            } else {
+              console.log(
+                '🔐 No existing authentication, resetting to clean state'
+              );
+              // No existing auth, reset to clean state
+              setAuthState((prev) => ({
+                ...prev,
+                method: null,
+                status: 'unauthenticated',
+                credentialId: undefined,
+              }));
+            }
           } else {
             console.log(
               '🔐 Setting status to failed for non-cancellation error'
@@ -645,7 +689,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return false;
     },
-    []
+    [authState, setAuthState]
   );
 
   // Verify passkey
@@ -797,7 +841,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     }
     return false;
-  }, [authState.credentialId]);
+  }, [authState, setAuthState, setSessionAuthenticated]);
 
   // Set PIN code
   const setPinCode = useCallback(
@@ -839,7 +883,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
     },
-    [pinAuth]
+    [setAuthState, setPinAuth]
   );
 
   // Verify PIN code
@@ -866,7 +910,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
     },
-    [pinAuth.pin]
+    [pinAuth.pin, setAuthState, setSessionAuthenticated]
   );
 
   // Reset authentication
@@ -900,7 +944,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('❌ Failed to clear auth state:', error);
       }
     }
-  }, []);
+  }, [
+    authState,
+    sessionAuthenticated,
+    setAuthState,
+    setPinAuth,
+    setSessionAuthenticated,
+  ]);
 
   // Logout
   const logout = useCallback(() => {
@@ -933,7 +983,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('❌ Failed to clear auth state:', error);
       }
     }
-  }, []);
+  }, [
+    authState,
+    sessionAuthenticated,
+    setAuthState,
+    setPinAuth,
+    setSessionAuthenticated,
+  ]);
 
   // Stress test utilities (development only)
   const stressTestUtils =
@@ -1552,7 +1608,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const challenge = new Uint8Array(32);
         crypto.getRandomValues(challenge);
 
-        const assertion = await navigator.credentials.get({
+        await navigator.credentials.get({
           publicKey: {
             challenge,
             rpId: window.location.hostname,

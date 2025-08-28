@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ltc-signer-main-net-1.0.5';
+const CACHE_NAME = 'ltc-signer-main-net-1.0.11';
 const urlsToCache = [
   '/',
   '/manifest.json',

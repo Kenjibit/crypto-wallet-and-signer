@@ -1,15 +1,16 @@
-import React, { useState, useRef } from 'react';
-import { Card, Button } from '@btc-wallet/ui';
-import {
-  Fingerprint,
-  Smartphone,
-  Shield,
-  ArrowLeft,
-  CheckCircle,
-  AlertCircle,
-} from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { Button } from '@btc-wallet/ui';
+import { Fingerprint, Smartphone, Shield } from 'lucide-react';
 import { useAuth, AuthMethod } from '../contexts/AuthContext';
 import { useEffect } from 'react';
+import {
+  ModalBase,
+  ModalStep,
+  ModalStepHeader,
+  OptionSelector,
+  NumericKeypad,
+} from './modals';
+import type { OptionItem } from './modals';
 
 interface AuthSetupModalProps {
   isOpen: boolean;
@@ -24,7 +25,9 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
 }) => {
   const { authState, createPasskey, setPinCode } = useAuth();
   const [selectedMethod, setSelectedMethod] = useState<AuthMethod | null>(null);
-  const [step, setStep] = useState<'choose' | 'pin' | 'confirm'>('choose');
+  const [step, setStep] = useState<
+    'choose' | 'pin-enter' | 'pin-confirm' | 'confirm'
+  >('choose');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
@@ -32,6 +35,29 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   // Use ref to track current auth state for polling
   const currentAuthState = useRef(authState);
   currentAuthState.current = authState;
+
+  // Memoize the handlePinSetupDirect function
+  const handlePinSetupDirect = useCallback(async () => {
+    try {
+      await setPinCode(pin, confirmPin);
+      setStep('confirm');
+    } catch {
+      setError('Failed to set PIN code. Please try again.');
+    }
+  }, [pin, confirmPin, setPinCode]);
+
+  // Watch for when confirmation PIN is complete to auto-verify
+  useEffect(() => {
+    if (step === 'pin-confirm' && confirmPin.length === 4) {
+      if (pin === confirmPin) {
+        // PINs match, proceed to setup
+        handlePinSetupDirect();
+      } else {
+        setError('PIN codes do not match');
+        setConfirmPin('');
+      }
+    }
+  }, [confirmPin, pin, step, handlePinSetupDirect]);
 
   // Monitor auth state changes in the modal
   useEffect(() => {
@@ -61,13 +87,35 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleMethodSelect = (method: AuthMethod) => {
-    setSelectedMethod(method);
-    if (method === 'passkey') {
+  // Define authentication options using the OptionItem interface
+  const authOptions: OptionItem[] = [
+    ...(authState.isPasskeySupported
+      ? [
+          {
+            id: 'passkey',
+            title: 'Passkey (Recommended)',
+            description:
+              'Use Face ID, Touch ID, or fingerprint for secure authentication',
+            icon: <Fingerprint size={24} />,
+          },
+        ]
+      : []),
+    {
+      id: 'pin',
+      title: 'PIN Code',
+      description: 'Create a 4-digit PIN code for quick wallet access',
+      icon: <Smartphone size={24} />,
+    },
+  ];
+
+  const handleMethodSelect = (method: string) => {
+    const authMethod = method as AuthMethod;
+    setSelectedMethod(authMethod);
+    if (authMethod === 'passkey') {
       // Go directly to passkey creation, no intermediate step
       handlePasskeySetup();
     } else {
-      setStep('pin');
+      setStep('pin-enter');
     }
     setError('');
   };
@@ -98,251 +146,146 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
       );
     } else {
       console.log('📱 AuthSetupModal: Passkey creation failed');
-      setError(
-        'Failed to create passkey. Please try again or use PIN code instead.'
-      );
-    }
-  };
-
-  const handlePinSetup = () => {
-    console.log('📱 AuthSetupModal: handlePinSetup called');
-    console.log(
-      '📱 AuthSetupModal: PIN length:',
-      pin.length,
-      'Confirm PIN length:',
-      confirmPin.length
-    );
-    console.log(
-      '📱 AuthSetupModal: PIN validation:',
-      /^\d{4}$/.test(pin),
-      'PINs match:',
-      pin === confirmPin
-    );
-
-    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-      console.log(
-        '📱 AuthSetupModal: PIN validation failed - length or format'
-      );
-      setError('PIN must be exactly 4 digits');
-      return;
-    }
-
-    if (pin !== confirmPin) {
-      console.log(
-        '📱 AuthSetupModal: PIN confirmation failed - PINs do not match'
-      );
-      setError('PINs do not match');
-      return;
-    }
-
-    console.log('📱 AuthSetupModal: Calling setPinCode with PIN:', pin);
-    const success = setPinCode(pin, confirmPin);
-    console.log('📱 AuthSetupModal: setPinCode returned:', success);
-
-    if (success) {
-      console.log(
-        '📱 AuthSetupModal: PIN setup successful, moving to confirm step'
-      );
-      setStep('confirm');
-    } else {
-      console.log('📱 AuthSetupModal: PIN setup failed');
-      setError('Failed to set PIN code');
+      setError('Failed to create passkey. Please try again.');
     }
   };
 
   const handleBack = () => {
-    if (step === 'choose') {
-      onClose();
-    } else if (step === 'pin') {
+    if (step === 'pin-enter' || step === 'pin-confirm') {
+      setStep('choose');
+      setPin('');
+      setConfirmPin('');
+      setError('');
+    } else if (step === 'confirm') {
       setStep('choose');
       setSelectedMethod(null);
-      setError('');
-    } else {
-      setStep('pin');
     }
   };
 
   const handleComplete = () => {
-    console.log('📱 AuthSetupModal: handleComplete called');
-    console.log('📱 AuthSetupModal: Current auth state in modal:', authState);
+    onComplete();
+  };
 
-    // Additional validation: Ensure we're actually authenticated
-    if (
-      authState.status === 'authenticated' ||
-      authState.method === 'passkey' ||
-      authState.method === 'pin'
-    ) {
-      console.log(
-        '📱 AuthSetupModal: Auth state validated, proceeding with completion'
-      );
-      onComplete();
+  // Smart back button behavior
+  const handleBackButton = () => {
+    if (step === 'choose') {
+      onClose();
     } else {
-      console.warn(
-        '📱 AuthSetupModal: Auth state not properly authenticated, but proceeding anyway'
-      );
-      // Proceed anyway since the context should have the correct state
-      onComplete();
+      handleBack();
     }
   };
 
-  const renderChooseMethod = () => (
-    <div className="auth-setup-content">
-      <div className="auth-header">
-        <Shield size={48} className="auth-icon" />
-        <h2>Secure Your Wallet</h2>
-        <p>Choose how you want to authenticate with your wallet</p>
-      </div>
-
-      <div className="auth-options">
-        {authState.isPasskeySupported && (
-          <div
-            className={`auth-option ${
-              selectedMethod === 'passkey' ? 'selected' : ''
-            }`}
-            onClick={() => handleMethodSelect('passkey')}
-          >
-            <div className="option-icon">
-              <Fingerprint size={32} />
-            </div>
-            <div className="option-content">
-              <h3>Passkey (Recommended)</h3>
-              <p>
-                Use Face ID, Touch ID, or fingerprint for secure authentication
-              </p>
-            </div>
-            <div className="option-check">
-              {selectedMethod === 'passkey' && <CheckCircle size={24} />}
-            </div>
-          </div>
-        )}
-
-        <div
-          className={`auth-option ${
-            selectedMethod === 'pin' ? 'selected' : ''
-          }`}
-          onClick={() => handleMethodSelect('pin')}
-        >
-          <div className="option-icon">
-            <Smartphone size={32} />
-          </div>
-          <div className="option-content">
-            <h3>4-Digit PIN Code</h3>
-            <p>Set a simple 4-digit PIN for quick access</p>
-          </div>
-          <div className="option-check">
-            {selectedMethod === 'pin' && <CheckCircle size={24} />}
-          </div>
-        </div>
-      </div>
-
-      {!authState.isPasskeySupported && (
-        <div className="passkey-notice">
-          <AlertCircle size={20} />
-          <span>
-            Passkeys not supported on this device. Using PIN code instead.
-          </span>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderPinSetup = () => (
-    <div className="auth-setup-content">
-      <div className="auth-header">
-        <Smartphone size={48} className="auth-icon" />
-        <h2>Setup PIN Code</h2>
-        <p>Create a 4-digit PIN code for quick wallet access</p>
-      </div>
-
-      <div className="auth-form">
-        <div className="form-group">
-          <label htmlFor="pin">PIN Code</label>
-          <input
-            id="pin"
-            type="password"
-            value={pin}
-            onChange={(e) =>
-              setPin(e.target.value.replace(/\D/g, '').slice(0, 4))
-            }
-            placeholder="Enter 4-digit PIN"
-            className="form-input"
-            maxLength={4}
-            pattern="[0-9]{4}"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="confirmPin">Confirm PIN</label>
-          <input
-            id="confirmPin"
-            type="password"
-            value={confirmPin}
-            onChange={(e) =>
-              setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))
-            }
-            placeholder="Confirm 4-digit PIN"
-            className="form-input"
-            maxLength={4}
-            pattern="[0-9]{4}"
-          />
-        </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <div className="auth-actions">
-          <Button onClick={handleBack} variant="ghost">
-            <ArrowLeft size={20} />
-            Back
-          </Button>
-          <Button
-            onClick={handlePinSetup}
-            disabled={pin.length !== 4 || confirmPin.length !== 4}
-          >
-            Set PIN Code
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderConfirm = () => (
-    <div className="auth-setup-content">
-      <div className="auth-header">
-        <CheckCircle size={48} className="auth-icon success" />
-        <h2>Authentication Setup Complete!</h2>
-        <p>
-          Your wallet is now secured with{' '}
-          {selectedMethod === 'passkey' ? 'a passkey' : 'a PIN code'}
-        </p>
-      </div>
-
-      <div className="auth-summary">
-        <div className="summary-item">
-          <span className="label">Method:</span>
-          <span className="value">
-            {selectedMethod === 'passkey' ? 'Passkey' : 'PIN Code'}
-          </span>
-        </div>
-      </div>
-
-      <div className="auth-actions">
-        <Button onClick={handleComplete} className="primary">
-          Continue to Wallet
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="auth-setup-modal">
-      <div className="modal-backdrop" onClick={onClose} />
-      <div className="modal-content">
-        <Card className="auth-card">
-          {step === 'choose' && renderChooseMethod()}
-          {step === 'pin' && renderPinSetup()}
-          {step === 'confirm' && renderConfirm()}
-        </Card>
-      </div>
-    </div>
+    <ModalBase
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Setup Authentication"
+      className="auth-setup-modal"
+      showBackButton={true}
+      onBack={handleBackButton}
+    >
+      {step === 'choose' && (
+        <ModalStep variant="narrow">
+          <ModalStepHeader
+            title="Choose Authentication Method"
+            description="Select how you want to secure your wallet. Passkey is recommended for modern devices."
+          />
+
+          <OptionSelector
+            options={authOptions}
+            selectedId={selectedMethod || undefined}
+            onSelect={handleMethodSelect}
+            variant="vertical"
+          />
+
+          <div className="passkey-notice">
+            <Shield size={20} />
+            <span>
+              Passkey provides the highest security and convenience. PIN codes
+              are stored locally on your device.
+            </span>
+          </div>
+        </ModalStep>
+      )}
+
+      {step === 'pin-enter' && (
+        <ModalStep variant="narrow">
+          <ModalStepHeader
+            title="Setup PIN Code"
+            description="Create a 4-digit PIN code for quick wallet access"
+          />
+
+          <div className="pin-setup-container">
+            <NumericKeypad
+              value={pin}
+              onChange={setPin}
+              maxLength={4}
+              label="Enter PIN Code"
+              placeholder="Enter 4-digit PIN"
+              step="enter"
+              onStepComplete={() => setStep('pin-confirm')}
+            />
+          </div>
+        </ModalStep>
+      )}
+
+      {step === 'pin-confirm' && (
+        <ModalStep variant="narrow">
+          <ModalStepHeader
+            title="Confirm PIN Code"
+            description="Please confirm your 4-digit PIN code"
+          />
+
+          <div className="pin-setup-container">
+            <NumericKeypad
+              value={confirmPin}
+              onChange={setConfirmPin}
+              maxLength={4}
+              label="Confirm PIN Code"
+              placeholder="Confirm 4-digit PIN"
+              step="confirm"
+            />
+
+            {error && <div className="error-message">{error}</div>}
+          </div>
+        </ModalStep>
+      )}
+
+      {step === 'confirm' && (
+        <ModalStep variant="narrow">
+          <ModalStepHeader
+            title="Authentication Setup Complete!"
+            description={`Your wallet is now secured with ${
+              selectedMethod === 'passkey' ? 'a passkey' : 'a PIN code'
+            }`}
+          />
+
+          <div className="success-container">
+            <div className="success-icon">
+              <Shield size={48} className="success-shield" />
+            </div>
+
+            <div className="success-summary">
+              <div className="summary-item">
+                <span className="summary-label">Authentication Method:</span>
+                <span className="summary-value">
+                  {selectedMethod === 'passkey' ? 'Passkey' : 'PIN Code'}
+                </span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Status:</span>
+                <span className="summary-value success">Secured</span>
+              </div>
+            </div>
+
+            <div className="success-actions">
+              <Button onClick={handleComplete} className="primary">
+                Continue to Wallet
+              </Button>
+            </div>
+          </div>
+        </ModalStep>
+      )}
+    </ModalBase>
   );
 };

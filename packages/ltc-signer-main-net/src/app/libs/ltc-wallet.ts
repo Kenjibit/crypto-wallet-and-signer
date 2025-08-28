@@ -12,15 +12,15 @@ export const litecoinMainnet: Network = {
   bech32: 'ltc',
   pubKeyHash: 0x30, // Litecoin mainnet pubkey hash
   scriptHash: 0x32, // Litecoin mainnet script hash
-  wif: 0xB0, // Litecoin mainnet WIF
+  wif: 0xb0, // Litecoin mainnet WIF
 };
 
 export const litecoinTestnet: Network = {
   ...networks.testnet,
   bech32: 'tltc',
-  pubKeyHash: 0x6F, // Litecoin testnet pubkey hash
-  scriptHash: 0x3A, // Litecoin testnet script hash
-  wif: 0xEF, // Litecoin testnet WIF
+  pubKeyHash: 0x6f, // Litecoin testnet pubkey hash
+  scriptHash: 0x3a, // Litecoin testnet script hash
+  wif: 0xef, // Litecoin testnet WIF
 };
 
 export type AddressKind = 'p2pkh' | 'p2sh-p2wpkh' | 'p2wpkh';
@@ -66,7 +66,10 @@ export function buildLTCDerivationPath(
   return `m/${purpose}'/${coinType}'/${account}'/${change}/${index}`;
 }
 
-export function deriveLTCNodeFromSeed(seed: Uint8Array, networkType: NetworkType) {
+export function deriveLTCNodeFromSeed(
+  seed: Uint8Array,
+  networkType: NetworkType
+) {
   const network = getLTCNetwork(networkType);
   const root = bip32.fromSeed(Buffer.from(seed), network);
   return root;
@@ -77,27 +80,31 @@ export function deriveLTCAddressFromPublicKey(
   kind: AddressKind,
   networkType: NetworkType
 ): string {
-  const network = getLTCNetwork(networkType);
-  
   if (kind === 'p2pkh') {
     const { address } = payments.p2pkh({
       pubkey: Buffer.from(publicKey),
-      network,
+      network: getLTCNetwork(networkType),
     });
     if (!address) throw new Error('Failed to compute P2PKH address');
     return address;
   }
-  
+
   if (kind === 'p2sh-p2wpkh') {
-    const redeem = payments.p2wpkh({ pubkey: Buffer.from(publicKey), network });
-    const { address } = payments.p2sh({ redeem, network });
+    const redeem = payments.p2wpkh({
+      pubkey: Buffer.from(publicKey),
+      network: getLTCNetwork(networkType),
+    });
+    const { address } = payments.p2sh({
+      redeem,
+      network: getLTCNetwork(networkType),
+    });
     if (!address) throw new Error('Failed to compute P2SH-P2WPKH address');
     return address;
   }
-  
+
   const { address } = payments.p2wpkh({
     pubkey: Buffer.from(publicKey),
-    network,
+    network: getLTCNetwork(networkType),
   });
   if (!address) throw new Error('Failed to compute P2WPKH address');
   return address;
@@ -112,35 +119,43 @@ export async function createLTCWallet(
 ): Promise<LTCWalletResult> {
   // Import BIP39 functions dynamically to avoid build issues
   const { mnemonicToSeed } = await import('bip39');
-  
+
   const seed = await mnemonicToSeed(mnemonic, passphrase);
   const root = deriveLTCNodeFromSeed(new Uint8Array(seed), networkType);
-  
+
   const account = options.account ?? 0;
   const change = options.change ?? 0;
   const index = options.index ?? 0;
-  
+
   // Build full leaf path and account-level path
-  const path = buildLTCDerivationPath(kind, networkType, { account, change, index });
+  const path = buildLTCDerivationPath(kind, networkType, {
+    account,
+    change,
+    index,
+  });
   const accountPath = `m/${getPurposeFor(kind)}'/2'/${account}'`; // Litecoin coin type is 2
-  
+
   const accountNode = root.derivePath(accountPath).neutered();
   const xpub = accountNode.toBase58();
-  
+
   const leaf = root.derivePath(path);
   if (!leaf.privateKey || !leaf.publicKey) {
     throw new Error('Failed to derive leaf key material');
   }
-  
+
   const keyPair = ECPair.fromPrivateKey(Buffer.from(leaf.privateKey), {
     compressed: true,
     network: getLTCNetwork(networkType),
   });
-  
+
   const wif = keyPair.toWIF();
   const publicKeyHex = Buffer.from(leaf.publicKey).toString('hex');
-  const address = deriveLTCAddressFromPublicKey(leaf.publicKey, kind, networkType);
-  
+  const address = deriveLTCAddressFromPublicKey(
+    leaf.publicKey,
+    kind,
+    networkType
+  );
+
   return {
     mnemonic,
     network: networkType,
@@ -153,20 +168,107 @@ export async function createLTCWallet(
   };
 }
 
-// Helper function to validate Litecoin address
-export function isValidLTCAddress(address: string, networkType: NetworkType = 'mainnet'): boolean {
+/**
+ * Creates an LTC wallet from a WIF private key
+ */
+export function createLTCWalletFromPrivateKey(
+  privateKeyWIF: string,
+  kind: AddressKind = 'p2wpkh',
+  networkType: NetworkType = 'mainnet'
+): LTCWalletResult {
   try {
+    // Validate WIF format
+    if (!isValidLTCWIF(privateKeyWIF, networkType)) {
+      throw new Error('Invalid WIF format for Litecoin');
+    }
+
+    // Create key pair from WIF
+    const keyPair = ECPair.fromWIF(privateKeyWIF, getLTCNetwork(networkType));
+
+    if (!keyPair.privateKey || !keyPair.publicKey) {
+      throw new Error('Failed to extract key material from WIF');
+    }
+
+    // Generate address
+    const publicKeyHex = Buffer.from(keyPair.publicKey).toString('hex');
+    const address = deriveLTCAddressFromPublicKey(
+      keyPair.publicKey,
+      kind,
+      networkType
+    );
+
+    // Create a default derivation path for imported keys
+    const path = buildLTCDerivationPath(kind, networkType, {
+      account: 0,
+      change: 0,
+      index: 0,
+    });
+
+    return {
+      mnemonic: '', // No mnemonic for imported private keys
+      network: networkType,
+      kind,
+      path,
+      xpub: '', // No xpub for single key imports
+      wif: privateKeyWIF,
+      publicKeyHex,
+      address,
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to create wallet from private key: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
+}
+
+/**
+ * Validates Litecoin WIF format
+ */
+export function isValidLTCWIF(
+  wif: string,
+  networkType: NetworkType = 'mainnet'
+): boolean {
+  try {
+    const trimmedWif = wif.trim();
+
+    // Check length
+    if (trimmedWif.length < 51 || trimmedWif.length > 52) {
+      return false;
+    }
+
+    // Check expected prefix based on network
     const network = getLTCNetwork(networkType);
-    
+
+    // Try to decode WIF using bitcoinjs-lib
+    try {
+      ECPair.fromWIF(trimmedWif, network);
+      return true;
+    } catch {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+}
+
+// Helper function to validate Litecoin address
+export function isValidLTCAddress(address: string): boolean {
+  try {
     // Try to decode the address
-    if (address.startsWith('L') || address.startsWith('M') || address.startsWith('3')) {
+    if (
+      address.startsWith('L') ||
+      address.startsWith('M') ||
+      address.startsWith('3')
+    ) {
       // Legacy or P2SH addresses
       return true;
     } else if (address.startsWith('ltc1') || address.startsWith('tltc1')) {
       // Bech32 addresses
       return true;
     }
-    
+
     return false;
   } catch {
     return false;

@@ -1,0 +1,1111 @@
+/* === MODALS.CSS - MODAL SYSTEM IMPLEMENTATION === */
+/* Imports shared modal components and provides specific modal implementations */
+
+/* === SHARED MODAL COMPONENTS CSS === */
+/* Reusable modal components for consistent design across all modals */
+
+/* === BASE MODAL FOUNDATION === */
+/* Common modal base styles - apply to any modal */
+.modal-base {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--modal-backdrop);
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(8px);
+
+  /* Mobile safe area support */
+  padding-left: var(--safe-area-inset-left);
+  padding-right: var(--safe-area-inset-right);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-top: var(--safe-area-inset-top);
+}
+
+/* === MODAL HEADER COMPONENT === */
+/* Standard header for all modals */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: transparent;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
+.modal-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+/* Back button component for all modals */
+.modal-header .back-button {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+}
+
+.modal-header .back-button:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* === MODAL CONTENT CONTAINER === */
+/* Standard content area for all modals */
+.modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+  background: var(--bg-secondary);
+}
+
+/* === MODAL STEP COMPONENT === */
+/* Reusable step container for multi-step flows */
+.modal-step {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.modal-step--narrow {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.modal-step--wide {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Step header component */
+.modal-step-header h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+.modal-step-description {
+  text-align: center;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+/* === OPTION SELECTION SYSTEM === */
+/* Reusable option grid and individual options */
+.option-system {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.option-system--vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Individual option component */
+.option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.option-item:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.option-item.selected {
+  background: var(--color-primary-10);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px var(--color-primary-20);
+}
+
+.option-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Option icon components */
+.option-item .icon-left {
+  width: 24px;
+  height: 24px;
+  color: var(--color-primary-light);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-item .icon-right {
+  width: 24px;
+  height: 24px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.option-item.selected .icon-right {
+  opacity: 1;
+}
+
+/* Option content component */
+.option-content {
+  flex: 1;
+  text-align: center;
+  margin: 0 var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* === NUMERIC KEYPAD COMPONENT === */
+/* Touch-friendly numeric input for PIN codes and similar inputs */
+.numeric-keypad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  height: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.keypad-label {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.pin-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.pin-dots {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+.pin-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--card-border);
+  background: transparent;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+}
+
+.pin-dot.filled {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.1);
+  color: white;
+  position: relative;
+}
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  width: 100%;
+  max-width: 400px;
+  min-width: 300px;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.keypad-key {
+  aspect-ratio: 1;
+  border: none;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 60px;
+  min-width: 60px;
+}
+
+.keypad-key:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.keypad-key:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
+}
+
+.keypad-key.number {
+  background: var(--card-bg);
+}
+
+.keypad-key.action {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.keypad-key.action:hover {
+  background: var(--bg-tertiary-hover);
+  color: var(--text-primary);
+}
+
+.keypad-key:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.keypad-key.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.keypad-key.empty:hover {
+  background: transparent;
+  border: none;
+  transform: none;
+  box-shadow: none;
+}
+
+/* iOS-specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  .keypad-key {
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-touch-action: manipulation;
+  }
+
+  .keypad-key:active {
+    -webkit-transform: scale(0.95);
+    transform: scale(0.95);
+  }
+}
+
+/* Mobile responsive optimizations */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* Large screen optimizations */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* PIN Setup Container */
+.pin-setup-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.pin-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* === SUCCESS STEP STYLING === */
+.success-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2xl);
+  width: 100%;
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-10),
+    var(--color-primary-20)
+  );
+  border: 3px solid var(--color-primary-30);
+  border-radius: 50%;
+  margin-bottom: var(--spacing-lg);
+  transition: all var(--transition-fast);
+}
+
+.success-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px var(--color-primary-20);
+}
+
+.success-shield {
+  color: var(--color-primary);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.success-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  gap: var(--spacing-sm);
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.summary-item:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.summary-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  margin-top: var(--spacing-xs);
+}
+
+.summary-value.success {
+  color: var(--color-success);
+  font-size: var(--font-size-xl);
+}
+
+.success-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-lg);
+  width: 100%;
+}
+
+.success-actions .primary {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.option-content h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.option-content p {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+/* === RESPONSIVE DESIGN === */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* iOS-specific safe area handling */
+@supports (padding: max(0px)) {
+  .modal-base {
+    /* Handle all safe areas with fallbacks */
+    padding-top: max(0px, var(--safe-area-inset-top));
+    padding-left: max(0px, var(--safe-area-inset-left));
+    padding-right: max(0px, var(--safe-area-inset-right));
+    padding-bottom: max(0px, var(--safe-area-inset-bottom));
+  }
+}
+
+/* === SPECIFIC MODAL IMPLEMENTATIONS === */
+
+/* === WALLET CREATION MODAL === */
+/* Uses modular components with specific customizations */
+.wallet-creation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--modal-backdrop);
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(8px);
+}
+
+/* Wallet-specific step styles */
+.entropy-step {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.entropy-source-selector h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+.description {
+  text-align: center;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+/* Entropy Generation Styles */
+.entropy-generation {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.generation-progress {
+  margin-top: 1.5rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-primary-lighter)
+  );
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: var(--gray-300);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Review Step Styles */
+.review-step {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.wallet-summary h3 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Review Actions Styles */
+.review-actions-single {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-xl);
+}
+
+/* Confirm Step Styles */
+.confirm-step {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.confirmation-content {
+  padding: 3rem 2rem;
+}
+
+.success-icon {
+  color: var(--color-success);
+  margin-bottom: 1.5rem;
+}
+
+.confirmation-content h3 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.confirmation-content p {
+  font-size: 1.125rem;
+  color: var(--gray-300);
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.final-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* Error Styles */
+.creation-error {
+  margin-top: 1rem;
+}
+
+/* Wallet-specific option system */
+.source-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.source-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.source-option:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.source-option.selected {
+  background: var(--color-primary-10);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px var(--color-primary-20);
+}
+
+.source-option .icon-left {
+  width: 24px;
+  height: 24px;
+  color: var(--color-primary-light);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.source-option .icon-right {
+  width: 24px;
+  height: 24px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.source-option.selected .icon-right {
+  opacity: 1;
+}
+
+/* === AUTHENTICATION MODAL === */
+/* Uses modular components with specific customizations */
+.auth-setup-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--modal-backdrop);
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(8px);
+}
+
+/* Auth-specific step styles */
+.auth-setup-step {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.auth-method-selector h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+.auth-description {
+  text-align: center;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+/* Auth Form Styles moved to components/forms.css */
+
+/* Auth Summary Step Styles */
+.auth-summary-step {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.auth-summary h3 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.auth-summary {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item .label {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.summary-item .value {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Verification Step Styles */
+.verification-step {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.verification-status {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.verifying,
+.ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.verifying .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.verifying p,
+.ready p {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.pin-verification {
+  margin-bottom: var(--spacing-xl);
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-secondary);
+}
+
+.auth-method-info {
+  font-size: var(--font-size-sm);
+  color: var(--text-quaternary);
+  margin: 0;
+}
+
+/* Auth-specific option system */
+.auth-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.auth-option {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.auth-option:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-option.selected {
+  background: var(--color-primary-10);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px var(--color-primary-20);
+}
+
+/* Auth Option Icon */
+.option-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  margin-right: var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+.option-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* Auth Option Check */
+.option-check {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* Passkey Notice */
+.passkey-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.passkey-info {
+  margin: var(--spacing-lg) 0;
+}
+
+/* Info Card */
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+}
+
+.info-card h4 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.info-card p {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* === HELPER MODAL COMPONENT === */
+/* Helper Modal Styles - Enhanced Readability & Design */
+.helper-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(8px);
+}
+
+.helper-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  /* Animation styles moved to utilities/animations.css */
+}
+
+/* Helper modal component variants */
+.helper-modal--compact {
+  padding: var(--space-lg);
+  max-width: 350px;
+  border-radius: var(--radius-lg);
+}
+
+.helper-modal--spacious {
+  padding: var(--space-xl);
+  max-width: 500px;
+  border-radius: var(--radius-xl);
+}
+
+.helper-modal--minimal {
+  padding: var(--space-md);
+  max-width: 300px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.helper-modal--elevated {
+  box-shadow: var(--shadow-xl);
+  border-color: var(--border-hover);
+  background: var(--bg-tertiary);
+}
+
+.helper-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.helper-modal-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.helper-close-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  /* Animation styles moved to utilities/animations.css */
+}
+
+.helper-close-btn:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  color: var(--text-primary);
+  /* Animation styles moved to utilities/animations.css */
+}
+
+.explanation-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  line-height: 1.7;
+  text-align: left;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-primary);
+}
+
+.modal-close-btn {
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  border: none;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  /* Animation styles moved to utilities/animations.css */
+}

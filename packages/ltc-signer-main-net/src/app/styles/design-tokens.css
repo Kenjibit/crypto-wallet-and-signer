@@ -190,8 +190,33 @@
   --font-size-3xl: clamp(1.875rem, 1.5rem + 1.875vw, 2.5rem);
   --font-size-4xl: clamp(2.25rem, 1.8rem + 2.25vw, 3rem);
 
+  /* === PHASE 2: CONTAINER QUERY SYSTEM === */
+  /* Container query breakpoints for component-based scaling */
+  --container-xs: 320px; /* iPhone SE and smaller */
+  --container-sm: 375px; /* iPhone SE */
+  --container-md: 390px; /* iPhone 12/13/14 */
+  --container-lg: 428px; /* iPhone 12/13/14 Pro Max */
+  --container-xl: 768px; /* iPad Mini */
+  --container-2xl: 1024px; /* iPad */
+
+  /* === PHASE 3: SYSTEMATIC BREAKPOINT STRATEGY === */
+  /* Industry-standard, device-agnostic breakpoints using logical units */
+  --breakpoint-xs: 20em; /* 320px - Small phones */
+  --breakpoint-sm: 30em; /* 480px - Large phones */
+  --breakpoint-md: 48em; /* 768px - Tablets */
+  --breakpoint-lg: 64em; /* 1024px - Small desktops */
+  --breakpoint-xl: 80em; /* 1280px - Large desktops */
+  --breakpoint-2xl: 90em; /* 1440px - Ultra-wide screens */
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
+
+  /* === SAFE AREA INSETS === */
+  /* Mobile device safe area support for notched devices */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
 }

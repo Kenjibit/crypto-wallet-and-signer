@@ -1,0 +1,266 @@
+/* === FLEXBOX UTILITIES === */
+/* Display, direction, alignment, and flex properties */
+
+/* === DISPLAY UTILITIES === */
+.d-flex {
+  display: flex;
+}
+.d-inline-flex {
+  display: inline-flex;
+}
+.d-grid {
+  display: grid;
+}
+.d-block {
+  display: block;
+}
+.d-inline-block {
+  display: inline-block;
+}
+.d-inline {
+  display: inline;
+}
+.d-none {
+  display: none;
+}
+
+/* === FLEX DIRECTION === */
+.flex-row {
+  flex-direction: row;
+}
+.flex-row-reverse {
+  flex-direction: row-reverse;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-col-reverse {
+  flex-direction: column-reverse;
+}
+
+/* === FLEX WRAP === */
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.flex-nowrap {
+  flex-wrap: nowrap;
+}
+.flex-wrap-reverse {
+  flex-wrap: wrap-reverse;
+}
+
+/* === FLEX GROW === */
+.flex-grow-0 {
+  flex-grow: 0;
+}
+.flex-grow-1 {
+  flex-grow: 1;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+
+/* === FLEX SHRINK === */
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+.flex-shrink-1 {
+  flex-shrink: 1;
+}
+.flex-shrink {
+  flex-shrink: 1;
+}
+
+/* === FLEX BASIS === */
+.flex-basis-auto {
+  flex-basis: auto;
+}
+.flex-basis-0 {
+  flex-basis: 0;
+}
+.flex-basis-full {
+  flex-basis: 100%;
+}
+
+/* === FLEX SHORTHAND === */
+.flex-1 {
+  flex: 1 1 0%;
+}
+.flex-auto {
+  flex: 1 1 auto;
+}
+.flex-initial {
+  flex: 0 1 auto;
+}
+.flex-none {
+  flex: none;
+}
+
+/* === JUSTIFY CONTENT === */
+.justify-start {
+  justify-content: flex-start;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.justify-around {
+  justify-content: space-around;
+}
+.justify-evenly {
+  justify-content: space-evenly;
+}
+
+/* === ALIGN ITEMS === */
+.items-start {
+  align-items: flex-start;
+}
+.items-end {
+  align-items: flex-end;
+}
+.items-center {
+  align-items: center;
+}
+.items-baseline {
+  align-items: baseline;
+}
+.items-stretch {
+  align-items: stretch;
+}
+
+/* === ALIGN SELF === */
+.self-start {
+  align-self: flex-start;
+}
+.self-end {
+  align-self: flex-end;
+}
+.self-center {
+  align-self: center;
+}
+.self-baseline {
+  align-self: baseline;
+}
+.self-stretch {
+  align-self: stretch;
+}
+
+/* === ALIGN CONTENT === */
+.content-start {
+  align-content: flex-start;
+}
+.content-end {
+  align-content: flex-end;
+}
+.content-center {
+  align-content: center;
+}
+.content-between {
+  align-content: space-between;
+}
+.content-around {
+  align-content: space-around;
+}
+.content-stretch {
+  align-content: stretch;
+}
+
+/* === ORDER === */
+.order-first {
+  order: -9999;
+}
+.order-last {
+  order: 9999;
+}
+.order-none {
+  order: 0;
+}
+.order-1 {
+  order: 1;
+}
+.order-2 {
+  order: 2;
+}
+.order-3 {
+  order: 3;
+}
+.order-4 {
+  order: 4;
+}
+.order-5 {
+  order: 5;
+}
+
+/* === GAP UTILITIES (Flexbox Specific) === */
+.gap-0 {
+  gap: 0;
+}
+.gap-xs {
+  gap: var(--space-xs);
+}
+.gap-sm {
+  gap: var(--space-sm);
+}
+.gap-md {
+  gap: var(--space-md);
+}
+.gap-lg {
+  gap: var(--space-lg);
+}
+.gap-xl {
+  gap: var(--space-xl);
+}
+.gap-2xl {
+  gap: var(--space-2xl);
+}
+
+/* Row Gap for Flexbox */
+.row-gap-0 {
+  row-gap: 0;
+}
+.row-gap-xs {
+  row-gap: var(--space-xs);
+}
+.row-gap-sm {
+  row-gap: var(--space-sm);
+}
+.row-gap-md {
+  row-gap: var(--space-md);
+}
+.row-gap-lg {
+  row-gap: var(--space-lg);
+}
+.row-gap-xl {
+  row-gap: var(--space-xl);
+}
+.row-gap-2xl {
+  row-gap: var(--space-2xl);
+}
+
+/* Column Gap for Flexbox */
+.col-gap-0 {
+  column-gap: 0;
+}
+.col-gap-xs {
+  column-gap: var(--space-xs);
+}
+.col-gap-sm {
+  column-gap: var(--space-sm);
+}
+.col-gap-md {
+  column-gap: var(--space-md);
+}
+.col-gap-lg {
+  column-gap: var(--space-lg);
+}
+.col-gap-xl {
+  column-gap: var(--space-xl);
+}
+.col-gap-2xl {
+  column-gap: var(--space-2xl);
+}

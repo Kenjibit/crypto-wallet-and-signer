@@ -1,0 +1,26 @@
+/* === UTILITIES: INDEX === */
+/* Import all utility files in dependency order */
+
+/* 1. Spacing utilities (margin, padding, gap) */
+@import './spacing.css';
+
+/* 2. Flexbox utilities (display, flex properties, alignment) */
+@import './flexbox.css';
+
+/* 3. Layout utilities (position, width/height, overflow) */
+@import './layout.css';
+
+/* 4. Typography utilities (font, text, line-height) */
+@import './typography.css';
+
+/* 5. Color utilities (background, text, border colors) */
+@import './colors.css';
+
+/* 6. Border & shadow utilities (radius, width, shadows) */
+@import './borders.css';
+
+/* 7. Animation utilities (transitions, animations, transforms) */
+@import './animations.css';
+
+/* 8. Responsive utilities (breakpoints, container queries) */
+@import './responsive.css';

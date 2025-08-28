@@ -1,6 +1,6 @@
 {
   "name": "ltc-signer-main-net",
-  "version": "1.0.5",
+  "version": "1.0.11",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,22 +12,24 @@
     "predev": "npm --prefix ../wallet-generator run build && npm --prefix ../ui run build && npm --prefix ../my-pwa run build && npm run copy-pwa-assets"
   },
   "dependencies": {
-    "@btc-wallet/ui": "file:../ui",
     "@btc-wallet/my-pwa": "file:../my-pwa",
+    "@btc-wallet/ui": "file:../ui",
     "@btc-wallet/wallet-generator": "file:../wallet-generator",
     "axios": "^1.11.0",
+    "bip32": "^4.0.0",
+    "bip39": "^3.1.0",
     "bitcoinjs-lib": "^6.1.7",
+    "dexie": "^4.2.0",
+    "dexie-react-hooks": "^4.2.0",
     "ecpair": "^3.0.0",
+    "hash-wasm": "^4.11.0",
+    "jsqr": "^1.4.0",
+    "lucide-react": "^0.539.0",
     "next": "15.4.4",
     "qrcode.react": "^4.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "jsqr": "^1.4.0",
-    "lucide-react": "^0.539.0",
-    "hash-wasm": "^4.11.0",
-    "tiny-secp256k1": "^2.2.4",
-    "bip32": "^4.0.0",
-    "bip39": "^3.1.0"
+    "tiny-secp256k1": "^2.2.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

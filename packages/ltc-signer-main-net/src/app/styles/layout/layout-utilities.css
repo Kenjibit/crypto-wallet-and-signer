@@ -1,0 +1,113 @@
+/* Layout Utility Classes */
+/* Reusable utility classes for common layout patterns */
+
+/* Layout utility classes */
+.flex {
+  display: flex;
+}
+
+.flex--column {
+  flex-direction: column;
+}
+
+.flex--row {
+  flex-direction: row;
+}
+
+.flex--center {
+  align-items: center;
+  justify-content: center;
+}
+
+.flex--start {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.flex--end {
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.flex--between {
+  justify-content: space-between;
+}
+
+.flex--around {
+  justify-content: space-around;
+}
+
+.flex--evenly {
+  justify-content: space-evenly;
+}
+
+/* Spacing utility classes */
+.space {
+  margin: var(--space-md);
+}
+
+.space--xs {
+  margin: var(--space-xs);
+}
+
+.space--sm {
+  margin: var(--space-sm);
+}
+
+.space--md {
+  margin: var(--space-md);
+}
+
+.space--lg {
+  margin: var(--space-lg);
+}
+
+.space--xl {
+  margin: var(--space-xl);
+}
+
+/* Padding utility classes */
+.padding {
+  padding: var(--space-md);
+}
+
+.padding--xs {
+  padding: var(--space-xs);
+}
+
+.padding--sm {
+  padding: var(--space-sm);
+}
+
+.padding--md {
+  padding: var(--space-md);
+}
+
+.padding--lg {
+  padding: var(--space-lg);
+}
+
+.padding--xl {
+  padding: var(--space-xl);
+}
+
+/* Responsive container */
+.container {
+  width: min(100%, 1200px);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+}
+
+.container--fluid {
+  width: 100%;
+  margin-inline: 0;
+}
+
+.container--narrow {
+  max-width: 800px;
+}
+
+.container--wide {
+  max-width: 1400px;
+}
+

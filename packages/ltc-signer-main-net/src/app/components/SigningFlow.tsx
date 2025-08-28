@@ -2,16 +2,37 @@
 
 import { useState } from 'react';
 import { Card, Button, Input, TextArea, Status } from '@btc-wallet/ui';
-import { Eye, EyeOff, Copy, CheckCircle, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Copy, CheckCircle, Wallet } from 'lucide-react';
+
+interface SimpleWallet {
+  id?: number;
+  name?: string;
+  address?: string;
+  publicKey?: string;
+  encryptedPrivateKey?: string;
+  encryptedMnemonic?: string;
+  derivationPath?: string;
+  network?: 'mainnet' | 'testnet';
+  cryptoType?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  isActive?: boolean;
+  lastSync?: Date;
+}
 
 interface SigningFlowProps {
   scannedData: string;
-  importedWallet: any;
-  createdWallet: any;
+  importedWallet: SimpleWallet | null;
+  createdWallet: SimpleWallet | null;
   onBack: () => void;
 }
 
-export function SigningFlow({ scannedData, importedWallet, createdWallet, onBack }: SigningFlowProps) {
+export function SigningFlow({
+  scannedData,
+  importedWallet,
+  createdWallet,
+  onBack,
+}: SigningFlowProps) {
   const [privateKey, setPrivateKey] = useState('');
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [signedPSBT, setSignedPSBT] = useState('');
@@ -39,15 +60,14 @@ export function SigningFlow({ scannedData, importedWallet, createdWallet, onBack
       setStatus('Signing transaction...');
 
       // Simulate signing process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Mock signed PSBT
       const mockSignedPSBT = 'signed-psbt-data-for-testing';
       setSignedPSBT(mockSignedPSBT);
       setStep('complete');
       setStatus('Transaction signed successfully!');
-
-    } catch (err) {
+    } catch {
       setError('Failed to sign transaction. Please try again.');
     } finally {
       setIsSigning(false);
@@ -88,22 +108,40 @@ export function SigningFlow({ scannedData, importedWallet, createdWallet, onBack
 
       <Card title="Wallet Information" className="wallet-card">
         <div className="wallet-info">
-          <Input
-            label="Wallet Type"
-            value={wallet?.type || 'Unknown'}
-            readOnly
-          />
-          <Input
-            label="Network"
-            value={wallet?.network || 'mainnet'}
-            readOnly
-          />
+          <div className="wallet-header">
+            <Wallet size={24} className="wallet-icon" />
+            <div className="wallet-details">
+              <h4 className="wallet-name">
+                {wallet?.name || 'Unknown Wallet'}
+              </h4>
+              <p className="wallet-network">{wallet?.network || 'mainnet'}</p>
+            </div>
+          </div>
+
           {wallet?.address && (
-            <Input
-              label="Address"
-              value={wallet.address}
-              readOnly
-            />
+            <div className="wallet-address">
+              <span className="address-label">Address:</span>
+              <div className="address-container">
+                <span className="address-value">{wallet.address}</span>
+                <Button
+                  onClick={() =>
+                    handleCopyToClipboard(wallet.address!, 'Address')
+                  }
+                  variant="ghost"
+                  size="sm"
+                  className="copy-btn"
+                >
+                  <Copy size={16} />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {wallet?.cryptoType && (
+            <div className="wallet-crypto-type">
+              <span className="crypto-label">Crypto Type:</span>
+              <span className="crypto-value">{wallet.cryptoType}</span>
+            </div>
           )}
         </div>
       </Card>
@@ -152,7 +190,7 @@ export function SigningFlow({ scannedData, importedWallet, createdWallet, onBack
         <div className="success-icon">
           <CheckCircle size={64} color="#10b981" />
         </div>
-        
+
         <div className="signed-psbt">
           <TextArea
             label="Signed PSBT"
@@ -161,7 +199,7 @@ export function SigningFlow({ scannedData, importedWallet, createdWallet, onBack
             rows={4}
             helperText="This is your signed transaction data"
           />
-          
+
           <div className="copy-actions">
             <Button
               onClick={() => handleCopyToClipboard(signedPSBT, 'Signed PSBT')}
@@ -215,4 +253,3 @@ export function SigningFlow({ scannedData, importedWallet, createdWallet, onBack
     </div>
   );
 }
-

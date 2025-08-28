@@ -1,0 +1,416 @@
+/* === BUTTON SYSTEM === */
+/* Extracted from globals.css for Phase 2 CSS Cleanup */
+
+/* Base Button */
+.btn {
+  /* Base button styles */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  font-family: inherit;
+}
+
+/* Button Variants */
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--secondary {
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: 1px solid var(--button-secondary-border);
+}
+
+.btn--secondary:hover {
+  background: var(--button-secondary-bg-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.btn--ghost {
+  background: var(--button-ghost-bg);
+  color: var(--button-ghost-text);
+  border: 1px solid transparent;
+}
+
+.btn--ghost:hover {
+  background: var(--button-ghost-bg-hover);
+  color: var(--text-primary);
+}
+
+/* Button Size Variants */
+.btn--small {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+}
+
+.btn--medium {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+}
+
+.btn--large {
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-md);
+  border-radius: var(--radius-lg);
+}
+
+/* Responsive Button */
+.btn--responsive {
+  padding: clamp(var(--space-xs), 1.5vw, var(--space-md))
+    clamp(var(--space-sm), 2vw, var(--space-lg));
+  font-size: clamp(var(--font-size-xs), 2vw, var(--font-size-md));
+}
+
+/* Specialized Buttons */
+.generate-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  background: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.generate-button:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.generate-button:active {
+  transform: translateY(0);
+}
+
+.generate-button .icon-left {
+  width: 24px;
+  height: 24px;
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.generate-button .button-content {
+  flex: 1;
+  text-align: center;
+  margin: 0 var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0; /* Allow text to shrink below content size */
+}
+
+.generate-button .button-content h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-on-primary);
+  margin: 0 0 var(--space-xs) 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.generate-button .button-content p {
+  font-size: var(--font-size-sm);
+  color: var(--text-on-primary);
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.generate-button .icon-right {
+  width: 24px;
+  height: 24px;
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-secondary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background: var(--button-secondary-bg);
+  border: 1px solid var(--button-secondary-border);
+  min-width: fit-content;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background: var(--button-secondary-bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--button-secondary-bg);
+  border: 1px solid var(--button-secondary-border);
+  border-radius: var(--radius-md);
+  color: var(--button-secondary-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+}
+
+.toggle-button:hover {
+  background: var(--button-secondary-bg-hover);
+  color: var(--text-primary);
+}
+
+.copy-button {
+  padding: 0.5rem 1rem;
+  background: var(--color-primary-20);
+  border: 1px solid var(--color-primary-30);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary-light);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.copy-button:hover {
+  background: var(--color-primary-30);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.add-save-button {
+  min-width: 160px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.confirm-button {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.modal-close-btn:hover {
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Button Layouts */
+.action-buttons {
+  /* Action buttons container - properly handle safe areas */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly; /* Changed from space-between to space-evenly for better distribution */
+  align-items: stretch;
+  gap: 2rem;
+  padding: 0 2rem;
+  /* Calculate height accounting for safe areas and margins */
+  height: calc(
+    100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem
+  );
+  margin: 2rem 0;
+  /* Ensure no overflow */
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Scale action buttons container based on container size */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* Button States & Interactions */
+.btn:focus,
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn,
+.btn--primary,
+.btn--secondary,
+.btn--ghost {
+  /* Ensure consistent button behavior */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.btn:hover,
+.btn--primary:hover,
+.btn--secondary:hover,
+.btn--ghost:hover {
+  /* Ensure consistent hover behavior */
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn:not(:hover) {
+  /* Reset transform when not hovering */
+  transform: translateY(0);
+}
+
+.btn,
+.btn--primary,
+.btn--secondary,
+.btn--ghost {
+  /* Responsive button adjustments */
+  padding: clamp(var(--space-xs), 1.5vw, var(--space-md))
+    clamp(var(--spacing-sm), 2vw, var(--spacing-lg));
+  font-size: clamp(var(--font-size-xs), 2vw, var(--font-size-md));
+}
+
+/* Mobile Layout with specific spacing */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* Tablet responsive */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* Desktop responsive */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* Large screen responsive */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* Extra large screen responsive */
+/* Moved to utilities/responsive.css for centralized responsive design management */
+
+/* Screen header back button specific styles */
+.screen-header .back-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-secondary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background: var(--button-secondary-bg);
+  border: 1px solid var(--button-secondary-border);
+  min-width: fit-content;
+  cursor: pointer;
+}
+
+.screen-header .back-button:hover {
+  background: var(--button-secondary-bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+/* Modal header back button specific styles */
+.modal-header .back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.modal-header .back-button:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Modal header h2 offset for back button centering */
+.modal-header h2 {
+  margin-left: -2.5rem; /* Offset back button width for perfect centering */
+}
+
+/* === HELPER ICON COMPONENT === */
+/* Helper icon - visible but integrated design */
+.helper-icon {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  opacity: 0.8;
+  cursor: pointer;
+  z-index: 100;
+  pointer-events: auto;
+  user-select: none;
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-sm);
+  /* Animation styles moved to utilities/animations.css */
+}
+
+.helper-icon:hover {
+  opacity: 1;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+  /* Animation styles moved to utilities/animations.css */
+}

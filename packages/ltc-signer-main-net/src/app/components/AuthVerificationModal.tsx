@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button } from '@btc-wallet/ui';
-import {
-  Fingerprint,
-  Smartphone,
-  Shield,
-  ArrowLeft,
-  AlertCircle,
-  Lock,
-} from 'lucide-react';
-import { useAuth, AuthMethod } from '../contexts/AuthContext';
+import { Button } from '@btc-wallet/ui';
+import { Fingerprint, Lock } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { ModalBase, ModalStep, ModalStepHeader, NumericKeypad } from './modals';
 
 interface AuthVerificationModalProps {
   isOpen: boolean;
@@ -29,12 +23,38 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [hasAttemptedAuth, setHasAttemptedAuth] = useState(false);
 
+  // Auto-verify PIN when it's complete
   useEffect(() => {
-    if (isOpen && authState.method === 'passkey') {
+    if (authState.method === 'pin' && pin.length === 4 && !isVerifying) {
+      handlePinVerification();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin, authState.method, isVerifying]);
+
+  // Clear PIN input when modal opens or when navigating back
+  useEffect(() => {
+    if (isOpen) {
+      setPin('');
+      setError('');
+      setHasAttemptedAuth(false); // Reset auth attempt flag
+    }
+  }, [isOpen]);
+
+  // Auto-trigger passkey verification only once when modal opens
+  useEffect(() => {
+    if (
+      isOpen &&
+      authState.method === 'passkey' &&
+      !hasAttemptedAuth &&
+      !isVerifying
+    ) {
+      setHasAttemptedAuth(true);
       handlePasskeyVerification();
     }
-  }, [isOpen, authState.method]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, authState.method, hasAttemptedAuth, isVerifying]);
 
   const handlePasskeyVerification = async () => {
     setIsVerifying(true);
@@ -47,7 +67,7 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
       } else {
         setError('Passkey verification failed. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('Passkey verification failed. Please try again.');
     } finally {
       setIsVerifying(false);
@@ -71,7 +91,7 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
         setError('Incorrect PIN code. Please try again.');
         setPin('');
       }
-    } catch (err) {
+    } catch {
       setError('PIN verification failed. Please try again.');
     } finally {
       setIsVerifying(false);
@@ -94,108 +114,66 @@ export const AuthVerificationModal: React.FC<AuthVerificationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="auth-verification-modal">
-      <div className="modal-backdrop" onClick={onClose} />
-      <div className="modal-content">
-        <Card className="auth-card">
-          <div className="auth-verification-content">
-            <div className="auth-header">
-              <div className="auth-icon-wrapper">
-                {authState.method === 'passkey' ? (
-                  <Fingerprint size={48} className="auth-icon" />
+    <ModalBase
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      className="auth-verification-modal"
+      showBackButton={true}
+      onBack={onClose}
+    >
+      <ModalStep variant="narrow">
+        <ModalStepHeader title={title} description={message} />
+
+        <div className="auth-verification-content">
+          {error && (
+            <div className="error-message">
+              <span>{error}</span>
+            </div>
+          )}
+
+          {authState.method === 'passkey' ? (
+            <div className="passkey-verification">
+              <div className="verification-status">
+                {isVerifying ? (
+                  <div className="verifying">
+                    <Lock size={32} className="spinning" />
+                    <p>Verifying passkey...</p>
+                  </div>
                 ) : (
-                  <Smartphone size={48} className="auth-icon" />
+                  <div className="ready">
+                    <Fingerprint size={32} />
+                    <p>Use Face ID, Touch ID, or fingerprint to authenticate</p>
+                  </div>
                 )}
               </div>
-              <h2>{title}</h2>
-              <p>{message}</p>
+
+              <div className="auth-actions">
+                <Button
+                  onClick={handleRetry}
+                  variant="ghost"
+                  disabled={isVerifying}
+                >
+                  Try Again
+                </Button>
+                <Button onClick={handleLogout} variant="ghost">
+                  Use Different Method
+                </Button>
+              </div>
             </div>
-
-            {error && (
-              <div className="error-message">
-                <AlertCircle size={20} />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {authState.method === 'passkey' ? (
-              <div className="passkey-verification">
-                <div className="verification-status">
-                  {isVerifying ? (
-                    <div className="verifying">
-                      <Lock size={32} className="spinning" />
-                      <p>Verifying passkey...</p>
-                    </div>
-                  ) : (
-                    <div className="ready">
-                      <Fingerprint size={32} />
-                      <p>
-                        Use Face ID, Touch ID, or fingerprint to authenticate
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="auth-actions">
-                  <Button
-                    onClick={handleRetry}
-                    variant="ghost"
-                    disabled={isVerifying}
-                  >
-                    Try Again
-                  </Button>
-                  <Button onClick={handleLogout} variant="ghost">
-                    Use Different Method
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="pin-verification">
-                <div className="form-group">
-                  <label htmlFor="verification-pin">Enter PIN Code</label>
-                  <input
-                    id="verification-pin"
-                    type="password"
-                    value={pin}
-                    onChange={(e) =>
-                      setPin(e.target.value.replace(/\D/g, '').slice(0, 4))
-                    }
-                    placeholder="Enter 4-digit PIN"
-                    className="form-input"
-                    maxLength={4}
-                    pattern="[0-9]{4}"
-                    disabled={isVerifying}
-                    autoFocus
-                  />
-                </div>
-
-                <div className="auth-actions">
-                  <Button
-                    onClick={onClose}
-                    variant="ghost"
-                    disabled={isVerifying}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handlePinVerification}
-                    disabled={pin.length !== 4 || isVerifying}
-                  >
-                    Verify PIN
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <div className="auth-footer">
-              <p className="auth-method-info">
-                Using {authState.method === 'passkey' ? 'passkey' : 'PIN code'}{' '}
-                authentication
-              </p>
+          ) : (
+            <div className="pin-verification">
+              <NumericKeypad
+                value={pin}
+                onChange={setPin}
+                maxLength={4}
+                label="Enter PIN Code"
+                placeholder="Enter 4-digit PIN"
+              />
             </div>
-          </div>
-        </Card>
-      </div>
-    </div>
+          )}
+        </div>
+      </ModalStep>
+    </ModalBase>
   );
 };

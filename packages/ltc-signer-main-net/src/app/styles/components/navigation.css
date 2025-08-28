@@ -1,0 +1,90 @@
+/* Navigation Component Styles */
+/* Styles for navigation elements and navigation-related components */
+
+/* Navigation container */
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+}
+
+/* Navigation items */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.nav-item--active {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border-color: var(--border-hover);
+}
+
+/* Navigation groups */
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.nav-group--left {
+  justify-content: flex-start;
+}
+
+.nav-group--center {
+  justify-content: center;
+  flex: 1;
+}
+
+.nav-group--right {
+  justify-content: flex-end;
+}
+
+/* Navigation brand/logo */
+.nav-brand {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* Navigation actions */
+.nav-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.nav-action:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  transform: scale(1.05);
+}
+
+/* Mobile navigation */
+/* Moved to utilities/responsive.css for centralized responsive design management */
