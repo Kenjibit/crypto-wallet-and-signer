@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button, Status } from '@btc-wallet/ui';
 import {
   Camera,
@@ -69,7 +69,33 @@ export function WalletCreationModal({
   const [showQRScanner, setShowQRScanner] = useState(false);
 
   const { authState } = useAuth();
-  const { createWallet } = useWalletDatabase();
+  const { createWallet, databaseStatus } = useWalletDatabase();
+
+  // Debug database status
+  console.log('🔍 WalletCreationModal - Database Status:', {
+    isInitialized: databaseStatus.status.isInitialized,
+    error: databaseStatus.status.error,
+    isOpen: databaseStatus.status.isOpen,
+    version: databaseStatus.status.version,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Fallback: Force database initialization if it's taking too long
+  useEffect(() => {
+    if (!databaseStatus.status.isInitialized && !databaseStatus.status.error) {
+      const timer = setTimeout(async () => {
+        console.log('🔄 Force initializing database after timeout...');
+        try {
+          await databaseStatus.initialize();
+          console.log('✅ Database force initialization completed');
+        } catch (error) {
+          console.error('❌ Database force initialization failed:', error);
+        }
+      }, 3000); // Wait 3 seconds before forcing initialization
+
+      return () => clearTimeout(timer);
+    }
+  }, [databaseStatus.status.isInitialized, databaseStatus.status.error, databaseStatus.initialize, databaseStatus]);
 
   // Define entropy source options using our OptionItem interface
   const entropyOptions: OptionItem[] = [
@@ -456,6 +482,19 @@ export function WalletCreationModal({
   const handleNameSubmit = useCallback(async () => {
     if (!generatedWallet) return;
 
+    // Check if database is initialized
+    if (!databaseStatus.status.isInitialized) {
+      setError(
+        'Database is not ready yet. Please wait a moment and try again.'
+      );
+      return;
+    }
+
+    if (databaseStatus.status.error) {
+      setError(`Database error: ${databaseStatus.status.error}`);
+      return;
+    }
+
     try {
       setStatus('Saving wallet to database...');
 
@@ -501,7 +540,13 @@ export function WalletCreationModal({
       setError(`Failed to save wallet: ${errorMessage}. Please try again.`);
       setStatus('');
     }
-  }, [walletName, generatedWallet, createWallet, authState.method]);
+  }, [
+    walletName,
+    generatedWallet,
+    createWallet,
+    authState.method,
+    databaseStatus,
+  ]);
 
   const handleScanToSign = useCallback(() => {
     if (generatedWallet) {
@@ -603,9 +648,11 @@ export function WalletCreationModal({
                 onClick={handleNameSubmit}
                 variant="primary"
                 className="name-submit-btn"
-                disabled={isGenerating}
+                disabled={isGenerating || !databaseStatus.status.isInitialized}
               >
-                Continue
+                {!databaseStatus.status.isInitialized
+                  ? 'Initializing Database...'
+                  : 'Continue'}
               </Button>
             </div>
           </div>

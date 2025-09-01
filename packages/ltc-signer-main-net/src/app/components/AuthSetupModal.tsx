@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@btc-wallet/ui';
 import { Fingerprint, Smartphone, Shield } from 'lucide-react';
-import { useAuth, AuthMethod } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
+import type { AuthMethod } from '../types/auth';
 import { useEffect } from 'react';
 import {
   ModalBase,
@@ -16,12 +17,14 @@ interface AuthSetupModalProps {
   isOpen: boolean;
   onComplete: () => void;
   onClose: () => void;
+  onBackToMain?: () => void;
 }
 
 export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   isOpen,
   onComplete,
   onClose,
+  onBackToMain,
 }) => {
   const { authState, createPasskey, setPinCode } = useAuth();
   const [selectedMethod, setSelectedMethod] = useState<AuthMethod | null>(null);
@@ -170,6 +173,13 @@ export const AuthSetupModal: React.FC<AuthSetupModalProps> = ({
   const handleBackButton = () => {
     if (step === 'choose') {
       onClose();
+    } else if (step === 'confirm' && onBackToMain) {
+      // On the "Authentication Setup Complete!" screen,
+      // use the specialized back to main callback if provided
+      onBackToMain();
+    } else if (step === 'confirm') {
+      // Fallback: use onComplete if onBackToMain is not provided
+      onComplete();
     } else {
       handleBack();
     }

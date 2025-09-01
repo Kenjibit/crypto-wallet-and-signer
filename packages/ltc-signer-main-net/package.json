@@ -6,6 +6,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --ui",
     "copy-pwa-assets": "node ../my-pwa/bin/sync-assets.js --target . --cache-name $npm_package_name-$npm_package_version",
     "postinstall": "npm run copy-pwa-assets",
     "prebuild": "npm --prefix ../wallet-generator run build && npm --prefix ../ui run build && npm --prefix ../my-pwa run build && npm run copy-pwa-assets",
@@ -34,12 +38,19 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.4",
+    "jsdom": "^23.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^1.0.0"
   }
 }

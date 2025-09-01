@@ -343,9 +343,9 @@
   }
 
   .keypad-key {
-    min-height: 55px;
-    min-width: 55px;
-    font-size: var(--font-size-lg);
+    min-height: 65px;
+    min-width: 65px;
+    font-size: clamp(1.5rem, 1.3rem + 1.8vw, 2.25rem);
   }
 
   .pin-display {
@@ -357,8 +357,8 @@
   }
 
   .pin-dot {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     font-size: var(--font-size-sm);
   }
 
@@ -399,9 +399,9 @@
   }
 
   .keypad-key {
-    min-height: 50px;
-    min-width: 50px;
-    font-size: var(--font-size-base);
+    min-height: 60px;
+    min-width: 60px;
+    font-size: clamp(1.4rem, 1.2rem + 1.6vw, 2rem);
   }
 }
 
@@ -415,12 +415,12 @@
   .keypad-key {
     min-height: 70px;
     min-width: 70px;
-    font-size: var(--font-size-xl);
+    font-size: clamp(2rem, 1.8rem + 2.2vw, 3rem);
   }
 
   .pin-dot {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     font-size: var(--font-size-base);
   }
 }

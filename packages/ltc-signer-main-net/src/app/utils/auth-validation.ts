@@ -3,13 +3,7 @@
  * Ensures auth state integrity and consistency
  */
 
-export interface AuthState {
-  method: 'passkey' | 'pin' | null;
-  status: 'authenticated' | 'unauthenticated' | 'authenticating' | 'failed';
-  isPasskeySupported: boolean;
-  isPWA: boolean;
-  credentialId?: string;
-}
+import type { AuthState } from '../types/auth';
 
 /**
  * Validates that an auth state is properly authenticated
