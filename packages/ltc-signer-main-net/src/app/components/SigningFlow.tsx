@@ -3,6 +3,13 @@
 import { useState } from 'react';
 import { Card, Button, Input, TextArea, Status } from '@btc-wallet/ui';
 import { Eye, EyeOff, Copy, CheckCircle, Wallet } from 'lucide-react';
+import {
+  parseLTCPSBT,
+  signLTCPSBT,
+  validateLTCPrivateKey,
+  getLTCSignedTransactionHex,
+  extractLTCSignatures,
+} from '../libs/ltc-psbt';
 
 interface SimpleWallet {
   id?: number;
@@ -39,7 +46,14 @@ export function SigningFlow({
   const [isSigning, setIsSigning] = useState(false);
   const [error, setError] = useState<string>('');
   const [status, setStatus] = useState<string>('');
-  const [step, setStep] = useState<'input' | 'signing' | 'complete'>('input');
+  const [step, setStep] = useState<
+    'input' | 'signing' | 'complete' | 'signatures'
+  >('input');
+
+  const [signedTxHex, setSignedTxHex] = useState<string>('');
+  const [signatures, setSignatures] = useState<
+    import('../types/ltc-psbt').LTCSignature[] | null
+  >(null);
 
   const wallet = importedWallet || createdWallet;
 
@@ -55,20 +69,54 @@ export function SigningFlow({
         return;
       }
 
+      // Validate private key format
+      if (!validateLTCPrivateKey(privateKey.trim())) {
+        setError('Invalid LTC private key format. Please check your WIF key.');
+        return;
+      }
+
       setIsSigning(true);
       setError('');
+      setStatus('Parsing PSBT...');
+
+      // Parse the PSBT first
+      try {
+        const parsedPsbtInfo = parseLTCPSBT(scannedData.trim());
+        setStatus(
+          `PSBT parsed: ${parsedPsbtInfo.inputs} inputs, ${parsedPsbtInfo.outputs} outputs (${parsedPsbtInfo.network})`
+        );
+      } catch {
+        setError('Invalid PSBT format. Please scan a valid LTC PSBT QR code.');
+        setIsSigning(false);
+        return;
+      }
+
       setStatus('Signing transaction...');
 
-      // Simulate signing process
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Sign the PSBT with the private key
+      const signedPSBT = signLTCPSBT(scannedData.trim(), privateKey.trim());
+      setSignedPSBT(signedPSBT);
 
-      // Mock signed PSBT
-      const mockSignedPSBT = 'signed-psbt-data-for-testing';
-      setSignedPSBT(mockSignedPSBT);
+      // Extract the signed transaction hex
+      try {
+        const txHex = getLTCSignedTransactionHex(signedPSBT);
+        setSignedTxHex(txHex);
+        setStatus(
+          'Transaction signed successfully! Extracting transaction hex...'
+        );
+      } catch (hexError) {
+        console.warn('Could not extract transaction hex:', hexError);
+        setStatus('Transaction signed successfully! (Could not extract hex)');
+      }
+
       setStep('complete');
-      setStatus('Transaction signed successfully!');
-    } catch {
-      setError('Failed to sign transaction. Please try again.');
+    } catch (error) {
+      console.error('LTC signing error:', error);
+      setError(
+        `Failed to sign LTC transaction: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     } finally {
       setIsSigning(false);
     }
@@ -84,12 +132,45 @@ export function SigningFlow({
     }
   };
 
+  const handleGenerateSignatures = async () => {
+    try {
+      if (!scannedData || !privateKey.trim()) {
+        setError('No PSBT data or private key to generate signatures');
+        return;
+      }
+
+      setIsSigning(true);
+      setError('');
+      setStatus('Generating signatures...');
+
+      // Extract signatures from the PSBT
+      const sigInfo = extractLTCSignatures(
+        scannedData.trim(),
+        privateKey.trim()
+      );
+      setSignatures(sigInfo);
+      setStep('signatures');
+      setStatus('Signatures generated successfully!');
+    } catch (error) {
+      console.error('LTC signature generation error:', error);
+      setError(
+        `Failed to generate LTC signatures: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    } finally {
+      setIsSigning(false);
+    }
+  };
+
   const handleReset = () => {
     setPrivateKey('');
     setSignedPSBT('');
     setError('');
     setStatus('');
     setStep('input');
+    setSignedTxHex('');
+    setSignatures(null);
   };
 
   const renderInputStep = () => (
@@ -179,6 +260,15 @@ export function SigningFlow({
             <CheckCircle size={20} />
             Sign Transaction
           </Button>
+          <Button
+            onClick={handleGenerateSignatures}
+            loading={isSigning}
+            variant="secondary"
+            disabled={!privateKey.trim() || isSigning}
+          >
+            <Copy size={20} />
+            Generate Signatures Only
+          </Button>
         </div>
       </Card>
     </div>
@@ -211,12 +301,37 @@ export function SigningFlow({
           </div>
         </div>
 
+        {signedTxHex && (
+          <div className="signed-transaction-hex">
+            <TextArea
+              label="Signed Transaction Hex"
+              value={signedTxHex}
+              readOnly
+              rows={4}
+              helperText="This is your signed transaction in hex format for broadcasting"
+            />
+
+            <div className="copy-actions">
+              <Button
+                onClick={() =>
+                  handleCopyToClipboard(signedTxHex, 'Transaction Hex')
+                }
+                variant="secondary"
+              >
+                <Copy size={20} />
+                Copy Transaction Hex
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="next-steps">
           <h3>Next Steps:</h3>
           <ol>
-            <li>Copy the signed PSBT data</li>
+            <li>Copy the signed PSBT data or transaction hex</li>
             <li>Transfer it back to your main device</li>
-            <li>Broadcast the transaction</li>
+            <li>Broadcast the transaction using the hex format</li>
+            <li>Wait for network confirmation</li>
           </ol>
         </div>
 
@@ -226,6 +341,66 @@ export function SigningFlow({
           </Button>
           <Button onClick={onBack} variant="primary">
             Back to Main Menu
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+
+  const renderSignaturesStep = () => (
+    <div className="signatures-complete">
+      <Card
+        title="Signatures Generated Successfully!"
+        className="signatures-card"
+      >
+        <div className="success-icon">
+          <CheckCircle size={64} color="#10b981" />
+        </div>
+
+        <div className="air-gapped-info">
+          <h3>Air-Gapped Workflow:</h3>
+          <p>
+            These are just the signatures. Transfer this data back to the device
+            that created the PSBT to combine signatures with the original PSBT.
+          </p>
+        </div>
+
+        <div className="signatures-list">
+          <h4>Generated Signatures:</h4>
+          {signatures?.map((sig, index) => (
+            <div key={index} className="signature-item">
+              <span className="signature-index">{sig.inputIndex + 1}</span>
+              <div className="signature-details">
+                <div className="signature-title">
+                  Input {sig.inputIndex + 1}
+                </div>
+                <div className="signature-data">
+                  <div>
+                    <div className="signature-label">Public Key:</div>
+                    <div className="signature-value">{sig.publicKey}</div>
+                  </div>
+                  <div>
+                    <div className="signature-label">Signature:</div>
+                    <div className="signature-value">{sig.signature}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="signatures-actions">
+          <Button
+            onClick={() =>
+              handleCopyToClipboard(JSON.stringify(signatures), 'Signatures')
+            }
+            variant="secondary"
+          >
+            <Copy size={20} />
+            Copy Signatures
+          </Button>
+          <Button onClick={handleReset} variant="primary">
+            New Transaction
           </Button>
         </div>
       </Card>
@@ -249,6 +424,7 @@ export function SigningFlow({
 
         {step === 'input' && renderInputStep()}
         {step === 'complete' && renderCompleteStep()}
+        {step === 'signatures' && renderSignaturesStep()}
       </div>
     </div>
   );

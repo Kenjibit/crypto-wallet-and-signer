@@ -10,12 +10,14 @@ export interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScanResult: (result: string) => void;
+  title?: string;
 }
 
 export function QRScannerModal({
   isOpen,
   onClose,
   onScanResult,
+  title = 'Scan Signature QR Code',
 }: QRScannerModalProps) {
   const [error, setError] = useState<string>('');
   const [isInitializing, setIsInitializing] = useState(false);
@@ -366,10 +368,8 @@ export function QRScannerModal({
     <div className={styles.scannerOverlay}>
       <div className={styles.scannerContainer}>
         <div className={styles.scannerHeader}>
-          <h2 className={styles.scannerTitle}>
-            <Camera size={20} strokeWidth={2.5} />
-            Scan Signature QR Code
-          </h2>
+          <Camera size={20} strokeWidth={2.5} className={styles.cameraIcon} />
+          <h2 className={styles.scannerTitle}>{title}</h2>
           <button onClick={handleClose} className={styles.closeButton}>
             ×
           </button>

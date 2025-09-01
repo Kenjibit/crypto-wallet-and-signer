@@ -89,35 +89,84 @@ export function useDatabaseStatus() {
 export function useWallets() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dbInitialized, setDbInitialized] = useState(false);
 
-  // Live query for all wallets
-  const wallets = useLiveQuery(() => walletDB.wallets.toArray(), [], []);
+  // Initialize database on first use
+  useEffect(() => {
+    const initializeDatabase = async (retryCount = 0) => {
+      try {
+        await WalletDatabaseOperations.initializeDatabase();
+        setDbInitialized(true);
+        setError(null);
+      } catch (err) {
+        console.error(
+          `Failed to initialize database (attempt ${retryCount + 1}):`,
+          err
+        );
 
-  // Live query for active wallets
-  const activeWallets = useLiveQuery(
-    () => walletDB.wallets.filter((wallet) => wallet.isActive).toArray(),
-    [],
-    []
+        // Retry up to 3 times for transient errors
+        if (
+          retryCount < 3 &&
+          err instanceof Error &&
+          err.name === 'DatabaseClosedError'
+        ) {
+          console.log('Retrying database initialization...');
+          setTimeout(
+            () => initializeDatabase(retryCount + 1),
+            1000 * (retryCount + 1)
+          );
+          return;
+        }
+
+        setError(
+          err instanceof Error ? err.message : 'Database initialization failed'
+        );
+      }
+    };
+
+    if (!dbInitialized && !error) {
+      initializeDatabase();
+    }
+  }, [dbInitialized, error]);
+
+  // Live query for all wallets - only if database is initialized
+  const wallets = useLiveQuery<Wallet[]>(
+    () =>
+      dbInitialized
+        ? walletDB.wallets.toArray()
+        : Promise.resolve([] as Wallet[]),
+    [dbInitialized]
   );
 
-  // Live query for mainnet wallets
-  const mainnetWallets = useLiveQuery(
+  // Live query for active wallets - only if database is initialized
+  const activeWallets = useLiveQuery<Wallet[]>(
     () =>
-      walletDB.wallets
-        .filter((wallet) => wallet.network === 'mainnet')
-        .toArray(),
-    [],
-    []
+      dbInitialized
+        ? walletDB.wallets.filter((wallet) => wallet.isActive).toArray()
+        : Promise.resolve([] as Wallet[]),
+    [dbInitialized]
   );
 
-  // Live query for testnet wallets
-  const testnetWallets = useLiveQuery(
+  // Live query for mainnet wallets - only if database is initialized
+  const mainnetWallets = useLiveQuery<Wallet[]>(
     () =>
-      walletDB.wallets
-        .filter((wallet) => wallet.network === 'testnet')
-        .toArray(),
-    [],
-    []
+      dbInitialized
+        ? walletDB.wallets
+            .filter((wallet) => wallet.network === 'mainnet')
+            .toArray()
+        : Promise.resolve([] as Wallet[]),
+    [dbInitialized]
+  );
+
+  // Live query for testnet wallets - only if database is initialized
+  const testnetWallets = useLiveQuery<Wallet[]>(
+    () =>
+      dbInitialized
+        ? walletDB.wallets
+            .filter((wallet) => wallet.network === 'testnet')
+            .toArray()
+        : Promise.resolve([] as Wallet[]),
+    [dbInitialized]
   );
 
   const createWallet = useCallback(
@@ -261,6 +310,7 @@ export function useWallets() {
     // State
     loading,
     error,
+    dbInitialized, // Export for combined status
 
     // Operations
     createWallet,
@@ -276,26 +326,71 @@ export function useWallets() {
 export function useTransactions() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dbInitialized, setDbInitialized] = useState(false);
 
-  // Live query for all transactions
-  const transactions = useLiveQuery(
-    () => walletDB.transactions.toArray(),
-    [],
-    []
+  // Initialize database on first use
+  useEffect(() => {
+    const initializeDatabase = async (retryCount = 0) => {
+      try {
+        await WalletDatabaseOperations.initializeDatabase();
+        setDbInitialized(true);
+        setError(null);
+      } catch (err) {
+        console.error(
+          `Failed to initialize database (attempt ${retryCount + 1}):`,
+          err
+        );
+
+        // Retry up to 3 times for transient errors
+        if (
+          retryCount < 3 &&
+          err instanceof Error &&
+          err.name === 'DatabaseClosedError'
+        ) {
+          console.log('Retrying database initialization...');
+          setTimeout(
+            () => initializeDatabase(retryCount + 1),
+            1000 * (retryCount + 1)
+          );
+          return;
+        }
+
+        setError(
+          err instanceof Error ? err.message : 'Database initialization failed'
+        );
+      }
+    };
+
+    if (!dbInitialized && !error) {
+      initializeDatabase();
+    }
+  }, [dbInitialized, error]);
+
+  // Live query for all transactions - only if database is initialized
+  const transactions = useLiveQuery<Transaction[]>(
+    () =>
+      dbInitialized
+        ? walletDB.transactions.toArray()
+        : Promise.resolve([] as Transaction[]),
+    [dbInitialized]
   );
 
-  // Live query for pending transactions
-  const pendingTransactions = useLiveQuery(
-    () => walletDB.transactions.where('status').equals('pending').toArray(),
-    [],
-    []
+  // Live query for pending transactions - only if database is initialized
+  const pendingTransactions = useLiveQuery<Transaction[]>(
+    () =>
+      dbInitialized
+        ? walletDB.transactions.where('status').equals('pending').toArray()
+        : Promise.resolve([] as Transaction[]),
+    [dbInitialized]
   );
 
-  // Live query for confirmed transactions
-  const confirmedTransactions = useLiveQuery(
-    () => walletDB.transactions.where('status').equals('confirmed').toArray(),
-    [],
-    []
+  // Live query for confirmed transactions - only if database is initialized
+  const confirmedTransactions = useLiveQuery<Transaction[]>(
+    () =>
+      dbInitialized
+        ? walletDB.transactions.where('status').equals('confirmed').toArray()
+        : Promise.resolve([] as Transaction[]),
+    [dbInitialized]
   );
 
   const createTransaction = useCallback(
@@ -417,6 +512,7 @@ export function useTransactions() {
     // State
     loading,
     error,
+    dbInitialized, // Export for combined status
 
     // Operations
     createTransaction,
@@ -427,10 +523,111 @@ export function useTransactions() {
   };
 }
 
-// Main database hook that combines everything
-export function useWalletDatabase() {
+// Combined database status that tracks all hooks
+const useCombinedDatabaseStatus = () => {
   const databaseStatus = useDatabaseStatus();
-  const wallets = useWallets();
+  const walletsHook = useWallets();
+  const transactionsHook = useTransactions();
+
+  // Synchronize initialization state - database is initialized if any hook has initialized it
+  const combinedInitialized = databaseStatus.status.isInitialized || walletsHook.dbInitialized || transactionsHook.dbInitialized;
+  const combinedError = databaseStatus.status.error || walletsHook.error || transactionsHook.error;
+
+  const combinedStatus = {
+    ...databaseStatus.status,
+    isInitialized: combinedInitialized,
+    error: combinedError,
+  };
+
+  // Debug logging
+  console.log('🔍 Combined Database Status:', {
+    databaseStatusIsInitialized: databaseStatus.status.isInitialized,
+    walletsHookDbInitialized: walletsHook.dbInitialized,
+    transactionsHookDbInitialized: transactionsHook.dbInitialized,
+    combinedInitialized,
+    combinedError,
+    timestamp: new Date().toISOString(),
+  });
+
+  return {
+    ...databaseStatus,
+    status: combinedStatus,
+  };
+};
+
+// Main database hook that combines everything
+export function useWalletDatabase(): {
+  databaseStatus: {
+    status: {
+      isOpen: boolean;
+      version: number;
+      isInitialized: boolean;
+      error: string | null;
+    };
+    initialize: () => Promise<void>;
+    close: () => Promise<void>;
+    checkStatus: () => Promise<void>;
+  };
+  wallets: Wallet[];
+  activeWallets: Wallet[];
+  mainnetWallets: Wallet[];
+  testnetWallets: Wallet[];
+  walletCount: number;
+  activeWalletCount: number;
+  mainnetWalletCount: number;
+  testnetWalletCount: number;
+  loading: boolean;
+  error: string | null;
+  createWallet: (
+    walletData: Omit<Wallet, 'id' | 'createdAt' | 'updatedAt'>,
+    encryptionMethod: 'pin' | 'passkey',
+    secret: string | ArrayBuffer
+  ) => Promise<Wallet>;
+  updateWallet: (
+    id: number,
+    updates: Partial<Omit<Wallet, 'id' | 'createdAt'>>
+  ) => Promise<void>;
+  deleteWallet: (id: number) => Promise<void>;
+  searchWallets: (query: string) => Promise<Wallet[]>;
+  getWalletById: (id: number) => Promise<Wallet | undefined>;
+  getWalletByAddress: (address: string) => Promise<Wallet | undefined>;
+  transactions: Transaction[];
+  pendingTransactions: Transaction[];
+  confirmedTransactions: Transaction[];
+  transactionCount: number;
+  pendingCount: number;
+  confirmedCount: number;
+  createTransaction: (
+    transactionData: Omit<Transaction, 'id'>
+  ) => Promise<Transaction>;
+  updateTransaction: (
+    id: number,
+    updates: Partial<Omit<Transaction, 'id'>>
+  ) => Promise<void>;
+  deleteTransaction: (id: number) => Promise<void>;
+  getWalletTransactions: (walletId: number) => Promise<Transaction[]>;
+  getTransactionsByStatus: (
+    status: Transaction['status']
+  ) => Promise<Transaction[]>;
+  clearAllData: () => Promise<void>;
+  exportWalletData: (walletId: number) => Promise<{
+    wallet: Wallet;
+    transactions: Transaction[];
+    encryptionMetadata: EncryptionMetadata | undefined;
+  }>;
+  importWalletData: (
+    walletData: {
+      wallet: Omit<Wallet, 'id' | 'createdAt' | 'updatedAt'>;
+      transactions: Omit<Transaction, 'id' | 'walletId'>[];
+      encryptionMetadata: Omit<EncryptionMetadata, 'id' | 'walletId'>;
+    },
+    encryptionMethod: 'pin' | 'passkey',
+    secret: string | ArrayBuffer
+  ) => Promise<Wallet>;
+  testEncryption: () => Promise<boolean>;
+} {
+  const databaseStatus = useCombinedDatabaseStatus();
+  const walletsHook = useWallets();
   const transactions = useTransactions();
 
   const clearAllData = useCallback(async (): Promise<void> => {
@@ -489,7 +686,7 @@ export function useWalletDatabase() {
     databaseStatus,
 
     // Wallets
-    ...wallets,
+    ...walletsHook,
 
     // Transactions
     ...transactions,

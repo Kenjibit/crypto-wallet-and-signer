@@ -10,3 +10,6 @@ export type { OptionSelectorProps, OptionItem } from './OptionSelector';
 
 export { NumericKeypad } from './NumericKeypad';
 export type { NumericKeypadProps } from './NumericKeypad';
+
+// QRScannerModal moved to @btc-wallet/ui package
+// PSBTScannerModal removed - using QRScannerModal from @btc-wallet/ui

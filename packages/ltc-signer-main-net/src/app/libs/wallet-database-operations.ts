@@ -12,7 +12,14 @@ export class WalletDatabaseOperations {
    */
   static async initializeDatabase(): Promise<void> {
     try {
+      // Check if database is already open
+      if (walletDB.isOpen()) {
+        console.log('✅ Database already initialized');
+        return;
+      }
+
       await walletDB.initialize();
+      console.log('✅ Database initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize database:', error);
       throw error;

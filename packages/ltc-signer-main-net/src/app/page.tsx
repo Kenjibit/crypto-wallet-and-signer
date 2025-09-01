@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  MainContainer,
-  Card,
-  Button,
-  Status,
-  QRScannerModal,
-} from '@btc-wallet/ui';
+import { MainContainer, Card, Button, Status } from '@btc-wallet/ui';
 import { OfflineIndicator, InstallPrompt } from '@btc-wallet/my-pwa';
 import {
   WalletImportModal,
@@ -18,6 +12,7 @@ import {
   AuthVerificationModal,
   WalletSelectorModal,
 } from './components';
+import { QRScannerModal } from '@btc-wallet/ui';
 // TestControlPanel import removed for production
 import { useAuth } from './contexts/AuthContext';
 import { QrCode, Upload, Plus, ArrowLeft, Wallet } from 'lucide-react';
@@ -58,9 +53,17 @@ interface ImportedWallet {
 export default function LTCMainPage() {
   const { authState, sessionAuthenticated } = useAuth();
   const [currentMode, setCurrentMode] = useState<AppMode>('main');
+
+  // Debug currentMode changes
+  useEffect(() => {
+    console.log('🔍 currentMode state changed to:', currentMode);
+  }, [currentMode]);
+
   const [scannedData, setScannedData] = useState<string>('');
   const [importedWallet, setImportedWallet] = useState<Wallet | null>(null);
   const [createdWallet, setCreatedWallet] = useState<Wallet | null>(null);
+  const [selectedWalletForSigning, setSelectedWalletForSigning] =
+    useState<Wallet | null>(null);
   const [status, setStatus] = useState<{
     message: string;
     type: 'success' | 'error' | 'warning';
@@ -106,6 +109,14 @@ export default function LTCMainPage() {
     setScannedData('');
     setImportedWallet(null);
     setCreatedWallet(null);
+    setSelectedWalletForSigning(null);
+  };
+
+  const handleWalletSelectedForScan = (wallet: Wallet) => {
+    console.log('🎯 Wallet selected for scan:', wallet);
+    setSelectedWalletForSigning(wallet);
+    setCurrentMode('scan-qr');
+    console.log('🎯 Mode changed to scan-qr, wallet selected for signing');
   };
 
   const handleScanSuccess = (data: string) => {
@@ -260,6 +271,9 @@ export default function LTCMainPage() {
     // After passkey setup, user is automatically authenticated
     // Set flag to bypass additional verification
     setJustCompletedAuthSetup(true);
+
+    // Navigate to main 3-button screen
+    setCurrentMode('main');
 
     if (pendingAction) {
       console.log('✅ Executing pending action directly');
@@ -450,10 +464,7 @@ export default function LTCMainPage() {
       <WalletSelectorModal
         isOpen={true}
         onClose={handleBackToMain}
-        onWalletSelect={() => {
-          // After wallet selection, proceed to QR scanning
-          setCurrentMode('scan-qr');
-        }}
+        onWalletSelect={handleWalletSelectedForScan}
         title="Select Wallet for Signing"
         description="Choose a wallet to use for signing this transaction"
         showCreateOption={false}
@@ -462,34 +473,21 @@ export default function LTCMainPage() {
     </div>
   );
 
-  const renderScanQRScreen = () => (
-    <div className="scan-screen">
-      <div className="screen-header">
-        <Button
-          onClick={() => setCurrentMode('scan')}
-          variant="ghost"
-          className="back-button"
-        >
-          <ArrowLeft size={20} />
-          Back to Wallet Selection
-        </Button>
-        <h2>Scan PSBT</h2>
-      </div>
+  const renderScanQRScreen = () => {
+    console.log('🔍 renderScanQRScreen called');
+    console.log('🔍 selectedWalletForSigning:', selectedWalletForSigning);
+    console.log('🔍 About to render QRScannerModal with isOpen=true');
 
-      <div className="scan-content">
-        <Card title="Scan PSBT QR Code" className="scan-card">
-          <div className="scan-instructions">
-            <p>Point your camera at the PSBT QR code to begin signing</p>
-          </div>
-          <QRScannerModal
-            isOpen={true}
-            onClose={() => setCurrentMode('scan')}
-            onScanResult={handleScanSuccess}
-          />
-        </Card>
-      </div>
-    </div>
-  );
+    // Use the exact same camera as "Scan Signature QR Code" but with PSBT title
+    return (
+      <QRScannerModal
+        isOpen={true}
+        onClose={() => setCurrentMode('scan')}
+        onScanResult={handleScanSuccess}
+        title="Scan PSBT QR Code"
+      />
+    );
+  };
 
   const renderImportScreen = () => (
     <div className="scan-screen">
@@ -559,18 +557,27 @@ export default function LTCMainPage() {
   );
 
   const renderCurrentMode = () => {
+    console.log('🔍 renderCurrentMode called with currentMode:', currentMode);
+    console.log('🔍 selectedWalletForSigning state:', selectedWalletForSigning);
+
     switch (currentMode) {
       case 'scan':
+        console.log('🔍 Rendering scan screen');
         return renderScanScreen();
       case 'scan-qr':
+        console.log('🔍 Rendering scan-qr screen');
         return renderScanQRScreen();
       case 'import':
+        console.log('🔍 Rendering import screen');
         return renderImportScreen();
       case 'create':
+        console.log('🔍 Rendering create screen');
         return renderCreateScreen();
       case 'signing':
+        console.log('🔍 Rendering signing screen');
         return renderSigningScreen();
       default:
+        console.log('🔍 Rendering main screen (default)');
         return renderMainScreen();
     }
   };
@@ -600,6 +607,12 @@ export default function LTCMainPage() {
         isOpen={showAuthSetup}
         onComplete={handleAuthSetupComplete}
         onClose={() => setShowAuthSetup(false)}
+        onBackToMain={() => {
+          setShowAuthSetup(false);
+          setCurrentMode('main');
+          // Clear any pending action when going back to main
+          setPendingAction(null);
+        }}
       />
 
       <AuthVerificationModal

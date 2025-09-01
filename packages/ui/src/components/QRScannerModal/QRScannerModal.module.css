@@ -37,25 +37,30 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: var(--spacing-lg);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   z-index: 10;
+  position: relative;
+}
+
+.cameraIcon {
+  position: absolute;
+  left: var(--spacing-lg);
+  color: var(--color-primary);
+  z-index: 11;
 }
 
 .scannerTitle {
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: white;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.scannerTitle i {
-  color: var(--color-primary);
+  text-align: center;
+  margin: 0;
 }
 
 .closeButton {
+  position: absolute;
+  right: var(--spacing-lg);
   color: var(--color-gray-400);
   font-size: var(--font-size-2xl);
   width: 2rem;
