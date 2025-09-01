@@ -7,17 +7,18 @@ import { PasskeyEncryptionService } from '../../services/encryption/PasskeyEncry
 import { PinEncryptionService } from '../../services/encryption/PinEncryptionService';
 import { authLogger } from '../../../utils/auth/authLogger';
 
+import { vi } from 'vitest';
 // Mock the services
-jest.mock('../../services/encryption/PasskeyEncryptionService');
-jest.mock('../../services/encryption/PinEncryptionService');
-jest.mock('../../../utils/auth/authLogger');
+vi.mock('../../services/encryption/PasskeyEncryptionService');
+vi.mock('../../services/encryption/PinEncryptionService');
+vi.mock('../../../utils/auth/authLogger');
 
 // Mock localStorage for offline persistence
 const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -26,7 +27,7 @@ Object.defineProperty(window, 'localStorage', {
 // Mock crypto API for offline operation
 Object.defineProperty(window, 'crypto', {
   value: {
-    getRandomValues: jest.fn((array) => {
+    getRandomValues: vi.fn((array) => {
       // Fill array with deterministic values for testing
       for (let i = 0; i < array.length; i++) {
         array[i] = i % 256;
@@ -34,13 +35,13 @@ Object.defineProperty(window, 'crypto', {
       return array;
     }),
     subtle: {
-      encrypt: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-      decrypt: jest
+      encrypt: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+      decrypt: vi
         .fn()
         .mockResolvedValue(new TextEncoder().encode('decrypted data')),
-      importKey: jest.fn().mockResolvedValue('mock-key'),
-      deriveKey: jest.fn().mockResolvedValue('mock-derived-key'),
-      digest: jest.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
+      importKey: vi.fn().mockResolvedValue('mock-key'),
+      deriveKey: vi.fn().mockResolvedValue('mock-derived-key'),
+      digest: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
     },
   },
 });
@@ -59,22 +60,23 @@ Object.defineProperty(navigator, 'onLine', {
 // Mock WebAuthn API for offline operation
 Object.defineProperty(navigator, 'credentials', {
   value: {
-    create: jest.fn(),
-    get: jest.fn(),
+    create: vi.fn(),
+    get: vi.fn(),
   },
   writable: true,
 });
 
-const mockPasskeyEncryptionService =
-  PasskeyEncryptionService as jest.MockedClass<typeof PasskeyEncryptionService>;
-const mockPinEncryptionService = PinEncryptionService as jest.MockedClass<
+const mockPasskeyEncryptionService = PasskeyEncryptionService as vi.Mocked<
+  typeof PasskeyEncryptionService
+>;
+const mockPinEncryptionService = PinEncryptionService as vi.Mocked<
   typeof PinEncryptionService
 >;
-const mockAuthLogger = authLogger as jest.Mocked<typeof authLogger>;
+const mockAuthLogger = authLogger as vi.Mocked<typeof authLogger>;
 
 describe('useEncryption Offline PWA Compatibility', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Setup default offline-compatible mocks
     mockPasskeyEncryptionService.encrypt.mockResolvedValue(
@@ -121,10 +123,16 @@ describe('useEncryption Offline PWA Compatibility', () => {
       },
     };
 
-    (navigator.credentials.create as jest.Mock).mockResolvedValue(
-      mockCredential
-    );
-    (navigator.credentials.get as jest.Mock).mockResolvedValue(mockAssertion);
+    (
+      navigator.credentials.create as vi.MockedFunction<
+        typeof navigator.credentials.create
+      >
+    ).mockResolvedValue(mockCredential);
+    (
+      navigator.credentials.get as vi.MockedFunction<
+        typeof navigator.credentials.get
+      >
+    ).mockResolvedValue(mockAssertion);
   });
 
   describe('Offline Operation Requirements', () => {
@@ -234,8 +242,8 @@ describe('useEncryption Offline PWA Compatibility', () => {
       // Simulate service worker offline mode
       const mockServiceWorker = {
         controller: {
-          postMessage: jest.fn(),
-          onmessage: jest.fn(),
+          postMessage: vi.fn(),
+          onmessage: vi.fn(),
         },
         ready: Promise.resolve({
           active: { state: 'activated' },
@@ -265,8 +273,8 @@ describe('useEncryption Offline PWA Compatibility', () => {
     test('PWA install prompt compatible', async () => {
       // Simulate PWA install prompt scenario
       const mockBeforeInstallPromptEvent = {
-        preventDefault: jest.fn(),
-        prompt: jest.fn(),
+        preventDefault: vi.fn(),
+        prompt: vi.fn(),
         userChoice: Promise.resolve({ outcome: 'accepted' }),
       };
 
@@ -430,7 +438,7 @@ describe('useEncryption Offline PWA Compatibility', () => {
 
     test('handles corrupted encrypted data', () => {
       // Mock atob to throw error (simulating corrupted data)
-      global.atob = jest.fn(() => {
+      global.atob = vi.fn(() => {
         throw new Error('Invalid base64 data');
       });
 
@@ -463,29 +471,16 @@ describe('useEncryption Offline PWA Compatibility', () => {
       );
     });
 
-    test('handles feature flag switching offline', async () => {
-      // Mock feature flag as disabled
-      const originalEnv = process.env.NEXT_PUBLIC_USE_ENCRYPTION_HOOK;
-      process.env.NEXT_PUBLIC_USE_ENCRYPTION_HOOK = 'false';
+    test('uses direct encryption interface offline', async () => {
+      // Using direct encryption interface
+      const { result } = renderHook(() => useConditionalEncryption());
 
-      // Force module reload to pick up new env var
-      jest.resetModules();
-
-      // Import using ES6 import syntax instead of require
-      const { useConditionalEncryption: newUseConditionalEncryption } =
-        await import('../../hooks/useEncryption');
-
-      const { result } = renderHook(() => newUseConditionalEncryption());
-
-      // Should use legacy interface when feature flag is disabled
+      // Should use direct encryption interface
       await act(async () => {
-        await expect(
-          result.current.encryptWithPin('test', '1234')
-        ).rejects.toThrow('Legacy encryption not implemented');
+        const encrypted = await result.current.encryptWithPin('test', '1234');
+        expect(encrypted).toBeDefined();
+        expect(typeof encrypted).toBe('string');
       });
-
-      // Restore original env
-      process.env.NEXT_PUBLIC_USE_ENCRYPTION_HOOK = originalEnv;
     });
   });
 
@@ -567,9 +562,11 @@ describe('useEncryption Offline PWA Compatibility', () => {
 
     test('graceful degradation when WebAuthn unavailable offline', async () => {
       // Mock WebAuthn to be unavailable
-      (navigator.credentials.get as jest.Mock).mockRejectedValue(
-        new Error('WebAuthn not available offline')
-      );
+      (
+        navigator.credentials.get as vi.MockedFunction<
+          typeof navigator.credentials.get
+        >
+      ).mockRejectedValue(new Error('WebAuthn not available offline'));
 
       const { result } = renderHook(() => useEncryption());
 

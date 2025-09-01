@@ -4,17 +4,18 @@ import {
 } from '../AuthValidationService';
 import { AuthState } from '../../../types/auth';
 
+import { vi } from 'vitest';
 // Mock console methods to avoid cluttering test output
 const mockConsole = {
-  log: jest.fn(),
-  warn: jest.fn(),
+  log: vi.fn(),
+  warn: vi.fn(),
 };
 global.console.log = mockConsole.log;
 global.console.warn = mockConsole.warn;
 
 describe('AuthValidationService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('validateAndCorrectAuthState', () => {

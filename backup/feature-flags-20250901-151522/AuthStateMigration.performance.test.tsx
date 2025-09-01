@@ -6,38 +6,37 @@ import { PinService } from '../../services/auth/PinService';
 import { AuthStorageService } from '../../services/storage/AuthStorageService';
 import { authLogger } from '../../../utils/auth/authLogger';
 
-import { vi } from 'vitest';
 // Mock all services and utilities
-vi.mock('../../services/auth/PasskeyService');
-vi.mock('../../services/auth/PinService');
-vi.mock('../../services/storage/AuthStorageService');
-vi.mock('../../../utils/auth/authLogger');
+jest.mock('../../services/auth/PasskeyService');
+jest.mock('../../services/auth/PinService');
+jest.mock('../../services/storage/AuthStorageService');
+jest.mock('../../../utils/auth/authLogger');
 
 // Mock performance for consistent timing
 const mockPerformance = {
-  now: vi.fn(),
+  now: jest.fn(),
 };
 Object.defineProperty(window, 'performance', { value: mockPerformance });
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
 };
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
-const mockPasskeyService = PasskeyService as vi.Mocked<typeof PasskeyService>;
-const mockPinService = PinService as vi.Mocked<typeof PinService>;
-const mockAuthStorageService = AuthStorageService as vi.Mocked<
+const mockPasskeyService = PasskeyService as jest.Mocked<typeof PasskeyService>;
+const mockPinService = PinService as jest.Mocked<typeof PinService>;
+const mockAuthStorageService = AuthStorageService as jest.Mocked<
   typeof AuthStorageService
 >;
-const mockAuthLogger = authLogger as vi.Mocked<typeof authLogger>;
+const mockAuthLogger = authLogger as jest.Mocked<typeof authLogger>;
 
 describe('AuthState Migration - Performance Tests', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
 
     // Mock timing for consistent performance measurements
     let timeCounter = 0;
@@ -527,7 +526,7 @@ describe('AuthState Migration - Performance Tests', () => {
         return <div data-testid="status">{authState.status}</div>;
       };
 
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation();
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const startTime = performance.now();
 

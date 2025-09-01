@@ -1,15 +1,16 @@
 import { authLogger } from '../authLogger';
 
+import { vi } from 'vitest';
 // Mock console methods
-const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-const consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation();
+const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation();
+const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation();
+const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation();
 
 describe('AuthLogger', () => {
   beforeEach(() => {
     // Clear all mocks before each test
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Development Environment (NODE_ENV=development)', () => {

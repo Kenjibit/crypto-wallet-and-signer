@@ -344,11 +344,14 @@ describe('useAuthState Hook', () => {
 
   describe('Performance Monitoring', () => {
     beforeEach(() => {
+    vi.clearAllMocks();
+
       let callCount = 0;
       vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++;
         return callCount * 100; // 100ms, 200ms, 300ms, etc.
-      });
+      
+  });
     });
 
     test('logs performance for direct state updates', () => {

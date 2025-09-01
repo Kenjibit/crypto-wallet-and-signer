@@ -1,18 +1,19 @@
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { PinEncryptionService } from '../PinEncryptionService';
 
+import { vi } from 'vitest';
 // Mock the authLogger
-jest.mock('../../../../utils/auth/authLogger', () => ({
+vi.mock('../../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
 // Mock crypto.getRandomValues
-const mockGetRandomValues = jest.fn();
+const mockGetRandomValues = vi.fn();
 Object.defineProperty(global.crypto, 'getRandomValues', {
   value: mockGetRandomValues,
   writable: true,
@@ -20,10 +21,10 @@ Object.defineProperty(global.crypto, 'getRandomValues', {
 
 // Mock crypto.subtle
 const mockCryptoSubtle = {
-  importKey: jest.fn(),
-  deriveKey: jest.fn(),
-  encrypt: jest.fn(),
-  decrypt: jest.fn(),
+  importKey: vi.fn(),
+  deriveKey: vi.fn(),
+  encrypt: vi.fn(),
+  decrypt: vi.fn(),
 };
 Object.defineProperty(global.crypto, 'subtle', {
   value: mockCryptoSubtle,
@@ -31,7 +32,7 @@ Object.defineProperty(global.crypto, 'subtle', {
 });
 
 // Mock performance.now
-const mockPerformanceNow = jest.fn();
+const mockPerformanceNow = vi.fn();
 Object.defineProperty(window.performance, 'now', {
   value: mockPerformanceNow,
   writable: true,
@@ -39,7 +40,7 @@ Object.defineProperty(window.performance, 'now', {
 
 describe('PinEncryptionService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPerformanceNow.mockReturnValue(1000);
 
     // Mock crypto.getRandomValues to return predictable values

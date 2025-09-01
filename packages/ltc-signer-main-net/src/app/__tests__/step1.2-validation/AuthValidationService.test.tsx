@@ -7,6 +7,7 @@
 import { AuthValidationService } from '../../services/validation/AuthValidationService';
 import type { AuthState } from '../../types/auth';
 
+import { vi } from 'vitest';
 describe('AuthValidationService', () => {
   describe('validateAndCorrectAuthState', () => {
     test('should pass valid auth state without changes', () => {
@@ -174,7 +175,7 @@ describe('AuthValidationService', () => {
 
       // Mock atob to throw an error for invalid base64
       const originalAtob = global.atob;
-      global.atob = jest.fn(() => {
+      global.atob = vi.fn(() => {
         throw new Error('Invalid base64');
       });
 

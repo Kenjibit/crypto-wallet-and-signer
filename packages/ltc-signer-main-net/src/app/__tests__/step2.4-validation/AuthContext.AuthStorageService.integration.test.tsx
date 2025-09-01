@@ -7,52 +7,53 @@ import { PinService } from '../../services/auth/PinService';
 import { authLogger } from '../../../utils/auth/authLogger';
 import type { AuthState } from '../../types/auth';
 
+import { vi } from 'vitest';
 // Mock all services
-jest.mock('../../services/auth/PasskeyService', () => ({
+vi.mock('../../services/auth/PasskeyService', () => ({
   PasskeyService: {
-    isSupported: jest.fn(),
-    createCredential: jest.fn(),
-    verifyCredential: jest.fn(),
-    verifyCredentialExists: jest.fn(),
+    isSupported: vi.fn(),
+    createCredential: vi.fn(),
+    verifyCredential: vi.fn(),
+    verifyCredentialExists: vi.fn(),
   },
 }));
 
-jest.mock('../../services/auth/PinService', () => ({
+vi.mock('../../services/auth/PinService', () => ({
   PinService: {
-    validatePinAuth: jest.fn(),
-    hashPin: jest.fn(),
-    verifyPinMatch: jest.fn(),
-    savePinAuth: jest.fn(),
-    loadPinAuth: jest.fn(),
-    clearPinAuth: jest.fn(),
+    validatePinAuth: vi.fn(),
+    hashPin: vi.fn(),
+    verifyPinMatch: vi.fn(),
+    savePinAuth: vi.fn(),
+    loadPinAuth: vi.fn(),
+    clearPinAuth: vi.fn(),
   },
 }));
 
-jest.mock('../../services/storage/AuthStorageService', () => ({
+vi.mock('../../services/storage/AuthStorageService', () => ({
   AuthStorageService: {
-    loadAuthState: jest.fn(),
-    saveAuthState: jest.fn(),
-    clearAuthState: jest.fn(),
-    hasAuthData: jest.fn(),
-    getDebugData: jest.fn(),
-    forceClearAuthData: jest.fn(),
+    loadAuthState: vi.fn(),
+    saveAuthState: vi.fn(),
+    clearAuthState: vi.fn(),
+    hasAuthData: vi.fn(),
+    getDebugData: vi.fn(),
+    forceClearAuthData: vi.fn(),
   },
 }));
 
-jest.mock('../../../utils/auth/authLogger', () => ({
+vi.mock('../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 
 Object.defineProperty(window, 'localStorage', {
@@ -61,17 +62,15 @@ Object.defineProperty(window, 'localStorage', {
 });
 
 describe('AuthContext + AuthStorageService Integration', () => {
-  const mockPasskeyService = PasskeyService as jest.Mocked<
-    typeof PasskeyService
-  >;
-  const mockPinService = PinService as jest.Mocked<typeof PinService>;
-  const mockAuthStorageService = AuthStorageService as jest.Mocked<
+  const mockPasskeyService = PasskeyService as vi.Mocked<typeof PasskeyService>;
+  const mockPinService = PinService as vi.Mocked<typeof PinService>;
+  const mockAuthStorageService = AuthStorageService as vi.Mocked<
     typeof AuthStorageService
   >;
-  const mockAuthLogger = authLogger as jest.Mocked<typeof authLogger>;
+  const mockAuthLogger = authLogger as vi.Mocked<typeof authLogger>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockLocalStorage.getItem.mockClear();
     mockLocalStorage.setItem.mockClear();
     mockLocalStorage.removeItem.mockClear();

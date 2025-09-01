@@ -97,6 +97,7 @@ import { authLogger } from '../../../utils/auth/authLogger';
 // Import the AuthContext and provider
 import { AuthProvider, useAuth } from '../../../app/contexts/AuthContext';
 
+import { vi } from 'vitest';
 // Test component that uses the AuthContext
 const TestComponent: React.FC = () => {
   const {
@@ -145,15 +146,13 @@ const TestComponent: React.FC = () => {
 };
 
 // Mock implementations
-const mockUseAuthState = useAuthState as jest.MockedFunction<
-  typeof useAuthState
->;
-const mockUsePasskeyAuth = usePasskeyAuth as jest.MockedFunction<
+const mockUseAuthState = useAuthState as vi.MockedFunction<typeof useAuthState>;
+const mockUsePasskeyAuth = usePasskeyAuth as vi.MockedFunction<
   typeof usePasskeyAuth
 >;
-const mockUsePinAuth = usePinAuth as jest.MockedFunction<typeof usePinAuth>;
+const mockUsePinAuth = usePinAuth as vi.MockedFunction<typeof usePinAuth>;
 const mockUseConditionalEncryption =
-  useConditionalEncryption as jest.MockedFunction<
+  useConditionalEncryption as vi.MockedFunction<
     typeof useConditionalEncryption
   >;
 
@@ -200,90 +199,38 @@ describe('AuthContext - Final Integration', () => {
     });
 
     // Setup service mocks
-    (
-      PasskeyService.createCredential as jest.MockedFunction<
-        typeof PasskeyService.createCredential
-      >
-    ).mockResolvedValue({
+    PasskeyService.createCredential.mockResolvedValue({
       credential: {},
       credentialId: 'test-credential-id',
     });
 
-    (
-      PasskeyService.verifyCredential as jest.MockedFunction<
-        typeof PasskeyService.verifyCredential
-      >
-    ).mockResolvedValue({
+    PasskeyService.verifyCredential.mockResolvedValue({
       success: true,
       authenticated: true,
     });
 
-    (
-      PinService.validatePinAuth as jest.MockedFunction<
-        typeof PinService.validatePinAuth
-      >
-    ).mockReturnValue({
+    PinService.validatePinAuth.mockReturnValue({
       isValid: true,
       errors: [],
     });
 
-    (
-      PinService.verifyPinMatch as jest.MockedFunction<
-        typeof PinService.verifyPinMatch
-      >
-    ).mockReturnValue(true);
+    PinService.verifyPinMatch.mockReturnValue(true);
 
-    (
-      PasskeyEncryptionService.encrypt as jest.MockedFunction<
-        typeof PasskeyEncryptionService.encrypt
-      >
-    ).mockResolvedValue('legacy-encrypted');
-    (
-      PasskeyEncryptionService.decrypt as jest.MockedFunction<
-        typeof PasskeyEncryptionService.decrypt
-      >
-    ).mockResolvedValue('legacy-decrypted');
-    (
-      PasskeyEncryptionService.testEncryption as jest.MockedFunction<
-        typeof PasskeyEncryptionService.testEncryption
-      >
-    ).mockResolvedValue(true);
+    PasskeyEncryptionService.encrypt.mockResolvedValue('legacy-encrypted');
+    PasskeyEncryptionService.decrypt.mockResolvedValue('legacy-decrypted');
+    PasskeyEncryptionService.testEncryption.mockResolvedValue(true);
 
-    (
-      PinEncryptionService.encrypt as jest.MockedFunction<
-        typeof PinEncryptionService.encrypt
-      >
-    ).mockResolvedValue('legacy-pin-encrypted');
-    (
-      PinEncryptionService.decrypt as jest.MockedFunction<
-        typeof PinEncryptionService.decrypt
-      >
-    ).mockResolvedValue('legacy-pin-decrypted');
+    PinEncryptionService.encrypt.mockResolvedValue('legacy-pin-encrypted');
+    PinEncryptionService.decrypt.mockResolvedValue('legacy-pin-decrypted');
 
-    (
-      AuthStorageService.hasAuthData as jest.MockedFunction<
-        typeof AuthStorageService.hasAuthData
-      >
-    ).mockReturnValue(false);
+    AuthStorageService.hasAuthData.mockReturnValue(false);
 
     // Add loadPinAuth mock
-    (
-      PinService.loadPinAuth as jest.MockedFunction<
-        typeof PinService.loadPinAuth
-      >
-    ).mockReturnValue({ pin: '', confirmPin: '' });
+    PinService.loadPinAuth.mockReturnValue({ pin: '', confirmPin: '' });
 
     // Add AuthStorageService method mocks
-    (
-      AuthStorageService.saveAuthState as jest.MockedFunction<
-        typeof AuthStorageService.saveAuthState
-      >
-    ).mockImplementation(() => {});
-    (
-      AuthStorageService.clearAuthState as jest.MockedFunction<
-        typeof AuthStorageService.clearAuthState
-      >
-    ).mockImplementation(() => {});
+    AuthStorageService.saveAuthState.mockImplementation(() => {});
+    AuthStorageService.clearAuthState.mockImplementation(() => {});
   });
 
   describe('Complete Authentication Flow', () => {
@@ -662,8 +609,8 @@ describe('AuthContext - Final Integration', () => {
       expect(screen.getByTestId('reset')).toBeInTheDocument();
     });
 
-    test('should handle legacy service fallbacks', async () => {
-      // Mock hook failures to test legacy fallbacks
+    test('should handle hook failures gracefully', async () => {
+      // Mock hook failures to test error handling
       mockUsePasskeyAuth.mockReturnValue({
         createPasskey: vi.fn().mockResolvedValue(false), // Hook fails
         verifyPasskey: vi.fn().mockResolvedValue(false), // Hook fails
@@ -679,15 +626,15 @@ describe('AuthContext - Final Integration', () => {
         </AuthProvider>
       );
 
-      // Test that legacy services are called as fallback
+      // Test that hook failures are handled gracefully
       const createButton = screen.getByTestId('create-passkey');
       await act(async () => {
         createButton.click();
       });
 
-      // Legacy service should be called
+      // Hook should be called (no legacy fallback)
       await waitFor(() => {
-        expect(PasskeyService.createCredential).toHaveBeenCalledWith(
+        expect(mockUsePasskeyAuth().createPasskey).toHaveBeenCalledWith(
           'test',
           'Test User'
         );

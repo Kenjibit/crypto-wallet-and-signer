@@ -6,6 +6,7 @@
  */
 
 // import { renderHook } from '@testing-library/react';
+import { vi } from 'vitest';
 import { createStressTestUtils } from '../../utils/auth/stressTestUtils';
 import { authLogger } from '../../utils/auth/authLogger';
 import type { AuthState, AuthMethod, AuthStatus } from '../../types/auth';
@@ -18,9 +19,9 @@ const originalConsoleError = console.error;
 describe('AuthContext - Phase 1.1 Validation', () => {
   beforeEach(() => {
     // Mock console methods
-    console.log = jest.fn();
-    console.warn = jest.fn();
-    console.error = jest.fn();
+    console.log = vi.fn();
+    console.warn = vi.fn();
+    console.error = vi.fn();
 
     // Clear localStorage
     localStorage.clear();
@@ -33,13 +34,17 @@ describe('AuthContext - Phase 1.1 Validation', () => {
     console.error = originalConsoleError;
 
     // Clear all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Stress Testing Utilities', () => {
-    let mockSetAuthState: jest.Mock;
-    let mockSetPinAuth: jest.Mock;
-    let mockSetSessionAuthenticated: jest.Mock;
+    let mockSetAuthState: (
+      state: AuthState | ((prev: AuthState) => AuthState)
+    ) => void;
+    let mockSetPinAuth: (
+      pin: { pin: string; confirmPin: string } | null
+    ) => void;
+    let mockSetSessionAuthenticated: (authenticated: boolean) => void;
     let stressTestUtils: ReturnType<typeof createStressTestUtils>;
 
     const mockAuthState: AuthState = {
@@ -52,9 +57,9 @@ describe('AuthContext - Phase 1.1 Validation', () => {
     const mockPinAuth = { pin: '', confirmPin: '' };
 
     beforeEach(() => {
-      mockSetAuthState = jest.fn();
-      mockSetPinAuth = jest.fn();
-      mockSetSessionAuthenticated = jest.fn();
+      mockSetAuthState = vi.fn();
+      mockSetPinAuth = vi.fn();
+      mockSetSessionAuthenticated = vi.fn();
 
       stressTestUtils = createStressTestUtils(
         mockAuthState,
@@ -148,9 +153,9 @@ describe('AuthContext - Phase 1.1 Validation', () => {
   describe('AuthLogger', () => {
     beforeEach(() => {
       // Clear previous calls
-      (console.log as jest.Mock).mockClear();
-      (console.warn as jest.Mock).mockClear();
-      (console.error as jest.Mock).mockClear();
+      (console.log as vi.MockedFunction<typeof console.log>).mockClear();
+      (console.warn as vi.MockedFunction<typeof console.warn>).mockClear();
+      (console.error as vi.MockedFunction<typeof console.error>).mockClear();
     });
 
     test('logs debug messages in development mode', () => {
@@ -205,7 +210,7 @@ describe('AuthContext - Phase 1.1 Validation', () => {
       );
 
       // Reset console.error mock
-      (console.error as jest.Mock).mockClear();
+      (console.error as vi.MockedFunction<typeof console.error>).mockClear();
 
       // Test in production
       process.env.NODE_ENV = 'production';
@@ -223,9 +228,9 @@ describe('AuthContext - Phase 1.1 Validation', () => {
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
 
-      const mockSetAuthState = jest.fn();
-      const mockSetPinAuth = jest.fn();
-      const mockSetSessionAuthenticated = jest.fn();
+      const mockSetAuthState = vi.fn();
+      const mockSetPinAuth = vi.fn();
+      const mockSetSessionAuthenticated = vi.fn();
 
       const utils = createStressTestUtils(
         mockAuthState,
@@ -250,9 +255,9 @@ describe('AuthContext - Phase 1.1 Validation', () => {
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
 
-      const mockSetAuthState = jest.fn();
-      const mockSetPinAuth = jest.fn();
-      const mockSetSessionAuthenticated = jest.fn();
+      const mockSetAuthState = vi.fn();
+      const mockSetPinAuth = vi.fn();
+      const mockSetSessionAuthenticated = vi.fn();
 
       const utils = createStressTestUtils(
         mockAuthState,

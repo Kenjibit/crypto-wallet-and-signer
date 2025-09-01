@@ -20,7 +20,7 @@ describe('Authentication Flow', () => {
       Object.defineProperty(global, 'navigator', {
         value: {
           credentials: {
-            create: jest.fn().mockResolvedValue(mockCredential)
+            create: vi.fn().mockResolvedValue(mockCredential)
           }
         }
       });
@@ -35,7 +35,7 @@ describe('Authentication Flow', () => {
       Object.defineProperty(global, 'navigator', {
         value: {
           credentials: {
-            create: jest.fn().mockRejectedValue(new Error('User cancelled'))
+            create: vi.fn().mockRejectedValue(new Error('User cancelled'))
           }
         }
       });

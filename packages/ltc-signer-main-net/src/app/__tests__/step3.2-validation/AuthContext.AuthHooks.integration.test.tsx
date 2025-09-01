@@ -6,50 +6,51 @@ import { usePinAuth } from '../../hooks/usePinAuth';
 import { PasskeyService } from '../../services/auth/PasskeyService';
 import { PinService } from '../../services/auth/PinService';
 
+import { vi } from 'vitest';
 // Mock all services
-jest.mock('../../services/auth/PasskeyService');
-jest.mock('../../services/auth/PinService');
-jest.mock('../../services/encryption/PasskeyEncryptionService');
-jest.mock('../../services/encryption/PinEncryptionService');
-jest.mock('../../services/storage/AuthStorageService');
-jest.mock('../../services/validation/AuthValidationService');
-jest.mock('../../../utils/auth/authLogger', () => ({
+vi.mock('../../services/auth/PasskeyService');
+vi.mock('../../services/auth/PinService');
+vi.mock('../../services/encryption/PasskeyEncryptionService');
+vi.mock('../../services/encryption/PinEncryptionService');
+vi.mock('../../services/storage/AuthStorageService');
+vi.mock('../../services/validation/AuthValidationService');
+vi.mock('../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
-const mockPasskeyService = PasskeyService as jest.Mocked<typeof PasskeyService>;
-const mockPinService = PinService as jest.Mocked<typeof PinService>;
+const mockPasskeyService = PasskeyService as vi.Mocked<typeof PasskeyService>;
+const mockPinService = PinService as vi.Mocked<typeof PinService>;
 
 describe('AuthContext with Authentication Hooks Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock window for PWA detection
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
-      value: jest.fn().mockImplementation((query) => ({
+      value: vi.fn().mockImplementation((query) => ({
         matches: false,
         media: query,
         onchange: null,
-        addListener: jest.fn(),
-        removeListener: jest.fn(),
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-        dispatchEvent: jest.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
       })),
     });
 
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
-        getItem: jest.fn(() => null),
-        setItem: jest.fn(),
-        removeItem: jest.fn(),
-        clear: jest.fn(),
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
       },
       writable: true,
     });
@@ -57,11 +58,11 @@ describe('AuthContext with Authentication Hooks Integration', () => {
     // Mock crypto
     Object.defineProperty(window, 'crypto', {
       value: {
-        getRandomValues: jest.fn((array) => array.fill(0)),
+        getRandomValues: vi.fn((array) => array.fill(0)),
         subtle: {
-          importKey: jest.fn(),
-          deriveKey: jest.fn(),
-          exportKey: jest.fn(),
+          importKey: vi.fn(),
+          deriveKey: vi.fn(),
+          exportKey: vi.fn(),
         },
       },
       writable: true,
@@ -80,8 +81,8 @@ describe('AuthContext with Authentication Hooks Integration', () => {
     // Mock navigator.credentials
     Object.defineProperty(navigator, 'credentials', {
       value: {
-        create: jest.fn(),
-        get: jest.fn(),
+        create: vi.fn(),
+        get: vi.fn(),
       },
       writable: true,
     });
@@ -505,15 +506,15 @@ describe('AuthContext with Authentication Hooks Integration', () => {
       // Mock PWA standalone mode
       Object.defineProperty(window, 'matchMedia', {
         writable: true,
-        value: jest.fn().mockImplementation((query) => ({
+        value: vi.fn().mockImplementation((query) => ({
           matches: query === '(display-mode: standalone)',
           media: query,
           onchange: null,
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-          addEventListener: jest.fn(),
-          removeEventListener: jest.fn(),
-          dispatchEvent: jest.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
         })),
       });
 
@@ -579,4 +580,3 @@ describe('AuthContext with Authentication Hooks Integration', () => {
     });
   });
 });
-

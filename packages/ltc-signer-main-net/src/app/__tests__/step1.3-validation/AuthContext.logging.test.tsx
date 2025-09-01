@@ -3,36 +3,37 @@ import { render, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 import { authLogger } from '../../utils/auth/authLogger';
 
+import { vi } from 'vitest';
 // Mock the authLogger to track calls
-jest.mock('../../utils/auth/authLogger');
-const mockAuthLogger = authLogger as jest.Mocked<typeof authLogger>;
+vi.mock('../../utils/auth/authLogger');
+const mockAuthLogger = authLogger as vi.Mocked<typeof authLogger>;
 
 // Mock console methods to ensure no accidental console output
-const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation();
+const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation();
+const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
 // Mock WebAuthn API
 Object.defineProperty(navigator, 'credentials', {
   value: {
-    create: jest.fn(),
-    get: jest.fn(),
+    create: vi.fn(),
+    get: vi.fn(),
   },
   writable: true,
 });
 
 describe('AuthContext Logging Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue(null);
     localStorageMock.setItem.mockImplementation(() => {});
     localStorageMock.removeItem.mockImplementation(() => {});
@@ -125,9 +126,11 @@ describe('AuthContext Logging Integration', () => {
       type: 'public-key',
       rawId: new Uint8Array(32),
     };
-    (navigator.credentials.create as jest.Mock).mockResolvedValue(
-      mockCredential
-    );
+    (
+      navigator.credentials.create as vi.MockedFunction<
+        typeof navigator.credentials.create
+      >
+    ).mockResolvedValue(mockCredential);
 
     const TestComponent = () => {
       const { createPasskey } = useAuth();
@@ -175,7 +178,11 @@ describe('AuthContext Logging Integration', () => {
         signature: new Uint8Array(64),
       },
     };
-    (navigator.credentials.get as jest.Mock).mockResolvedValue(mockAssertion);
+    (
+      navigator.credentials.get as vi.MockedFunction<
+        typeof navigator.credentials.get
+      >
+    ).mockResolvedValue(mockAssertion);
 
     const TestComponent = () => {
       const { verifyPasskey } = useAuth();
