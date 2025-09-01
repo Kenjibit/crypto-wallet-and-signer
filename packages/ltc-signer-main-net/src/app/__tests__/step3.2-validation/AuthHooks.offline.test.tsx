@@ -6,31 +6,32 @@ import { PinService } from '../../services/auth/PinService';
 import { PasskeyEncryptionService } from '../../services/encryption/PasskeyEncryptionService';
 import { PinEncryptionService } from '../../services/encryption/PinEncryptionService';
 
+import { vi } from 'vitest';
 // Mock all services
-jest.mock('../../services/auth/PasskeyService');
-jest.mock('../../services/auth/PinService');
-jest.mock('../../services/encryption/PasskeyEncryptionService');
-jest.mock('../../services/encryption/PinEncryptionService');
-jest.mock('../../../utils/auth/authLogger', () => ({
+vi.mock('../../services/auth/PasskeyService');
+vi.mock('../../services/auth/PinService');
+vi.mock('../../services/encryption/PasskeyEncryptionService');
+vi.mock('../../services/encryption/PinEncryptionService');
+vi.mock('../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
-const mockPasskeyService = PasskeyService as jest.Mocked<typeof PasskeyService>;
-const mockPinService = PinService as jest.Mocked<typeof PinService>;
-const mockPasskeyEncryptionService = PasskeyEncryptionService as jest.Mocked<
+const mockPasskeyService = PasskeyService as vi.Mocked<typeof PasskeyService>;
+const mockPinService = PinService as vi.Mocked<typeof PinService>;
+const mockPasskeyEncryptionService = PasskeyEncryptionService as vi.Mocked<
   typeof PasskeyEncryptionService
 >;
-const mockPinEncryptionService = PinEncryptionService as jest.Mocked<
+const mockPinEncryptionService = PinEncryptionService as vi.Mocked<
   typeof PinEncryptionService
 >;
 
 describe('Authentication Hooks - Offline PWA Compatibility', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Setup service mocks with offline-compatible responses
     mockPasskeyService.createCredential.mockResolvedValue({
@@ -127,15 +128,15 @@ describe('Authentication Hooks - Offline PWA Compatibility', () => {
       // Mock PWA environment
       Object.defineProperty(window, 'matchMedia', {
         writable: true,
-        value: jest.fn().mockImplementation((query) => ({
+        value: vi.fn().mockImplementation((query) => ({
           matches: query === '(display-mode: standalone)',
           media: query,
           onchange: null,
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-          addEventListener: jest.fn(),
-          removeEventListener: jest.fn(),
-          dispatchEvent: jest.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
         })),
       });
 
@@ -155,16 +156,16 @@ describe('Authentication Hooks - Offline PWA Compatibility', () => {
       // Mock PWA environment
       Object.defineProperty(window, 'matchMedia', {
         writable: true,
-        value: jest.fn().mockImplementation((query) => ({
+        value: vi.fn().mockImplementation((query) => ({
           matches: query === '(display-mode: standalone)',
           media: query,
           onchange: null,
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-          addEventListener: jest.fn(),
-          addEventListener: jest.fn(),
-          removeEventListener: jest.fn(),
-          dispatchEvent: jest.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
         })),
       });
 
@@ -316,12 +317,12 @@ describe('Authentication Hooks - Offline PWA Compatibility', () => {
     test('handles localStorage quota exceeded gracefully', () => {
       // Mock localStorage quota exceeded
       const mockLocalStorage = {
-        getItem: jest.fn(() => null),
-        setItem: jest.fn(() => {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(() => {
           throw new Error('Quota exceeded');
         }),
-        removeItem: jest.fn(),
-        clear: jest.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
       };
 
       Object.defineProperty(window, 'localStorage', {

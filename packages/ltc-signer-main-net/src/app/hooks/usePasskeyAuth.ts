@@ -14,7 +14,10 @@ import { authLogger } from '../../utils/auth/authLogger';
  */
 export interface UsePasskeyAuthReturn {
   /** Create a new passkey credential */
-  createPasskey: (username: string, displayName: string) => Promise<boolean>;
+  createPasskey: (
+    username: string,
+    displayName: string
+  ) => Promise<{ success: boolean; credentialId?: string }>;
 
   /** Verify an existing passkey credential */
   verifyPasskey: (credentialId?: string) => Promise<boolean>;
@@ -56,7 +59,10 @@ export const usePasskeyAuth = (): UsePasskeyAuthReturn => {
    * Create a new passkey credential
    */
   const createPasskey = useCallback(
-    async (username: string, displayName: string): Promise<boolean> => {
+    async (
+      username: string,
+      displayName: string
+    ): Promise<{ success: boolean; credentialId?: string }> => {
       authLogger.debug('usePasskeyAuth.createPasskey called', {
         username,
         displayName,
@@ -66,7 +72,7 @@ export const usePasskeyAuth = (): UsePasskeyAuthReturn => {
         const errorMsg = 'Username and display name are required';
         authLogger.error(errorMsg);
         setError(errorMsg);
-        return false;
+        return { success: false };
       }
 
       setIsLoading(true);
@@ -82,12 +88,12 @@ export const usePasskeyAuth = (): UsePasskeyAuthReturn => {
           authLogger.debug('Passkey created successfully', {
             credentialId: result.credentialId.substring(0, 10) + '...',
           });
-          return true;
+          return { success: true, credentialId: result.credentialId };
         } else {
           const errorMsg = 'Passkey creation failed: No credential returned';
           authLogger.error(errorMsg);
           setError(errorMsg);
-          return false;
+          return { success: false };
         }
       } catch (error) {
         const errorMsg =
@@ -97,7 +103,7 @@ export const usePasskeyAuth = (): UsePasskeyAuthReturn => {
           error instanceof Error ? error : new Error(String(error))
         );
         setError(errorMsg);
-        return false;
+        return { success: false };
       } finally {
         setIsLoading(false);
       }

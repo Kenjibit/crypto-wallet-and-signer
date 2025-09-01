@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { PinService } from '../services/auth/PinService';
 import { PinEncryptionService } from '../services/encryption/PinEncryptionService';
 import { authLogger } from '../../utils/auth/authLogger';
@@ -64,6 +64,27 @@ export const usePinAuth = (): UsePinAuthReturn => {
   const getStoredPin = useCallback(() => {
     return storedPin;
   }, [storedPin]);
+
+  // Load PIN from localStorage on initialization
+  useEffect(() => {
+    authLogger.debug('usePinAuth: Loading PIN from localStorage');
+    try {
+      const loadedPinAuth = PinService.loadPinAuth();
+      if (loadedPinAuth.pin) {
+        setStoredPin(loadedPinAuth.pin);
+        authLogger.debug('usePinAuth: PIN loaded from localStorage', {
+          pinLength: loadedPinAuth.pin.length,
+        });
+      } else {
+        authLogger.debug('usePinAuth: No PIN found in localStorage');
+      }
+    } catch (error) {
+      authLogger.error(
+        'usePinAuth: Failed to load PIN from localStorage',
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
+  }, []);
 
   /**
    * Set a new PIN with validation
@@ -308,4 +329,3 @@ export const usePinAuth = (): UsePinAuthReturn => {
     getStoredPin,
   };
 };
-

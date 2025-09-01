@@ -4,30 +4,29 @@ import { AuthStorageService } from '../../services/storage/AuthStorageService';
 import { AuthValidationService } from '../../services/validation/AuthValidationService';
 import { authLogger } from '../../../utils/auth/authLogger';
 
-import { vi } from 'vitest';
 // Mock all dependencies
-vi.mock('../../services/storage/AuthStorageService');
-vi.mock('../../services/validation/AuthValidationService');
-vi.mock('../../../utils/auth/authLogger');
+jest.mock('../../services/storage/AuthStorageService');
+jest.mock('../../services/validation/AuthValidationService');
+jest.mock('../../../utils/auth/authLogger');
 
-const mockAuthStorageService = AuthStorageService as vi.Mocked<
+const mockAuthStorageService = AuthStorageService as jest.Mocked<
   typeof AuthStorageService
 >;
-const mockAuthValidationService = AuthValidationService as vi.Mocked<
+const mockAuthValidationService = AuthValidationService as jest.Mocked<
   typeof AuthValidationService
 >;
-const mockAuthLogger = authLogger as vi.Mocked<typeof authLogger>;
+const mockAuthLogger = authLogger as jest.Mocked<typeof authLogger>;
 
 describe('useAuthState Hook - Migration Unit Tests', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
 
     // Reset localStorage mock
     const mockLocalStorage = {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
+      getItem: jest.fn(),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+      clear: jest.fn(),
     };
     Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
@@ -325,7 +324,7 @@ describe('useAuthState Hook - Migration Unit Tests', () => {
 
       const { result } = renderHook(() => useAuthState());
 
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       act(() => {
         result.current.setAuthState({
@@ -473,7 +472,7 @@ describe('useAuthState Hook - Migration Unit Tests', () => {
 
       const { result } = renderHook(() => useAuthState());
 
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       act(() => {
         result.current.setAuthState({

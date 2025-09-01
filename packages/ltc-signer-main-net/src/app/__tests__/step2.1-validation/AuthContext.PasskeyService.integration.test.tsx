@@ -4,17 +4,18 @@ import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 import { PasskeyService } from '../../services/auth/PasskeyService';
 import { PasskeyEncryptionService } from '../../services/encryption/PasskeyEncryptionService';
 
+import { vi } from 'vitest';
 // Mock the services
-jest.mock('../../services/auth/PasskeyService');
-jest.mock('../../services/encryption/PasskeyEncryptionService');
-jest.mock('../../utils/auth/authLogger');
+vi.mock('../../services/auth/PasskeyService');
+vi.mock('../../services/encryption/PasskeyEncryptionService');
+vi.mock('../../utils/auth/authLogger');
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
@@ -26,33 +27,33 @@ Object.defineProperty(window, 'location', {
 
 // Mock crypto
 Object.defineProperty(window, 'crypto', {
-  value: { getRandomValues: jest.fn() },
+  value: { getRandomValues: vi.fn() },
   writable: true,
 });
 
 // Mock performance
 Object.defineProperty(window, 'performance', {
-  value: { now: jest.fn(() => 1000) },
+  value: { now: vi.fn(() => 1000) },
   writable: true,
 });
 
 // Mock PublicKeyCredential
 Object.defineProperty(window, 'PublicKeyCredential', {
   value: {
-    isUserVerifyingPlatformAuthenticatorAvailable: jest.fn(),
-    isConditionalMediationAvailable: jest.fn(),
+    isUserVerifyingPlatformAuthenticatorAvailable: vi.fn(),
+    isConditionalMediationAvailable: vi.fn(),
   },
   writable: true,
 });
 
-const mockPasskeyService = PasskeyService as jest.Mocked<typeof PasskeyService>;
-const mockPasskeyEncryptionService = PasskeyEncryptionService as jest.Mocked<
+const mockPasskeyService = PasskeyService as vi.Mocked<typeof PasskeyService>;
+const mockPasskeyEncryptionService = PasskeyEncryptionService as vi.Mocked<
   typeof PasskeyEncryptionService
 >;
 
 describe('AuthContext - PasskeyService Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Reset localStorage mocks
     mockLocalStorage.getItem.mockReturnValue(null);

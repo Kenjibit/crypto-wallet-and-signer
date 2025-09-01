@@ -7,10 +7,10 @@ import {
 
 // Mock the WebAuthn API
 const mockWebAuthn = {
-  create: jest.fn(),
-  get: jest.fn(),
-  isUserVerifyingPlatformAuthenticatorAvailable: jest.fn(),
-  isConditionalMediationAvailable: jest.fn(),
+  create: vi.fn(),
+  get: vi.fn(),
+  isUserVerifyingPlatformAuthenticatorAvailable: vi.fn(),
+  isConditionalMediationAvailable: vi.fn(),
 };
 
 // Mock navigator
@@ -43,13 +43,13 @@ Object.defineProperty(window, 'location', {
 // Mock crypto
 Object.defineProperty(window, 'crypto', {
   value: {
-    getRandomValues: jest.fn(),
+    getRandomValues: vi.fn(),
     subtle: {
-      digest: jest.fn(),
-      importKey: jest.fn(),
-      deriveKey: jest.fn(),
-      encrypt: jest.fn(),
-      decrypt: jest.fn(),
+      digest: vi.fn(),
+      importKey: vi.fn(),
+      deriveKey: vi.fn(),
+      encrypt: vi.fn(),
+      decrypt: vi.fn(),
     },
   },
   writable: true,
@@ -58,14 +58,14 @@ Object.defineProperty(window, 'crypto', {
 // Mock performance
 Object.defineProperty(window, 'performance', {
   value: {
-    now: jest.fn(),
+    now: vi.fn(),
   },
   writable: true,
 });
 
 // Setup mocks before each test
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 
   // Default mock implementations
   mockWebAuthn.create.mockResolvedValue(null);
@@ -75,23 +75,35 @@ beforeEach(() => {
   );
   mockWebAuthn.isConditionalMediationAvailable.mockResolvedValue(true);
 
-  (crypto.getRandomValues as jest.Mock).mockImplementation(
-    (array: Uint8Array) => {
-      // Fill with predictable values for testing
-      for (let i = 0; i < array.length; i++) {
-        array[i] = i % 256;
-      }
-      return array;
+  (
+    crypto.getRandomValues as vi.MockedFunction<typeof crypto.getRandomValues>
+  ).mockImplementation((array: Uint8Array) => {
+    // Fill with predictable values for testing
+    for (let i = 0; i < array.length; i++) {
+      array[i] = i % 256;
     }
-  );
+    return array;
+  });
 
-  (crypto.subtle.digest as jest.Mock).mockResolvedValue(new Uint8Array(32));
-  (crypto.subtle.importKey as jest.Mock).mockResolvedValue({});
-  (crypto.subtle.deriveKey as jest.Mock).mockResolvedValue({});
-  (crypto.subtle.encrypt as jest.Mock).mockResolvedValue(new Uint8Array(32));
-  (crypto.subtle.decrypt as jest.Mock).mockResolvedValue(new Uint8Array(16));
+  (
+    crypto.subtle.digest as vi.MockedFunction<typeof crypto.subtle.digest>
+  ).mockResolvedValue(new Uint8Array(32));
+  (
+    crypto.subtle.importKey as vi.MockedFunction<typeof crypto.subtle.importKey>
+  ).mockResolvedValue({});
+  (
+    crypto.subtle.deriveKey as vi.MockedFunction<typeof crypto.subtle.deriveKey>
+  ).mockResolvedValue({});
+  (
+    crypto.subtle.encrypt as vi.MockedFunction<typeof crypto.subtle.encrypt>
+  ).mockResolvedValue(new Uint8Array(32));
+  (
+    crypto.subtle.decrypt as vi.MockedFunction<typeof crypto.subtle.decrypt>
+  ).mockResolvedValue(new Uint8Array(16));
 
-  (performance.now as jest.Mock).mockReturnValue(1000);
+  (
+    performance.now as vi.MockedFunction<typeof performance.now>
+  ).mockReturnValue(1000);
 });
 
 describe('PasskeyService', () => {

@@ -1,22 +1,23 @@
 import React from 'react';
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 import { PinService } from '../../services/auth/PinService';
 import { PinEncryptionService } from '../../services/encryption/PinEncryptionService';
 
+import { vi } from 'vitest';
 // Mock the authLogger to avoid console output during tests
-jest.mock('../../../utils/auth/authLogger', () => ({
+vi.mock('../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
 // Mock crypto.getRandomValues
-const mockGetRandomValues = jest.fn();
+const mockGetRandomValues = vi.fn();
 Object.defineProperty(global.crypto, 'getRandomValues', {
   value: mockGetRandomValues,
   writable: true,
@@ -24,12 +25,12 @@ Object.defineProperty(global.crypto, 'getRandomValues', {
 
 // Mock crypto.subtle
 const mockCryptoSubtle = {
-  importKey: jest.fn(),
-  deriveKey: jest.fn(),
-  exportKey: jest.fn(),
-  sign: jest.fn(),
-  encrypt: jest.fn(),
-  decrypt: jest.fn(),
+  importKey: vi.fn(),
+  deriveKey: vi.fn(),
+  exportKey: vi.fn(),
+  sign: vi.fn(),
+  encrypt: vi.fn(),
+  decrypt: vi.fn(),
 };
 Object.defineProperty(global.crypto, 'subtle', {
   value: mockCryptoSubtle,
@@ -38,10 +39,10 @@ Object.defineProperty(global.crypto, 'subtle', {
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
@@ -50,7 +51,7 @@ Object.defineProperty(window, 'localStorage', {
 
 describe('AuthContext - PinService Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Reset localStorage mocks
     mockLocalStorage.getItem.mockReturnValue(null);
@@ -484,7 +485,7 @@ describe('AuthContext - PinService Integration', () => {
   describe('Service Integration Verification', () => {
     test('AuthContext uses PinService for validation', async () => {
       // Spy on PinService methods
-      const validatePinAuthSpy = jest.spyOn(PinService, 'validatePinAuth');
+      const validatePinAuthSpy = vi.spyOn(PinService, 'validatePinAuth');
 
       const TestComponent = () => {
         const { setPinCode } = useAuth();
@@ -517,7 +518,7 @@ describe('AuthContext - PinService Integration', () => {
 
     test('AuthContext uses PinEncryptionService for crypto operations', async () => {
       // Spy on PinEncryptionService methods
-      const encryptSpy = jest.spyOn(PinEncryptionService, 'encrypt');
+      const encryptSpy = vi.spyOn(PinEncryptionService, 'encrypt');
 
       const TestComponent = () => {
         const { encryptWithPin } = useAuth();

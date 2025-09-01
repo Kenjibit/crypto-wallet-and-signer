@@ -5,44 +5,67 @@ import { PinEncryptionService } from '../../services/encryption/PinEncryptionSer
 import { authLogger } from '../../../utils/auth/authLogger';
 
 // Mock the services
-jest.mock('../../services/encryption/PasskeyEncryptionService');
-jest.mock('../../services/encryption/PinEncryptionService');
-jest.mock('../../../utils/auth/authLogger');
+vi.mock('../../services/encryption/PasskeyEncryptionService', () => ({
+  PasskeyEncryptionService: {
+    encrypt: vi.fn(),
+    decrypt: vi.fn(),
+    testEncryption: vi.fn(),
+  },
+}));
+
+vi.mock('../../services/encryption/PinEncryptionService', () => ({
+  PinEncryptionService: {
+    encrypt: vi.fn(),
+    decrypt: vi.fn(),
+    testEncryption: vi.fn(),
+    validateEncryptedData: vi.fn(),
+    getEncryptedDataInfo: vi.fn(),
+  },
+}));
+
+vi.mock('../../../utils/auth/authLogger', () => ({
+  authLogger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 // Mock the useAuthState hook
-jest.mock('../useAuthState', () => ({
-  useAuthState: jest.fn(),
+vi.mock('../useAuthState', () => ({
+  useAuthState: vi.fn(),
 }));
 
 // Mock crypto API
 Object.defineProperty(window, 'crypto', {
   value: {
-    getRandomValues: jest.fn(),
+    getRandomValues: vi.fn(),
     subtle: {
-      encrypt: jest.fn(),
-      decrypt: jest.fn(),
-      importKey: jest.fn(),
-      deriveKey: jest.fn(),
-      digest: jest.fn(),
+      encrypt: vi.fn(),
+      decrypt: vi.fn(),
+      importKey: vi.fn(),
+      deriveKey: vi.fn(),
+      digest: vi.fn(),
     },
   },
 });
 
 import { useAuthState } from '../useAuthState';
 
-const mockUseAuthState = useAuthState as jest.MockedFunction<
-  typeof useAuthState
+import { vi } from 'vitest';
+const mockUseAuthState = useAuthState as vi.MockedFunction<typeof useAuthState>;
+const mockPasskeyEncryptionService = PasskeyEncryptionService as vi.Mocked<
+  typeof PasskeyEncryptionService
 >;
-const mockPasskeyEncryptionService =
-  PasskeyEncryptionService as jest.MockedClass<typeof PasskeyEncryptionService>;
-const mockPinEncryptionService = PinEncryptionService as jest.MockedClass<
+const mockPinEncryptionService = PinEncryptionService as vi.Mocked<
   typeof PinEncryptionService
 >;
-const mockAuthLogger = authLogger as jest.Mocked<typeof authLogger>;
+const mockAuthLogger = authLogger as vi.Mocked<typeof authLogger>;
 
 describe('useEncryption Hook', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Setup default auth state (unauthenticated)
     mockUseAuthState.mockReturnValue({
@@ -52,7 +75,7 @@ describe('useEncryption Hook', () => {
         isPasskeySupported: true,
         isPWA: false,
       },
-      setAuthState: jest.fn(),
+      setAuthState: vi.fn(),
     });
 
     // Setup default service mocks
@@ -122,7 +145,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -144,7 +167,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -178,7 +201,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -197,7 +220,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -221,7 +244,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -243,7 +266,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -277,7 +300,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -298,7 +321,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -322,7 +345,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -340,7 +363,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -361,7 +384,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -385,7 +408,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -403,7 +426,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -474,7 +497,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -495,7 +518,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -528,7 +551,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -549,7 +572,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -567,7 +590,7 @@ describe('useEncryption Hook', () => {
           isPasskeySupported: true,
           isPWA: false,
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -595,7 +618,7 @@ describe('useEncryption Hook', () => {
       mockPinEncryptionService.validateEncryptedData.mockReturnValue(false);
 
       // Mock atob and JSON.parse for passkey format
-      global.atob = jest.fn(() =>
+      global.atob = vi.fn(() =>
         JSON.stringify({
           version: 1,
           algorithm: 'passkey-aes-gcm',
@@ -616,7 +639,7 @@ describe('useEncryption Hook', () => {
 
     test('returns false for invalid data', () => {
       mockPinEncryptionService.validateEncryptedData.mockReturnValue(false);
-      global.atob = jest.fn(() => {
+      global.atob = vi.fn(() => {
         throw new Error('Invalid data');
       });
 
@@ -659,7 +682,7 @@ describe('useEncryption Hook', () => {
         challenge: [10, 11, 12],
         timestamp: Date.now(),
       };
-      global.atob = jest.fn(() => JSON.stringify(mockData));
+      global.atob = vi.fn(() => JSON.stringify(mockData));
 
       const { result } = renderHook(() => useEncryption());
 
@@ -675,7 +698,7 @@ describe('useEncryption Hook', () => {
 
     test('returns null for invalid data', () => {
       mockPinEncryptionService.getEncryptedDataInfo.mockReturnValue(null);
-      global.atob = jest.fn(() => {
+      global.atob = vi.fn(() => {
         throw new Error('Invalid data');
       });
 
@@ -697,7 +720,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       mockPasskeyEncryptionService.encrypt.mockRejectedValue(
@@ -721,7 +744,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       mockPasskeyEncryptionService.decrypt.mockRejectedValue(
@@ -747,7 +770,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -769,7 +792,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -793,7 +816,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());
@@ -820,7 +843,7 @@ describe('useEncryption Hook', () => {
           isPWA: false,
           credentialId: 'test-credential-id',
         },
-        setAuthState: jest.fn(),
+        setAuthState: vi.fn(),
       });
 
       const { result } = renderHook(() => useEncryption());

@@ -1,11 +1,12 @@
 import { PasskeyEncryptionService } from '../PasskeyEncryptionService';
 
+import { vi } from 'vitest';
 // Mock the WebAuthn API
 const mockWebAuthn = {
-  create: jest.fn(),
-  get: jest.fn(),
-  isUserVerifyingPlatformAuthenticatorAvailable: jest.fn(),
-  isConditionalMediationAvailable: jest.fn(),
+  create: vi.fn(),
+  get: vi.fn(),
+  isUserVerifyingPlatformAuthenticatorAvailable: vi.fn(),
+  isConditionalMediationAvailable: vi.fn(),
 };
 
 // Mock navigator
@@ -38,13 +39,13 @@ Object.defineProperty(window, 'location', {
 // Mock crypto
 Object.defineProperty(window, 'crypto', {
   value: {
-    getRandomValues: jest.fn(),
+    getRandomValues: vi.fn(),
     subtle: {
-      digest: jest.fn(),
-      importKey: jest.fn(),
-      deriveKey: jest.fn(),
-      encrypt: jest.fn(),
-      decrypt: jest.fn(),
+      digest: vi.fn(),
+      importKey: vi.fn(),
+      deriveKey: vi.fn(),
+      encrypt: vi.fn(),
+      decrypt: vi.fn(),
     },
   },
   writable: true,
@@ -53,29 +54,29 @@ Object.defineProperty(window, 'crypto', {
 // Mock performance
 Object.defineProperty(window, 'performance', {
   value: {
-    now: jest.fn(),
+    now: vi.fn(),
   },
   writable: true,
 });
 
 // Mock TextEncoder and TextDecoder
 Object.defineProperty(window, 'TextEncoder', {
-  value: jest.fn().mockImplementation(() => ({
-    encode: jest.fn((str: string) => new Uint8Array(str.length)),
+  value: vi.fn().mockImplementation(() => ({
+    encode: vi.fn((str: string) => new Uint8Array(str.length)),
   })),
   writable: true,
 });
 
 Object.defineProperty(window, 'TextDecoder', {
-  value: jest.fn().mockImplementation(() => ({
-    decode: jest.fn(() => 'decrypted text'),
+  value: vi.fn().mockImplementation(() => ({
+    decode: vi.fn(() => 'decrypted text'),
   })),
   writable: true,
 });
 
 // Setup mocks before each test
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 
   // Default mock implementations
   mockWebAuthn.get.mockResolvedValue({
@@ -87,31 +88,39 @@ beforeEach(() => {
     },
   });
 
-  (crypto.getRandomValues as jest.Mock).mockImplementation(
-    (array: Uint8Array) => {
-      // Fill with predictable values for testing
-      for (let i = 0; i < array.length; i++) {
-        array[i] = i % 256;
-      }
-      return array;
+  (
+    crypto.getRandomValues as vi.MockedFunction<typeof crypto.getRandomValues>
+  ).mockImplementation((array: Uint8Array) => {
+    // Fill with predictable values for testing
+    for (let i = 0; i < array.length; i++) {
+      array[i] = i % 256;
     }
-  );
+    return array;
+  });
 
-  (crypto.subtle.digest as jest.Mock).mockResolvedValue(new Uint8Array(32));
-  (crypto.subtle.importKey as jest.Mock).mockResolvedValue({});
-  (crypto.subtle.deriveKey as jest.Mock).mockResolvedValue({});
-  (crypto.subtle.encrypt as jest.Mock).mockResolvedValue(
-    new Uint8Array([1, 2, 3, 4])
-  );
-  (crypto.subtle.decrypt as jest.Mock).mockResolvedValue(
-    new Uint8Array([72, 101, 108, 108, 111])
-  ); // "Hello" in UTF-8
+  (
+    crypto.subtle.digest as vi.MockedFunction<typeof crypto.subtle.digest>
+  ).mockResolvedValue(new Uint8Array(32));
+  (
+    crypto.subtle.importKey as vi.MockedFunction<typeof crypto.subtle.importKey>
+  ).mockResolvedValue({});
+  (
+    crypto.subtle.deriveKey as vi.MockedFunction<typeof crypto.subtle.deriveKey>
+  ).mockResolvedValue({});
+  (
+    crypto.subtle.encrypt as vi.MockedFunction<typeof crypto.subtle.encrypt>
+  ).mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
+  (
+    crypto.subtle.decrypt as vi.MockedFunction<typeof crypto.subtle.decrypt>
+  ).mockResolvedValue(new Uint8Array([72, 101, 108, 108, 111])); // "Hello" in UTF-8
 
-  (performance.now as jest.Mock).mockReturnValue(1000);
+  (
+    performance.now as vi.MockedFunction<typeof performance.now>
+  ).mockReturnValue(1000);
 
   // Mock TextEncoder/TextDecoder
   const mockTextEncoder = {
-    encode: jest.fn((str: string) => {
+    encode: vi.fn((str: string) => {
       const arr = new Uint8Array(str.length);
       for (let i = 0; i < str.length; i++) {
         arr[i] = str.charCodeAt(i);
@@ -121,7 +130,7 @@ beforeEach(() => {
   };
 
   const mockTextDecoder = {
-    decode: jest.fn((arr: Uint8Array) => {
+    decode: vi.fn((arr: Uint8Array) => {
       let str = '';
       for (let i = 0; i < arr.length; i++) {
         str += String.fromCharCode(arr[i]);
@@ -130,8 +139,12 @@ beforeEach(() => {
     }),
   };
 
-  (window.TextEncoder as jest.Mock).mockImplementation(() => mockTextEncoder);
-  (window.TextDecoder as jest.Mock).mockImplementation(() => mockTextDecoder);
+  (
+    window.TextEncoder as vi.MockedFunction<typeof TextEncoder>
+  ).mockImplementation(() => mockTextEncoder);
+  (
+    window.TextDecoder as vi.MockedFunction<typeof TextDecoder>
+  ).mockImplementation(() => mockTextDecoder);
 });
 
 describe('PasskeyEncryptionService', () => {

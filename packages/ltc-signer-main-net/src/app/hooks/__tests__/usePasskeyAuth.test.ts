@@ -3,25 +3,26 @@ import { usePasskeyAuth } from '../usePasskeyAuth';
 import { PasskeyService } from '../../services/auth/PasskeyService';
 import { PasskeyEncryptionService } from '../../services/encryption/PasskeyEncryptionService';
 
+import { vi } from 'vitest';
 // Mock the services
-jest.mock('../../services/auth/PasskeyService');
-jest.mock('../../services/encryption/PasskeyEncryptionService');
-jest.mock('../../../utils/auth/authLogger', () => ({
+vi.mock('../../services/auth/PasskeyService');
+vi.mock('../../services/encryption/PasskeyEncryptionService');
+vi.mock('../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
-const mockPasskeyService = PasskeyService as jest.Mocked<typeof PasskeyService>;
-const mockPasskeyEncryptionService = PasskeyEncryptionService as jest.Mocked<
+const mockPasskeyService = PasskeyService as vi.Mocked<typeof PasskeyService>;
+const mockPasskeyEncryptionService = PasskeyEncryptionService as vi.Mocked<
   typeof PasskeyEncryptionService
 >;
 
 describe('usePasskeyAuth Hook', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Reset all mocks to default implementations
     mockPasskeyService.createCredential.mockResolvedValue({
@@ -61,12 +62,16 @@ describe('usePasskeyAuth Hook', () => {
     test('successfully creates passkey', async () => {
       const { result } = renderHook(() => usePasskeyAuth());
 
-      let success = false;
+      let result_data = { success: false };
       await act(async () => {
-        success = await result.current.createPasskey('testuser', 'Test User');
+        result_data = await result.current.createPasskey(
+          'testuser',
+          'Test User'
+        );
       });
 
-      expect(success).toBe(true);
+      expect(result_data.success).toBe(true);
+      expect(result_data.credentialId).toBe('mock-credential-id');
       expect(mockPasskeyService.createCredential).toHaveBeenCalledWith(
         'testuser',
         'Test User'
@@ -82,12 +87,16 @@ describe('usePasskeyAuth Hook', () => {
 
       const { result } = renderHook(() => usePasskeyAuth());
 
-      let success = false;
+      let result_data = { success: false };
       await act(async () => {
-        success = await result.current.createPasskey('testuser', 'Test User');
+        result_data = await result.current.createPasskey(
+          'testuser',
+          'Test User'
+        );
       });
 
-      expect(success).toBe(false);
+      expect(result_data.success).toBe(false);
+      expect(result_data.credentialId).toBeUndefined();
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBe('Creation failed');
     });
@@ -95,12 +104,13 @@ describe('usePasskeyAuth Hook', () => {
     test('validates required parameters', async () => {
       const { result } = renderHook(() => usePasskeyAuth());
 
-      let success = false;
+      let result_data = { success: false };
       await act(async () => {
-        success = await result.current.createPasskey('', 'Test User');
+        result_data = await result.current.createPasskey('', 'Test User');
       });
 
-      expect(success).toBe(false);
+      expect(result_data.success).toBe(false);
+      expect(result_data.credentialId).toBeUndefined();
       expect(result.current.error).toBe(
         'Username and display name are required'
       );
@@ -115,12 +125,16 @@ describe('usePasskeyAuth Hook', () => {
 
       const { result } = renderHook(() => usePasskeyAuth());
 
-      let success = false;
+      let result_data = { success: false };
       await act(async () => {
-        success = await result.current.createPasskey('testuser', 'Test User');
+        result_data = await result.current.createPasskey(
+          'testuser',
+          'Test User'
+        );
       });
 
-      expect(success).toBe(false);
+      expect(result_data.success).toBe(false);
+      expect(result_data.credentialId).toBeUndefined();
       expect(result.current.error).toBe(
         'Passkey creation failed: No credential returned'
       );
@@ -507,12 +521,16 @@ describe('usePasskeyAuth Hook', () => {
 
       const { result } = renderHook(() => usePasskeyAuth());
 
-      let success = false;
+      let result_data = { success: false };
       await act(async () => {
-        success = await result.current.createPasskey('testuser', 'Test User');
+        result_data = await result.current.createPasskey(
+          'testuser',
+          'Test User'
+        );
       });
 
-      expect(success).toBe(false);
+      expect(result_data.success).toBe(false);
+      expect(result_data.credentialId).toBeUndefined();
       expect(result.current.error).toBe('Network unavailable');
     });
   });

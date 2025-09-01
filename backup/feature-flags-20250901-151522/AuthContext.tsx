@@ -9,13 +9,18 @@ import React, {
   useMemo,
   ReactNode,
 } from 'react';
-// Removed unused validation imports after simplifying auth functions
+import {
+  validateAuthState,
+  validatePasskeyCreation,
+} from '../utils/auth-validation';
 // STEP 4.1.6: Removed AuthValidationService import - validation now handled in useAuthState hook
 import { PasskeyService } from '../services/auth/PasskeyService';
+import { PasskeyEncryptionService } from '../services/encryption/PasskeyEncryptionService';
 import { PinService } from '../services/auth/PinService';
+import { PinEncryptionService } from '../services/encryption/PinEncryptionService';
 import { AuthStorageService } from '../services/storage/AuthStorageService';
 import { authLogger } from '../../utils/auth/authLogger';
-
+import { FEATURES } from '../config/features';
 import { useAuthState } from '../hooks/useAuthState';
 import { usePasskeyAuth } from '../hooks/usePasskeyAuth';
 import { usePinAuth } from '../hooks/usePinAuth';
@@ -23,6 +28,7 @@ import { useConditionalEncryption } from '../hooks/useEncryption';
 import type {
   AuthMethod,
   AuthStatus,
+  AuthState,
   PinAuth,
   AuthContextType,
 } from '../types/auth';
@@ -61,7 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setSessionAuthenticated: newSetSessionAuthenticated,
   } = authStateHook;
 
-  // Using useAuthState hook for state management
+  // STEP 4.1.4: Using useAuthState hook exclusively (AUTH_STATE_HOOK_MIGRATION enabled)
   const currentAuthState = newAuthState;
   const currentSessionAuthenticated = newSessionAuthenticated;
   const currentSetSessionAuthenticated = newSetSessionAuthenticated;
@@ -235,33 +241,152 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [currentAuthState]);
 
-  // Create passkey - direct hook usage
+  // Create passkey - conditionally use new hook or legacy implementation
+  // Memoize stable auth state properties to reduce unnecessary re-renders
+  const stableAuthStateProps = useMemo(
+    () => ({
+      isPasskeySupported: currentAuthState?.isPasskeySupported ?? false,
+      isPWA: currentAuthState?.isPWA ?? false,
+    }),
+    [currentAuthState?.isPasskeySupported, currentAuthState?.isPWA]
+  );
 
   const createPasskey = useCallback(
     async (username: string, displayName: string) => {
-      authLogger.debug('Using usePasskeyAuth hook for passkey creation');
+      // Use new hook if available (more stable than checking current state)
+      if (passkeyAuth) {
+        authLogger.debug('Using usePasskeyAuth hook for passkey creation');
 
-      // First set status to authenticating
-      setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
+        // First set status to authenticating
+        setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
 
-      const result = await passkeyAuth.createPasskey(username, displayName);
+        const success = await passkeyAuth.createPasskey(username, displayName);
 
-      if (result.success && result.credentialId) {
-        // Update auth state with authenticated status
-        setAuthState((prev) => ({
-          ...prev,
+        if (success) {
+          // Update auth state with authenticated status
+          setAuthState((prev) => ({
+            ...prev,
+            method: 'passkey' as AuthMethod,
+            status: 'authenticated' as AuthStatus,
+            credentialId: 'credential-created', // This would come from the hook result
+          }));
+          currentSetSessionAuthenticated(true);
+          return true;
+        } else {
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+          return false;
+        }
+      }
+
+      // Legacy implementation - only depends on stable properties
+      authLogger.debug('createPasskey called (legacy)', {
+        username,
+        displayName,
+      });
+
+      try {
+        authLogger.debug('Setting status to authenticating');
+        setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
+
+        // Use PasskeyService to create the credential
+        const result = await PasskeyService.createCredential(
+          username,
+          displayName
+        );
+
+        authLogger.debug('PasskeyService.createCredential completed', {
+          hasCredential: !!result.credential,
+          hasCredentialId: !!result.credentialId,
+          credentialIdLength: result.credentialId.length,
+        });
+
+        // Validate that the credential is properly formed
+        if (!result.credentialId || result.credentialId.length === 0) {
+          authLogger.error('Invalid credential ID generated');
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+          return false;
+        }
+
+        const newState: AuthState = {
           method: 'passkey' as AuthMethod,
           status: 'authenticated' as AuthStatus,
           credentialId: result.credentialId,
-        }));
-        currentSetSessionAuthenticated(true);
+          ...stableAuthStateProps, // Use memoized stable properties
+        };
+
+        authLogger.debug('New state to be set', newState);
+
+        // Validate the new state before setting it
+        const validation = validateAuthState(newState);
+        if (!validation.isValid) {
+          authLogger.error(
+            'Auth state validation failed before setting',
+            new Error(`Validation errors: ${validation.errors.join(', ')}`)
+          );
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+          return false;
+        }
+
+        authLogger.debug('Setting authenticated state');
+        setAuthState(newState);
+        authLogger.debug('Authenticated state set successfully');
+
+        // Additional validation: Ensure state was actually set correctly
+        setTimeout(() => {
+          const postValidation = validatePasskeyCreation(newState);
+          if (!postValidation) {
+            authLogger.error('Post-creation validation failed');
+          } else {
+            authLogger.debug('Post-creation validation passed');
+          }
+        }, 50);
+
         return true;
-      } else {
-        setAuthState((prev) => ({ ...prev, status: 'failed' }));
-        return false;
+      } catch (error) {
+        authLogger.error(
+          'Passkey creation failed',
+          error instanceof Error ? error : new Error(String(error))
+        );
+
+        // Simplified error handling - reduce complexity
+        if (error instanceof Error) {
+          if (
+            error.name === 'NotAllowedError' ||
+            error.message.includes('User cancelled') ||
+            error.message.includes('aborted')
+          ) {
+            // Check if there's existing authentication
+            const hasExistingAuth = AuthStorageService.hasAuthData();
+
+            if (hasExistingAuth) {
+              setAuthState((prev) => ({
+                ...prev,
+                status: 'failed',
+              }));
+            } else {
+              setAuthState((prev) => ({
+                ...prev,
+                method: null,
+                status: 'unauthenticated',
+                credentialId: undefined,
+              }));
+            }
+          } else {
+            setAuthState((prev) => ({ ...prev, status: 'failed' }));
+          }
+        } else {
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+        }
       }
+      return false;
     },
-    [passkeyAuth, setAuthState, currentSetSessionAuthenticated]
+    [
+      // Reduced dependencies - removed currentAuthState to prevent unnecessary re-renders
+      setAuthState,
+      passkeyAuth,
+      currentSetSessionAuthenticated,
+      stableAuthStateProps, // Use memoized stable properties
+    ]
   );
 
   // Memoize credential ID to reduce dependency on full auth state
@@ -276,62 +401,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [currentAuthState?.method]
   );
 
-  // Verify passkey - direct hook usage
+  // Verify passkey - conditionally use new hook or legacy implementation
   const verifyPasskey = useCallback(async () => {
-    authLogger.debug('Using usePasskeyAuth hook for passkey verification');
+    // Use new hook (migration completed in Step 4.1.8)
+    if (passkeyAuth) {
+      authLogger.debug('Using usePasskeyAuth hook for passkey verification');
 
-    // Set status to authenticating
-    setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
+      // Set status to authenticating
+      setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
 
-    const success = await passkeyAuth.verifyPasskey(currentCredentialId);
-
-    if (success) {
-      setAuthState((prev) => ({ ...prev, status: 'authenticated' }));
-      currentSetSessionAuthenticated(true);
-      return true;
-    } else {
-      setAuthState((prev) => ({ ...prev, status: 'failed' }));
-      return false;
-    }
-  }, [
-    passkeyAuth,
-    currentCredentialId,
-    setAuthState,
-    currentSetSessionAuthenticated,
-  ]);
-
-  // Set PIN code - direct hook usage
-  const setPinCode = useCallback(
-    (pin: string, confirmPin: string) => {
-      authLogger.debug('Using usePinAuth hook for PIN setup');
-
-      const success = pinAuth.setPinCode(pin, confirmPin);
-
-      if (success) {
-        // Update auth state with authenticated status
-        setAuthState((prev) => ({
-          ...prev,
-          method: 'pin',
-          status: 'authenticated',
-        }));
-        // Update local PIN auth state
-        setLocalPinAuth({ pin, confirmPin });
-        currentSetSessionAuthenticated(true);
-        return true;
-      } else {
-        setAuthState((prev) => ({ ...prev, status: 'failed' }));
-        return false;
-      }
-    },
-    [pinAuth, setAuthState, setLocalPinAuth, currentSetSessionAuthenticated]
-  );
-
-  // Verify PIN code - direct hook usage
-  const verifyPinCode = useCallback(
-    (pin: string) => {
-      authLogger.debug('Using usePinAuth hook for PIN verification');
-
-      const success = pinAuth.verifyPinCode(pin);
+      const success = await passkeyAuth.verifyPasskey(currentCredentialId);
 
       if (success) {
         setAuthState((prev) => ({ ...prev, status: 'authenticated' }));
@@ -341,8 +420,234 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setAuthState((prev) => ({ ...prev, status: 'failed' }));
         return false;
       }
+    }
+
+    // Legacy implementation
+    authLogger.debug('verifyPasskey called (legacy)');
+    authLogger.debug('Current credential ID for verification', currentCredentialId);
+
+    if (!currentCredentialId) {
+      authLogger.debug('No credential ID available for verification');
+      setAuthState((prev) => ({ ...prev, status: 'failed' }));
+      return false;
+    }
+
+    try {
+      authLogger.debug('Setting status to authenticating');
+      setAuthState((prev) => ({ ...prev, status: 'authenticating' }));
+
+      // Use PasskeyService to verify the credential
+      const result = await PasskeyService.verifyCredential(currentCredentialId);
+
+      authLogger.debug('PasskeyService.verifyCredential completed', {
+        success: result.success,
+        authenticated: result.authenticated,
+      });
+
+      if (result.success && result.authenticated) {
+        authLogger.debug(
+          'Passkey verification successful, setting authenticated state'
+        );
+        setAuthState((prev) => ({ ...prev, status: 'authenticated' }));
+        currentSetSessionAuthenticated(true); // Mark as authenticated in this session
+        authLogger.debug('Passkey verification completed successfully');
+        return true;
+      } else {
+        authLogger.debug('Passkey verification failed');
+        setAuthState((prev) => ({ ...prev, status: 'failed' }));
+        return false;
+      }
+    } catch (error) {
+      authLogger.error(
+        'Passkey verification failed',
+        error instanceof Error ? error : new Error(String(error))
+      );
+      authLogger.debug('Verification error details', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack',
+      });
+
+      // Handle specific error types
+      if (error instanceof Error) {
+        authLogger.debug('Error type analysis', {
+          name: error.name,
+          message: error.message,
+          isNotAllowed: error.name === 'NotAllowedError',
+          isInvalidState: error.name === 'InvalidStateError',
+          isAbortError: error.name === 'AbortError',
+          includesNotAllowed: error.message.includes('not allowed'),
+          includesTimedOut: error.message.includes('timed out'),
+          includesCancelled:
+            error.message.includes('cancelled') ||
+            error.message.includes('canceled'),
+          includesAborted: error.message.includes('aborted'),
+          includesUserCancelled:
+            error.message.includes('user cancelled') ||
+            error.message.includes('user canceled'),
+        });
+
+        // Simplified error handling for performance
+        if (
+          error.name === 'NotAllowedError' ||
+          error.name === 'AbortError' ||
+          error.message.includes('not allowed') ||
+          error.message.includes('timed out') ||
+          error.message.includes('cancelled') ||
+          error.message.includes('canceled') ||
+          error.message.includes('aborted')
+        ) {
+          // User cancellation - preserve stored credential
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+        } else if (
+          error.name === 'InvalidStateError' ||
+          error.message.includes('credential not found')
+        ) {
+          // Credential doesn't exist - clear it
+          setAuthState((prev) => ({
+            ...prev,
+            status: 'unauthenticated',
+            method: null,
+            credentialId: undefined,
+          }));
+          AuthStorageService.forceClearAuthData();
+        } else {
+          // Other errors - preserve stored credential
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+        }
+      } else {
+        setAuthState((prev) => ({ ...prev, status: 'failed' }));
+      }
+    }
+    return false;
+  }, [
+    // Optimized dependencies - only what's actually needed
+    setAuthState,
+    passkeyAuth,
+    currentSetSessionAuthenticated,
+    currentCredentialId, // Memoized credential ID instead of full auth state
+  ]);
+
+  // Set PIN code - conditionally use new hook or legacy implementation
+  const setPinCode = useCallback(
+    (pin: string, confirmPin: string) => {
+      // Use new hook if feature flag is enabled
+      if (pinAuth) {
+        authLogger.debug('Using usePinAuth hook for PIN setup');
+
+        const success = pinAuth.setPinCode(pin, confirmPin);
+
+        if (success) {
+          // Update auth state with authenticated status
+          setAuthState((prev) => ({
+            ...prev,
+            method: 'pin',
+            status: 'authenticated',
+          }));
+          // Update local PIN auth state
+          setLocalPinAuth({ pin, confirmPin });
+          currentSetSessionAuthenticated(true);
+          return true;
+        } else {
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+          return false;
+        }
+      }
+
+      // Legacy implementation
+      authLogger.debug('setPinCode called (legacy)', {
+        pinLength: pin.length,
+        confirmPinLength: confirmPin.length,
+      });
+
+      // Use PinService for PIN validation
+      const pinValidationStart = performance.now();
+      const validationResult = PinService.validatePinAuth(pin, confirmPin);
+      const pinValidationDuration = performance.now() - pinValidationStart;
+      authLogger.performance('validatePinAuth', pinValidationDuration);
+
+      if (validationResult.isValid) {
+        authLogger.debug('PIN validation passed, setting authenticated state');
+        setAuthState((prev) => ({
+          ...prev,
+          method: 'pin',
+          status: 'authenticated',
+        }));
+        const newPinAuth = { pin, confirmPin };
+        setLocalPinAuth(newPinAuth);
+        authLogger.debug('PIN auth state updated');
+
+        // Use PinService to save PIN to localStorage
+        try {
+          PinService.savePinAuth(newPinAuth);
+          authLogger.debug('PIN saved to localStorage via PinService');
+        } catch (error) {
+          authLogger.error(
+            'Failed to save PIN via PinService',
+            error instanceof Error ? error : new Error(String(error))
+          );
+          // Continue with authentication even if storage fails
+        }
+
+        return true;
+      } else {
+        authLogger.debug('PIN validation failed', {
+          errorCount: validationResult.errors.length,
+          errors: validationResult.errors,
+        });
+        return false;
+      }
     },
-    [pinAuth, setAuthState, currentSetSessionAuthenticated]
+    [setAuthState, setLocalPinAuth, currentSetSessionAuthenticated, pinAuth]
+  );
+
+  // Verify PIN code - conditionally use new hook or legacy implementation
+  const verifyPinCode = useCallback(
+    (pin: string) => {
+      // Use new hook if feature flag is enabled
+      if (pinAuth) {
+        authLogger.debug('Using usePinAuth hook for PIN verification');
+
+        const success = pinAuth.verifyPinCode(pin);
+
+        if (success) {
+          setAuthState((prev) => ({ ...prev, status: 'authenticated' }));
+          currentSetSessionAuthenticated(true);
+          return true;
+        } else {
+          setAuthState((prev) => ({ ...prev, status: 'failed' }));
+          return false;
+        }
+      }
+
+      // Legacy implementation
+      authLogger.debug('verifyPinCode called (legacy)', {
+        pinLength: pin.length,
+      });
+
+      // Use PinService for PIN verification
+      const pinsMatch = PinService.verifyPinMatch(pin, localPinAuth.pin);
+      authLogger.debug('PIN verification result', {
+        inputPinLength: pin.length,
+        storedPinLength: localPinAuth.pin.length,
+        pinsMatch,
+      });
+
+      if (pinsMatch) {
+        authLogger.debug(
+          'PIN verification successful, setting authenticated state'
+        );
+        setAuthState((prev) => ({ ...prev, status: 'authenticated' }));
+        currentSetSessionAuthenticated(true); // Mark as authenticated in this session
+        authLogger.debug('PIN verification completed successfully');
+        return true;
+      } else {
+        authLogger.debug('PIN verification failed, setting failed state');
+        setAuthState((prev) => ({ ...prev, status: 'failed' }));
+        return false;
+      }
+    },
+    [pinAuth, setAuthState, currentSetSessionAuthenticated, localPinAuth]
   );
 
   // Reset authentication
@@ -554,41 +859,148 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       : null;
   */
 
-  // Passkey-based encryption and decryption functions - direct hook usage
+  // Passkey-based encryption and decryption functions - conditionally use new hook
   const encryptWithPasskey = useCallback(
     async (data: string): Promise<string> => {
-      return await encryption.encryptWithPasskey(data);
+      // Use new encryption hook if feature flag is enabled
+      if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+        authLogger.debug('Using useEncryption hook for passkey encryption');
+        return await encryption.encryptWithPasskey(data);
+      }
+
+      // Use new passkey auth hook if feature flag is enabled
+      if (passkeyAuth) {
+        authLogger.debug('Using usePasskeyAuth hook for encryption');
+        return await passkeyAuth.encryptWithPasskey(
+          data,
+          currentAuthState?.credentialId || ''
+        );
+      }
+
+      // Legacy implementation
+      authLogger.debug('encryptWithPasskey called (legacy)');
+
+      if (!currentAuthState?.credentialId) {
+        throw new Error('No passkey available for encryption');
+      }
+
+      // Use PasskeyEncryptionService to encrypt the data
+      return await PasskeyEncryptionService.encrypt(
+        data,
+        currentAuthState.credentialId
+      );
     },
-    [encryption]
+    [currentAuthState, passkeyAuth, encryption]
   );
 
   const decryptWithPasskey = useCallback(
     async (encryptedData: string): Promise<string> => {
-      return await encryption.decryptWithPasskey(encryptedData);
+      // Use new encryption hook if feature flag is enabled
+      if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+        authLogger.debug('Using useEncryption hook for passkey decryption');
+        return await encryption.decryptWithPasskey(encryptedData);
+      }
+
+      // Use new passkey auth hook if feature flag is enabled
+      if (passkeyAuth) {
+        authLogger.debug('Using usePasskeyAuth hook for decryption');
+        return await passkeyAuth.decryptWithPasskey(
+          encryptedData,
+          currentAuthState?.credentialId || ''
+        );
+      }
+
+      // Legacy implementation
+      authLogger.debug('decryptWithPasskey called (legacy)');
+
+      if (!currentAuthState?.credentialId) {
+        throw new Error('No passkey available for decryption');
+      }
+
+      // Use PasskeyEncryptionService to decrypt the data
+      return await PasskeyEncryptionService.decrypt(
+        encryptedData,
+        currentAuthState.credentialId
+      );
     },
-    [encryption]
+    [currentAuthState, passkeyAuth, encryption]
   );
 
-  // PIN-based encryption function - direct hook usage
+  // PIN-based encryption function - conditionally use new hook
   const encryptWithPin = useCallback(
     async (data: string, pin: string): Promise<string> => {
-      return await encryption.encryptWithPin(data, pin);
+      // Use new encryption hook if feature flag is enabled
+      if (encryption) {
+        authLogger.debug('Using useEncryption hook for PIN encryption');
+        return await encryption.encryptWithPin(data, pin);
+      }
+
+      // Use new PIN auth hook if feature flag is enabled
+      if (pinAuth) {
+        authLogger.debug('Using usePinAuth hook for PIN encryption');
+        return await pinAuth.encryptWithPin(data, pin);
+      }
+
+      // Legacy implementation
+      authLogger.debug('encryptWithPin called (legacy)');
+
+      // Use PinEncryptionService for encryption
+      return await PinEncryptionService.encrypt(data, pin);
     },
-    [encryption]
+    [pinAuth, encryption]
   );
 
-  // PIN-based decryption function - direct hook usage
+  // PIN-based decryption function - conditionally use new hook
   const decryptWithPin = useCallback(
     async (encryptedData: string, pin: string): Promise<string> => {
-      return await encryption.decryptWithPin(encryptedData, pin);
+      // Use new encryption hook if feature flag is enabled
+      if (encryption) {
+        authLogger.debug('Using useEncryption hook for PIN decryption');
+        return await encryption.decryptWithPin(encryptedData, pin);
+      }
+
+      // Use new PIN auth hook if feature flag is enabled
+      if (pinAuth) {
+        authLogger.debug('Using usePinAuth hook for PIN decryption');
+        return await pinAuth.decryptWithPin(encryptedData, pin);
+      }
+
+      // Legacy implementation
+      authLogger.debug('decryptWithPin called (legacy)');
+
+      // Use PinEncryptionService for decryption
+      return await PinEncryptionService.decrypt(encryptedData, pin);
     },
-    [encryption]
+    [pinAuth, encryption]
   );
 
-  // Test passkey encryption/decryption - direct hook usage
+  // Test passkey encryption/decryption - conditionally use new hook
   const testPasskeyEncryption = useCallback(async (): Promise<boolean> => {
-    return await encryption.testPasskeyEncryption();
-  }, [encryption]);
+    // Use new encryption hook if feature flag is enabled
+    if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+      authLogger.debug('Using useEncryption hook for encryption test');
+      return await encryption.testPasskeyEncryption();
+    }
+
+    // Use new passkey auth hook if feature flag is enabled
+    if (passkeyAuth) {
+      authLogger.debug('Using usePasskeyAuth hook for encryption test');
+      return await passkeyAuth.testPasskeyEncryption(
+        currentAuthState?.credentialId || ''
+      );
+    }
+
+    // Legacy implementation
+    if (!currentAuthState?.credentialId) {
+      authLogger.debug('No credential ID available for testing');
+      return false;
+    }
+
+    // Use PasskeyEncryptionService to test encryption
+    return await PasskeyEncryptionService.testEncryption(
+      currentAuthState.credentialId
+    );
+  }, [currentAuthState, passkeyAuth, encryption]);
 
   // Unified encryption function - automatically detects auth method
   const encryptData = useCallback(
@@ -612,14 +1024,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Auto-detect encryption method based on current auth state
         if (currentAuthMethod === 'passkey' && currentCredentialId) {
           authLogger.debug('Auto-detected passkey encryption');
-          result = await encryption.encryptWithPasskey(data);
+          // Use new encryption hook if feature flag is enabled
+          if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+            result = await encryption.encryptWithPasskey(data);
+          } else if (passkeyAuth) {
+            // Use new passkey auth hook if feature flag is enabled
+            result = await passkeyAuth.encryptWithPasskey(
+              data,
+              currentCredentialId!
+            );
+          } else {
+            // Legacy implementation
+            result = await PasskeyEncryptionService.encrypt(
+              data,
+              currentCredentialId!
+            );
+          }
         } else if (currentAuthMethod === 'pin' && pin) {
           authLogger.debug('Auto-detected PIN encryption');
-          result = await encryption.encryptWithPin(data, pin);
+          // Use new encryption hook if feature flag is enabled
+          if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+            result = await encryption.encryptWithPin(data, pin);
+          } else if (pinAuth) {
+            // Use new PIN auth hook if feature flag is enabled
+            result = await pinAuth.encryptWithPin(data, pin);
+          } else {
+            // Legacy implementation
+            result = await PinEncryptionService.encrypt(data, pin);
+          }
         } else if (pin) {
           // Fallback: use PIN encryption if PIN is provided
           authLogger.debug('Fallback to PIN encryption with provided PIN');
-          result = await encryption.encryptWithPin(data, pin);
+          // Use new encryption hook if feature flag is enabled
+          if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+            result = await encryption.encryptWithPin(data, pin);
+          } else if (pinAuth) {
+            // Use new PIN auth hook if feature flag is enabled
+            result = await pinAuth.encryptWithPin(data, pin);
+          } else {
+            // Legacy implementation
+            result = await PinEncryptionService.encrypt(data, pin);
+          }
         } else {
           throw new Error(
             `No valid encryption method available. Auth method: ${
@@ -656,6 +1101,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       currentAuthMethod,
       currentCredentialId,
       encryption,
+      passkeyAuth,
+      pinAuth,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       currentAuthState, // Only used in error messages, not for function behavior
     ]
@@ -683,14 +1130,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Auto-detect decryption method based on current auth state
         if (currentAuthMethod === 'passkey' && currentCredentialId) {
           authLogger.debug('Auto-detected passkey decryption');
-          result = await encryption.decryptWithPasskey(encryptedData);
+          // Use new encryption hook if feature flag is enabled
+          if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+            result = await encryption.decryptWithPasskey(encryptedData);
+          } else if (passkeyAuth) {
+            // Use new passkey auth hook if feature flag is enabled
+            result = await passkeyAuth.decryptWithPasskey(
+              encryptedData,
+              currentCredentialId!
+            );
+          } else {
+            // Legacy implementation
+            result = await PasskeyEncryptionService.decrypt(
+              encryptedData,
+              currentCredentialId!
+            );
+          }
         } else if (currentAuthMethod === 'pin' && pin) {
           authLogger.debug('Auto-detected PIN decryption');
-          result = await encryption.decryptWithPin(encryptedData, pin);
+          // Use new encryption hook if feature flag is enabled
+          if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+            result = await encryption.decryptWithPin(encryptedData, pin);
+          } else if (pinAuth) {
+            // Use new PIN auth hook if feature flag is enabled
+            result = await pinAuth.decryptWithPin(encryptedData, pin);
+          } else {
+            // Legacy implementation
+            result = await PinEncryptionService.decrypt(encryptedData, pin);
+          }
         } else if (pin) {
           // Fallback: use PIN decryption if PIN is provided
           authLogger.debug('Fallback to PIN decryption with provided PIN');
-          result = await encryption.decryptWithPin(encryptedData, pin);
+          // Use new encryption hook if feature flag is enabled
+          if (FEATURES.USE_ENCRYPTION_HOOK && encryption) {
+            result = await encryption.decryptWithPin(encryptedData, pin);
+          } else if (pinAuth) {
+            // Use new PIN auth hook if feature flag is enabled
+            result = await pinAuth.decryptWithPin(encryptedData, pin);
+          } else {
+            // Legacy implementation
+            result = await PinEncryptionService.decrypt(encryptedData, pin);
+          }
         } else {
           throw new Error(
             `No valid decryption method available. Auth method: ${
@@ -727,6 +1207,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       currentAuthMethod,
       currentCredentialId,
       encryption,
+      passkeyAuth,
+      pinAuth,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       currentAuthState, // Only used in error messages, not for function behavior
     ]
@@ -759,9 +1241,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Test function
     testPasskeyEncryption,
     verifyCredentialExists: async () => {
-      return await passkeyAuth.verifyCredentialExists(
-        currentAuthState?.credentialId || ''
+      // Use new hook if feature flag is enabled
+      if (passkeyAuth) {
+        authLogger.debug(
+          'Using usePasskeyAuth hook for credential existence check'
+        );
+        return await passkeyAuth.verifyCredentialExists(
+          currentAuthState?.credentialId || ''
+        );
+      }
+
+      // Legacy implementation
+      authLogger.debug('verifyCredentialExists called (legacy)');
+      authLogger.debug('Current auth state for verification', {
+        method: currentAuthState?.method || 'null',
+        credentialId: currentAuthState?.credentialId ? 'exists' : 'null',
+      });
+
+      if (!currentAuthState?.credentialId) {
+        authLogger.debug('No credential ID to verify');
+        return false;
+      }
+
+      // Use PasskeyService to verify credential exists
+      const exists = await PasskeyService.verifyCredentialExists(
+        currentAuthState.credentialId
       );
+
+      authLogger.debug('PasskeyService.verifyCredentialExists result', {
+        exists,
+      });
+      return exists;
     },
     ...(stressTestUtils ? { stressTestUtils } : {}),
   };

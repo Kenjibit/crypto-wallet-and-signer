@@ -186,3 +186,33 @@ export const useLegacyAuthState = () => {
   // For now, just delegate to the new hook
   return useAuthState();
 };
+
+/**
+ * Feature-flag-aware auth state hook
+ *
+ * This hook automatically chooses between legacy and new implementations
+ * based on feature flags, enabling gradual migration for air-gapped wallet.
+ *
+ * Usage:
+ * ```tsx
+ * import { useAuthStateWithFeatureFlag } from '../hooks/useAuthState';
+ *
+ * const MyComponent = () => {
+ *   const { authState, setAuthState } = useAuthStateWithFeatureFlag();
+ *   // Works with both legacy and new implementations
+ * };
+ * ```
+ */
+export const useAuthStateWithFeatureFlag = () => {
+  // Always call both hooks to follow Rules of Hooks
+  const newHookResult = useAuthState();
+  const legacyHookResult = useLegacyAuthState();
+
+  // Import FEATURES here to avoid circular dependencies
+  const FEATURES = {
+    USE_AUTH_STATE_HOOK: process.env.NEXT_PUBLIC_USE_AUTH_STATE_HOOK === 'true',
+  };
+
+  // Return appropriate result based on feature flag
+  return FEATURES.USE_AUTH_STATE_HOOK ? newHookResult : legacyHookResult;
+};

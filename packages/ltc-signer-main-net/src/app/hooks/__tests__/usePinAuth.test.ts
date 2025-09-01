@@ -3,25 +3,26 @@ import { usePinAuth } from '../usePinAuth';
 import { PinService } from '../../services/auth/PinService';
 import { PinEncryptionService } from '../../services/encryption/PinEncryptionService';
 
+import { vi } from 'vitest';
 // Mock the services
-jest.mock('../../services/auth/PinService');
-jest.mock('../../services/encryption/PinEncryptionService');
-jest.mock('../../../utils/auth/authLogger', () => ({
+vi.mock('../../services/auth/PinService');
+vi.mock('../../services/encryption/PinEncryptionService');
+vi.mock('../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
-const mockPinService = PinService as jest.Mocked<typeof PinService>;
-const mockPinEncryptionService = PinEncryptionService as jest.Mocked<
+const mockPinService = PinService as vi.Mocked<typeof PinService>;
+const mockPinEncryptionService = PinEncryptionService as vi.Mocked<
   typeof PinEncryptionService
 >;
 
 describe('usePinAuth Hook', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Reset all mocks to default implementations
     mockPinService.validatePinAuth.mockReturnValue({

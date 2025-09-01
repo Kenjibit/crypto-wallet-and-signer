@@ -2,21 +2,22 @@ import { AuthStorageService } from '../AuthStorageService';
 import { authLogger } from '../../../../utils/auth/authLogger';
 import type { AuthState } from '../../../types/auth';
 
+import { vi } from 'vitest';
 // Mock authLogger
-jest.mock('../../../../utils/auth/authLogger', () => ({
+vi.mock('../../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 
 Object.defineProperty(window, 'localStorage', {
@@ -26,7 +27,7 @@ Object.defineProperty(window, 'localStorage', {
 
 describe('AuthStorageService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockLocalStorage.getItem.mockClear();
     mockLocalStorage.setItem.mockClear();
     mockLocalStorage.removeItem.mockClear();

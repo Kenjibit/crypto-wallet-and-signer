@@ -5,16 +5,17 @@ import { PasskeyEncryptionService } from '../../services/encryption/PasskeyEncry
 import { PinEncryptionService } from '../../services/encryption/PinEncryptionService';
 import { authLogger } from '../../../utils/auth/authLogger';
 
+import { vi } from 'vitest';
 // Mock the services
-jest.mock('../../services/encryption/PasskeyEncryptionService');
-jest.mock('../../services/encryption/PinEncryptionService');
-jest.mock('../../../utils/auth/authLogger');
+vi.mock('../../services/encryption/PasskeyEncryptionService');
+vi.mock('../../services/encryption/PinEncryptionService');
+vi.mock('../../../utils/auth/authLogger');
 
 // Mock WebAuthn API
 Object.defineProperty(navigator, 'credentials', {
   value: {
-    create: jest.fn(),
-    get: jest.fn(),
+    create: vi.fn(),
+    get: vi.fn(),
   },
   writable: true,
 });
@@ -22,27 +23,28 @@ Object.defineProperty(navigator, 'credentials', {
 // Mock crypto API
 Object.defineProperty(window, 'crypto', {
   value: {
-    getRandomValues: jest.fn(),
+    getRandomValues: vi.fn(),
     subtle: {
-      encrypt: jest.fn(),
-      decrypt: jest.fn(),
-      importKey: jest.fn(),
-      deriveKey: jest.fn(),
-      digest: jest.fn(),
+      encrypt: vi.fn(),
+      decrypt: vi.fn(),
+      importKey: vi.fn(),
+      deriveKey: vi.fn(),
+      digest: vi.fn(),
     },
   },
 });
 
-const mockPasskeyEncryptionService =
-  PasskeyEncryptionService as jest.MockedClass<typeof PasskeyEncryptionService>;
-const mockPinEncryptionService = PinEncryptionService as jest.MockedClass<
+const mockPasskeyEncryptionService = PasskeyEncryptionService as vi.Mocked<
+  typeof PasskeyEncryptionService
+>;
+const mockPinEncryptionService = PinEncryptionService as vi.Mocked<
   typeof PinEncryptionService
 >;
-const mockAuthLogger = authLogger as jest.Mocked<typeof authLogger>;
+const mockAuthLogger = authLogger as vi.Mocked<typeof authLogger>;
 
 describe('AuthContext + useEncryption Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Setup default service mocks
     mockPasskeyEncryptionService.encrypt.mockResolvedValue(
@@ -83,10 +85,16 @@ describe('AuthContext + useEncryption Integration', () => {
       },
     };
 
-    (navigator.credentials.create as jest.Mock).mockResolvedValue(
-      mockCredential
-    );
-    (navigator.credentials.get as jest.Mock).mockResolvedValue(mockAssertion);
+    (
+      navigator.credentials.create as vi.MockedFunction<
+        typeof navigator.credentials.create
+      >
+    ).mockResolvedValue(mockCredential);
+    (
+      navigator.credentials.get as vi.MockedFunction<
+        typeof navigator.credentials.get
+      >
+    ).mockResolvedValue(mockAssertion);
   });
 
   describe('Encryption Integration with AuthContext', () => {

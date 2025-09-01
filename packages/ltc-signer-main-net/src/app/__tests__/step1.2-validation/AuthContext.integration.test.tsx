@@ -6,26 +6,27 @@
 
 import React from 'react';
 import { render, act } from '@testing-library/react';
+import { vi } from 'vitest';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 import { AuthValidationService } from '../../services/validation/AuthValidationService';
 import type { AuthState } from '../../types/auth';
 
 // Mock the AuthValidationService
-jest.mock('../../services/validation/AuthValidationService');
-const mockAuthValidationService = AuthValidationService as jest.Mocked<
+vi.mock('../../services/validation/AuthValidationService');
+const mockAuthValidationService = AuthValidationService as vi.Mocked<
   typeof AuthValidationService
 >;
 
 describe('AuthContext Integration with AuthValidationService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
-        getItem: jest.fn(() => null),
-        setItem: jest.fn(() => null),
-        removeItem: jest.fn(() => null),
-        clear: jest.fn(() => null),
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(() => null),
+        removeItem: vi.fn(() => null),
+        clear: vi.fn(() => null),
       },
       writable: true,
     });

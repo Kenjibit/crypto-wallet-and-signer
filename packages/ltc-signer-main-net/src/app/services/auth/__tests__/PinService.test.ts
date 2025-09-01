@@ -1,25 +1,25 @@
-import {
-  describe,
+import { describe,
   test,
   expect,
   beforeEach,
   afterEach,
   jest,
-} from '@jest/globals';
+ } from 'vitest';
 import { PinService } from '../PinService';
 
+import { vi } from 'vitest';
 // Mock the authLogger
-jest.mock('../../../../utils/auth/authLogger', () => ({
+vi.mock('../../../../utils/auth/authLogger', () => ({
   authLogger: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-    performance: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    performance: vi.fn(),
   },
 }));
 
 // Mock crypto.getRandomValues
-const mockGetRandomValues = jest.fn();
+const mockGetRandomValues = vi.fn();
 Object.defineProperty(global.crypto, 'getRandomValues', {
   value: mockGetRandomValues,
   writable: true,
@@ -27,10 +27,10 @@ Object.defineProperty(global.crypto, 'getRandomValues', {
 
 // Mock crypto.subtle
 const mockCryptoSubtle = {
-  importKey: jest.fn(),
-  deriveKey: jest.fn(),
-  exportKey: jest.fn(),
-  sign: jest.fn(),
+  importKey: vi.fn(),
+  deriveKey: vi.fn(),
+  exportKey: vi.fn(),
+  sign: vi.fn(),
 };
 Object.defineProperty(global.crypto, 'subtle', {
   value: mockCryptoSubtle,
@@ -39,10 +39,10 @@ Object.defineProperty(global.crypto, 'subtle', {
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 } as unknown as Storage;
 Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
@@ -50,7 +50,7 @@ Object.defineProperty(window, 'localStorage', {
 });
 
 // Mock performance.now
-const mockPerformanceNow = jest.fn();
+const mockPerformanceNow = vi.fn();
 Object.defineProperty(window.performance, 'now', {
   value: mockPerformanceNow,
   writable: true,
@@ -58,7 +58,7 @@ Object.defineProperty(window.performance, 'now', {
 
 describe('PinService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPerformanceNow.mockReturnValue(1000);
 
     // Reset localStorage mocks

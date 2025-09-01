@@ -3,6 +3,7 @@ import { PasskeyEncryptionService } from '../services/encryption/PasskeyEncrypti
 import { PinEncryptionService } from '../services/encryption/PinEncryptionService';
 import { authLogger } from '../../utils/auth/authLogger';
 import { useAuthState } from './useAuthState';
+import { FEATURES } from '../config/features';
 
 /**
  * Unified encryption hook for offline PWA wallet
@@ -560,15 +561,14 @@ export const useLegacyEncryption = () => {
 };
 
 /**
- * Conditional encryption hook - now always returns direct encryption interface
- * Use this in components for consistent encryption interface
+ * Conditional encryption hook based on feature flag
+ * Use this in components to automatically switch between new and legacy encryption
  */
 export const useConditionalEncryption = () => {
   // Always call hooks at the top level to follow Rules of Hooks
   const newEncryption = useEncryption();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _legacyEncryption = useLegacyEncryption(); // Prefix with underscore to indicate intentionally unused
+  const legacyEncryption = useLegacyEncryption();
 
-  // Return the encryption interface
-  return newEncryption;
+  // Return the appropriate interface based on feature flag
+  return FEATURES.USE_ENCRYPTION_HOOK ? newEncryption : legacyEncryption;
 };
