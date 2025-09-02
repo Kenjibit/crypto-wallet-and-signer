@@ -61,7 +61,6 @@ export class WalletDatabaseOperations {
     try {
       // Encrypt sensitive data
       let encryptedPrivateKey: string;
-      let encryptedMnemonic: string | undefined;
 
       if (encryptionMethod === 'pin') {
         const pin = secret as string;
@@ -71,15 +70,6 @@ export class WalletDatabaseOperations {
           0 // Temporary ID, will be updated after wallet creation
         );
         encryptedPrivateKey = encrypted.encryptedData;
-
-        if (walletData.encryptedMnemonic) {
-          const encryptedMnemonicResult = await WalletEncryption.encryptWithPIN(
-            walletData.encryptedMnemonic,
-            pin,
-            0
-          );
-          encryptedMnemonic = encryptedMnemonicResult.encryptedData;
-        }
       } else {
         const signature = secret as ArrayBuffer;
         const encrypted = await WalletEncryption.encryptWithPasskey(
@@ -88,23 +78,12 @@ export class WalletDatabaseOperations {
           0
         );
         encryptedPrivateKey = encrypted.encryptedData;
-
-        if (walletData.encryptedMnemonic) {
-          const encryptedMnemonicResult =
-            await WalletEncryption.encryptWithPasskey(
-              walletData.encryptedMnemonic,
-              signature,
-              0
-            );
-          encryptedMnemonic = encryptedMnemonicResult.encryptedData;
-        }
       }
 
       // Create wallet record
       const wallet: Omit<Wallet, 'id'> = {
         ...walletData,
         encryptedPrivateKey,
-        encryptedMnemonic,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

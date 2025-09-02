@@ -39,7 +39,7 @@ interface ImportedWallet {
   address: string;
   publicKey: string;
   encryptedPrivateKey: string;
-  encryptedMnemonic?: string;
+  mnemonic?: string; // For display purposes only
   derivationPath: string;
   network: 'mainnet' | 'testnet';
   cryptoType: string;
@@ -156,7 +156,7 @@ export function WalletImportModal({
         address: walletResult.address,
         publicKey: walletResult.publicKeyHex || '',
         encryptedPrivateKey: walletResult.wif, // This will be encrypted later
-        encryptedMnemonic: importData.mnemonic, // This will be encrypted later
+        mnemonic: importData.mnemonic, // For display purposes only
         derivationPath: walletResult.path,
         network: 'mainnet',
         cryptoType: 'LTC',
@@ -270,7 +270,6 @@ export function WalletImportModal({
         address: walletWithName.address,
         publicKey: walletWithName.publicKey,
         encryptedPrivateKey: walletWithName.encryptedPrivateKey,
-        encryptedMnemonic: walletWithName.encryptedMnemonic,
         derivationPath: walletWithName.derivationPath,
         network: walletWithName.network,
         cryptoType: walletWithName.cryptoType,
@@ -509,46 +508,43 @@ export function WalletImportModal({
             </div>
 
             {/* Only show mnemonic for private key imports, not mnemonic imports */}
-            {importedWallet.encryptedMnemonic &&
-              importType === 'private-key' && (
-                <div className="mnemonic-section">
-                  <div className="section-header">
-                    <h4>Your Recovery Phrase</h4>
-                    <button
-                      onClick={() => setShowMnemonic(!showMnemonic)}
-                      className="toggle-button"
-                    >
-                      {showMnemonic ? <EyeOff size={16} /> : <Eye size={16} />}
-                      {showMnemonic ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-
-                  <div className="mnemonic-display">
-                    {showMnemonic ? (
-                      <div className="mnemonic-words">
-                        {importedWallet.encryptedMnemonic
-                          .split(' ')
-                          .map((word, index) => (
-                            <span key={index} className="word">
-                              {index + 1}. {word}
-                            </span>
-                          ))}
-                      </div>
-                    ) : (
-                      <div className="mnemonic-hidden">
-                        •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
-                        ••••
-                      </div>
-                    )}
-                  </div>
-
-                  <p className="mnemonic-warning">
-                    <AlertCircle size={16} />
-                    Write down these words and store them securely offline.
-                    Never share them with anyone.
-                  </p>
+            {importedWallet.mnemonic && importType === 'private-key' && (
+              <div className="mnemonic-section">
+                <div className="section-header">
+                  <h4>Your Recovery Phrase</h4>
+                  <button
+                    onClick={() => setShowMnemonic(!showMnemonic)}
+                    className="toggle-button"
+                  >
+                    {showMnemonic ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showMnemonic ? 'Hide' : 'Show'}
+                  </button>
                 </div>
-              )}
+
+                <div className="mnemonic-display">
+                  {showMnemonic ? (
+                    <div className="mnemonic-words">
+                      {importedWallet.mnemonic.split(' ').map((word, index) => (
+                        <span key={index} className="word">
+                          {index + 1}. {word}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mnemonic-hidden">
+                      •••• •••• •••• •••• •••• •••• •••• •••• •••• •••• ••••
+                      ••••
+                    </div>
+                  )}
+                </div>
+
+                <p className="mnemonic-warning">
+                  <AlertCircle size={16} />
+                  Write down these words and store them securely offline. Never
+                  share them with anyone.
+                </p>
+              </div>
+            )}
 
             <div className="address-section">
               <h4>Your Litecoin Address</h4>

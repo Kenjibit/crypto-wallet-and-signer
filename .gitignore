@@ -3,6 +3,9 @@
 # cursor
 .cursor
 
+#playwright
+.playwright-mcp/
+
 # editors / IDE
 .vscode/
 .idea/

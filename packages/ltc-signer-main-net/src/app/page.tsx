@@ -25,7 +25,6 @@ interface Wallet {
   address: string;
   publicKey: string;
   encryptedPrivateKey: string;
-  encryptedMnemonic?: string;
   derivationPath: string;
   network: 'mainnet' | 'testnet';
   cryptoType: string;
@@ -41,7 +40,7 @@ interface ImportedWallet {
   address: string;
   publicKey?: string;
   encryptedPrivateKey?: string;
-  encryptedMnemonic?: string;
+  mnemonic?: string; // For display purposes only
   derivationPath?: string;
   network: string;
   cryptoType?: string;
@@ -132,7 +131,6 @@ export default function LTCMainPage() {
       address: wallet.address,
       publicKey: wallet.publicKey || '',
       encryptedPrivateKey: wallet.encryptedPrivateKey || '',
-      encryptedMnemonic: wallet.encryptedMnemonic,
       derivationPath: wallet.derivationPath || "m/84'/2'/0'/0/0",
       network: wallet.network as 'mainnet' | 'testnet',
       cryptoType: wallet.cryptoType || 'LTC',

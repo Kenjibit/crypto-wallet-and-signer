@@ -36,7 +36,7 @@ interface GeneratedWallet {
   address: string;
   publicKey: string;
   encryptedPrivateKey: string;
-  encryptedMnemonic: string;
+  mnemonic: string; // Keep mnemonic for display purposes only
   derivationPath: string;
   network: 'mainnet' | 'testnet';
   cryptoType: string;
@@ -95,7 +95,12 @@ export function WalletCreationModal({
 
       return () => clearTimeout(timer);
     }
-  }, [databaseStatus.status.isInitialized, databaseStatus.status.error, databaseStatus.initialize, databaseStatus]);
+  }, [
+    databaseStatus.status.isInitialized,
+    databaseStatus.status.error,
+    databaseStatus.initialize,
+    databaseStatus,
+  ]);
 
   // Define entropy source options using our OptionItem interface
   const entropyOptions: OptionItem[] = [
@@ -146,7 +151,7 @@ export function WalletCreationModal({
           address: wallet.address,
           publicKey: wallet.publicKeyHex || '',
           encryptedPrivateKey: wallet.wif, // This will be encrypted later
-          encryptedMnemonic: mnemonic, // This will be encrypted later
+          mnemonic: mnemonic, // For display purposes only
           derivationPath: "m/84'/2'/0'/0/0", // BIP84 for LTC
           network: 'mainnet',
           cryptoType: 'LTC',
@@ -437,7 +442,7 @@ export function WalletCreationModal({
         address: wallet.address,
         publicKey: wallet.publicKeyHex || '',
         encryptedPrivateKey: wallet.wif, // This will be encrypted later
-        encryptedMnemonic: mnemonic, // This will be encrypted later
+        mnemonic: mnemonic, // For display purposes only
         derivationPath: "m/84'/2'/0'/0/0", // BIP84 for LTC
         network: 'mainnet',
         cryptoType: 'LTC',
@@ -512,7 +517,6 @@ export function WalletCreationModal({
         address: walletWithName.address,
         publicKey: walletWithName.publicKey,
         encryptedPrivateKey: walletWithName.encryptedPrivateKey,
-        encryptedMnemonic: walletWithName.encryptedMnemonic,
         derivationPath: walletWithName.derivationPath,
         network: walletWithName.network,
         cryptoType: walletWithName.cryptoType,
@@ -700,13 +704,11 @@ export function WalletCreationModal({
               <div className="mnemonic-display">
                 {showMnemonic ? (
                   <div className="mnemonic-words">
-                    {generatedWallet.encryptedMnemonic
-                      .split(' ')
-                      .map((word, index) => (
-                        <span key={index} className="word">
-                          {index + 1}. {word}
-                        </span>
-                      ))}
+                    {generatedWallet.mnemonic.split(' ').map((word, index) => (
+                      <span key={index} className="word">
+                        {index + 1}. {word}
+                      </span>
+                    ))}
                   </div>
                 ) : (
                   <div className="mnemonic-hidden">

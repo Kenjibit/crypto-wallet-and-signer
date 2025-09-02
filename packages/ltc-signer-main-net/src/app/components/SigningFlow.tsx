@@ -17,7 +17,6 @@ interface SimpleWallet {
   address?: string;
   publicKey?: string;
   encryptedPrivateKey?: string;
-  encryptedMnemonic?: string;
   derivationPath?: string;
   network?: 'mainnet' | 'testnet';
   cryptoType?: string;
